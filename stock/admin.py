@@ -1,4 +1,4 @@
 from django.contrib import admin
-from .models import MatierePremiere
+from .models import MouvementStock
 
-admin.site.register(MatierePremiere)
+admin.site.register(MouvementStock)

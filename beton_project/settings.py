@@ -151,16 +151,16 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 JAZZMIN_SETTINGS = {
-    "site_title": "Beton+",
-    "site_header": "Beton+",
-    "site_brand": "Beton+",
-    "site_logo": None,
-    "login_logo": None,
+    "site_title": "Sitrad",
+    "site_header": "Sitrad",
+    "site_brand": "Sitrad",
+    "site_logo": "images/logo.png",
+    "login_logo": "images/logo.png",
     "login_logo_dark": None,
     "site_logo_classes": "img-circle",
-    "site_icon": None,
-    "welcome_sign": "Bienvenue sur Beton+",
-    "copyright": "Beton+ Ltd",
+    "site_icon": "images/logo.png",
+    "welcome_sign": "Bienvenue sur Sitrad",
+    "copyright": "Sitrad Ltd",
     "search_model": ["auth.User", "orders.Commande"],
     "topmenu_links": [
         {"name": "Accueil", "url": "admin:index", "permissions": ["auth.view_user"]},

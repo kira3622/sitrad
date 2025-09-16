@@ -5,6 +5,7 @@ class FormuleBeton(models.Model):
     nom = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     resistance_requise = models.CharField(max_length=50)  # e.g., 'C25/30'
+    quantite_produite_reference = models.DecimalField(max_digits=10, decimal_places=2, default=1) # Ajout de la quantité de référence
 
     def __str__(self):
         return self.nom
