@@ -154,7 +154,7 @@ JAZZMIN_SETTINGS = {
     "site_title": "Sitrad",
     "site_header": "Sitrad",
     "site_brand": "Sitrad",
-    "site_logo": "images/logo.png",
+    "site_logo": "vendor/adminlte/img/AdminLTELogo.png",
     "login_logo": "images/logo.png",
     "login_logo_dark": None,
     "site_logo_classes": "img-circle",
