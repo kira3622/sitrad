@@ -1,0 +1,10 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>Liste des Rapports</h1>
+  <ul>
+    {% for report in reports %}
+      <li><a href="{% url 'report_detail' report.pk %}">{{ report.nom }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

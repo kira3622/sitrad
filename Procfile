@@ -1,0 +1,1 @@
+web: gunicorn beton_project.wsgi:application

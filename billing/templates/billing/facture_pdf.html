@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Facture {{ facture.id }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 1cm;
+        }
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .header .logo {
+            width: 150px;
+        }
+        .header .company-details {
+            text-align: right;
+        }
+        .invoice-details {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .client-details, .invoice-info {
+            width: 48%;
+        }
+        .client-details p, .invoice-info p {
+            margin: 5px 0;
+        }
+        .items-table {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .items-table th {
+            background-color: #f2f2f2;
+        }
+        .totals {
+            margin-top: 20px;
+            float: right;
+            width: 40%;
+        }
+        .totals table {
+            width: 100%;
+        }
+        .totals td {
+            padding: 5px;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="/static/images/logo.png" alt="Logo" class="logo">
+        <div class="company-details">
+            <p><strong>Capital:</strong> 10 000 000.00 DH</p>
+            <p><strong>IF:</strong> 3383587</p>
+            <p><strong>RC:</strong> 74157</p>
+            <p><strong>ICE:</strong> 000096411000092</p>
+            <p><strong>CNSS:</strong> 7938220</p>
+            <p><strong>Adresse:</strong> N11 IMM 05 RES. EL OSRA AV.TARIK BEN ZIAD-TEMARA</p>
+            <p><strong>TEL:</strong> 06 61 63 75 18</p>
+            <p><strong>Email:</strong> sitrad.office@gmail.com</p>
+            <p><strong>Patente:</strong> 26944649</p>
+        </div>
+    </div>
+
+    <h1>Facture N° F{{ facture.id }}</h1>
+
+    <div class="invoice-details">
+        <div class="client-details">
+            <p><strong>Client:</strong> {{ facture.commande.client.nom }}</p>
+            <p><strong>ICE:</strong> {{ facture.commande.client.ice }}</p>
+            <p><strong>Code client:</strong> {{ facture.commande.client.code_client }}</p>
+            <p><strong>Mode de règlement:</strong> {{ facture.get_mode_reglement_display }}</p>
+            <p><strong>Date du règlement:</strong> {{ facture.date_reglement|date:"d/m/Y" }}</p>
+            <p><strong>Numéro du règlement:</strong> {{ facture.numero_reglement }}</p>
+            <p><strong>Délai de règlement:</strong> {{ facture.delai_reglement }} jours</p>
+            <p><strong>Objet:</strong> {{ facture.objet }}</p>
+        </div>
+        <div class="invoice-info">
+            <p><strong>Date:</strong> {{ facture.date_facturation|date:"d/m/Y" }}</p>
+            <p><strong>Référence:</strong> {{ facture.reference }}</p>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Désignation</th>
+                <th>Ut</th>
+                <th>PU HT</th>
+                <th>Qté</th>
+                <th>Total HT</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ligne in facture.lignes.all %}
+            <tr>
+                <td>{{ ligne.description }}</td>
+                <td>{{ ligne.unite }}</td>
+                <td>{{ ligne.prix_unitaire }}</td>
+                <td>{{ ligne.quantite }}</td>
+                <td>{{ ligne.montant_ligne }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td>Total HT</td>
+                <td>{{ facture.montant_ht }}</td>
+            </tr>
+            <tr>
+                <td>TVA 20%</td>
+                <td>{{ facture.montant_tva }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total TTC</strong></td>
+                <td><strong>{{ facture.montant_total }}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    <p>Arrêtée la présente facture, à la somme en DH T.T.C de : {{ total_en_lettres }}</p>
+
+    <div class="footer">
+        <p>SITRAD S.A.R.L - Ensemble nous construisons l'avenir</p>
+    </div>
+</body>
+</html>

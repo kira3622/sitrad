@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>{{ report.nom }}</h1>
+  <p><strong>Date de création:</strong> {{ report.date_creation }}</p>
+  <div>
+    <h2>Contenu du Rapport</h2>
+    {{ report.contenu|safe }}
+  </div>
+  <a href="{% url 'report_list' %}">Retour à la liste</a>
+  <a href="{% url 'report_pdf' report.pk %}">Télécharger en PDF</a>
+{% endblock %}
