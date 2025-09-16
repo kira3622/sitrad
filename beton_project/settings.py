@@ -196,9 +196,14 @@ JAZZMIN_SETTINGS = {
     "related_modal_active": False,
     "custom_css": None,
     "custom_js": None,
-    "show_ui_builder": False,
+    "show_ui_builder": True,
     "changeform_format": "horizontal_tabs",
     "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs"},
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",
+    "dark_mode_theme": "darkly",
 }
 
 LOGGING = {
