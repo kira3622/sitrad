@@ -1,0 +1,556 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - {{ site_title|default:"Django site admin" }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .report-container {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .report-header {
+        background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .report-header h1 {
+        margin: 0;
+        font-size: 2.2em;
+        font-weight: 300;
+    }
+    
+    .filters {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .filters h3 {
+        margin: 0 0 15px 0;
+        color: #333;
+    }
+    
+    .filter-row {
+        display: flex;
+        gap: 20px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    
+    .btn-filter {
+        padding: 10px 20px;
+        background-color: #FF9800;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        height: fit-content;
+    }
+    
+    .btn-filter:hover {
+        background-color: #F57C00;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 5px solid #FF9800;
+    }
+    
+    .stat-value {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #FF9800;
+        margin-bottom: 10px;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 1.1em;
+    }
+    
+    .section {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .section h3 {
+        margin: 0 0 20px 0;
+        color: #333;
+        border-bottom: 2px solid #FF9800;
+        padding-bottom: 10px;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    
+    .table th,
+    .table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .table tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+    
+    .status-payee {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-en-attente {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .status-en-retard {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .montant {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    
+    .montant-positif {
+        color: #28a745;
+    }
+    
+    .montant-negatif {
+        color: #dc3545;
+    }
+    
+    .no-data {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        padding: 40px;
+    }
+    
+    .export-actions {
+        text-align: right;
+        margin-bottom: 20px;
+    }
+    
+    .btn-export {
+        padding: 10px 20px;
+        background-color: #007cba;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: 500;
+        margin-left: 10px;
+    }
+    
+    .btn-export:hover {
+        background-color: #005a87;
+        color: white;
+    }
+    
+    .chart-container {
+        height: 300px;
+        margin: 20px 0;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+    }
+    
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .kpi-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid #e9ecef;
+    }
+    
+    .kpi-value {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #FF9800;
+        margin-bottom: 5px;
+    }
+    
+    .kpi-label {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .trend-indicator {
+        font-size: 0.8em;
+        margin-left: 5px;
+    }
+    
+    .trend-up {
+        color: #28a745;
+    }
+    
+    .trend-down {
+        color: #dc3545;
+    }
+    
+    .highlight-box {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border: 1px solid #ffcc02;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .highlight-box h4 {
+        margin: 0 0 10px 0;
+        color: #e65100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <div class="report-header">
+        <h1>💰 Rapport Financier</h1>
+        <p>Analyse financière et suivi de la facturation</p>
+    </div>
+    
+    <div class="filters">
+        <h3>🔍 Filtres</h3>
+        <form method="get" class="filter-row">
+            <div class="filter-group">
+                <label for="date_debut">Date de début :</label>
+                <input type="date" id="date_debut" name="date_debut" value="{{ request.GET.date_debut }}">
+            </div>
+            <div class="filter-group">
+                <label for="date_fin">Date de fin :</label>
+                <input type="date" id="date_fin" name="date_fin" value="{{ request.GET.date_fin }}">
+            </div>
+            <div class="filter-group">
+                <label for="statut">Statut :</label>
+                <select id="statut" name="statut">
+                    <option value="">Tous les statuts</option>
+                    <option value="en_attente" {% if request.GET.statut == 'en_attente' %}selected{% endif %}>En attente</option>
+                    <option value="payee" {% if request.GET.statut == 'payee' %}selected{% endif %}>Payée</option>
+                    <option value="en_retard" {% if request.GET.statut == 'en_retard' %}selected{% endif %}>En retard</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-filter">Filtrer</button>
+        </form>
+    </div>
+    
+    <div class="export-actions">
+        <a href="{% url 'reports:dashboard' %}" class="btn-export" style="background-color: #6c757d;">← Retour au tableau de bord</a>
+        <a href="{% url 'reports:export_pdf' 'financier' %}" class="btn-export">📄 Export PDF</a>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats_factures.total_factures|default:0 }}</div>
+            <div class="stat-label">Factures totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats_factures.ca_total|floatformat:0|default:0 }}€</div>
+            <div class="stat-label">Chiffre d'affaires</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats_factures.ca_paye|floatformat:0|default:0 }}€</div>
+            <div class="stat-label">CA encaissé</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats_factures.ca_en_attente|floatformat:0|default:0 }}€</div>
+            <div class="stat-label">CA en attente</div>
+        </div>
+    </div>
+    
+    {% if stats_factures.ca_en_attente > 0 %}
+    <div class="highlight-box">
+        <h4>⚠️ Attention - Créances en attente</h4>
+        <p>
+            <strong>{{ stats_factures.ca_en_attente|floatformat:0 }}€</strong> de chiffre d'affaires en attente de paiement.
+            Cela représente <strong>{{ stats_factures.pourcentage_en_attente|floatformat:1 }}%</strong> du CA total.
+        </p>
+    </div>
+    {% endif %}
+    
+    <div class="section">
+        <h3>📊 Indicateurs Clés de Performance</h3>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value">{{ stats_factures.montant_moyen|floatformat:0|default:0 }}€</div>
+                <div class="kpi-label">Montant moyen par facture</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ stats_factures.delai_paiement_moyen|default:0 }}</div>
+                <div class="kpi-label">Délai de paiement moyen (jours)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ stats_factures.taux_paiement|floatformat:1|default:0 }}%</div>
+                <div class="kpi-label">Taux de paiement</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ stats_factures.factures_en_retard|default:0 }}</div>
+                <div class="kpi-label">Factures en retard</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>📋 Répartition par Statut</h3>
+        {% if repartition_statut %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Statut</th>
+                        <th>Nombre de factures</th>
+                        <th>Montant total</th>
+                        <th>Pourcentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for statut in repartition_statut %}
+                    <tr>
+                        <td>
+                            <span class="status-badge status-{{ statut.statut }}">
+                                {% if statut.statut == 'payee' %}✅ Payée
+                                {% elif statut.statut == 'en_attente' %}⏳ En attente
+                                {% elif statut.statut == 'en_retard' %}🔴 En retard
+                                {% else %}{{ statut.statut|title }}{% endif %}
+                            </span>
+                        </td>
+                        <td>{{ statut.nombre }}</td>
+                        <td class="montant">{{ statut.montant_total|floatformat:2 }}€</td>
+                        <td>{{ statut.pourcentage|floatformat:1 }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">Aucune donnée de répartition par statut.</div>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <h3>🏆 Top 10 des Clients par CA</h3>
+        {% if top_clients %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Nombre de factures</th>
+                        <th>Chiffre d'affaires</th>
+                        <th>CA moyen par facture</th>
+                        <th>Dernière facture</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in top_clients %}
+                    <tr>
+                        <td><strong>{{ client.commande__client__nom }}</strong></td>
+                        <td>{{ client.nombre_factures }}</td>
+                        <td class="montant montant-positif">{{ client.ca_total|floatformat:2 }}€</td>
+                        <td>{{ client.ca_moyen|floatformat:2 }}€</td>
+                        <td>{{ client.derniere_facture|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">Aucune donnée de chiffre d'affaires par client.</div>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <h3>📅 Évolution Mensuelle du CA</h3>
+        {% if evolution_ca %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Mois</th>
+                        <th>Nombre de factures</th>
+                        <th>Chiffre d'affaires</th>
+                        <th>Évolution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mois in evolution_ca %}
+                    <tr>
+                        <td>{{ mois.mois|date:"F Y" }}</td>
+                        <td>{{ mois.nombre_factures }}</td>
+                        <td class="montant montant-positif">{{ mois.ca_mensuel|floatformat:2 }}€</td>
+                        <td>
+                            {% if mois.evolution %}
+                                {% if mois.evolution > 0 %}
+                                    <span class="trend-indicator trend-up">📈 +{{ mois.evolution|floatformat:1 }}%</span>
+                                {% else %}
+                                    <span class="trend-indicator trend-down">📉 {{ mois.evolution|floatformat:1 }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span style="color: #666;">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">Aucune donnée d'évolution mensuelle.</div>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <h3>⚠️ Factures en Retard de Paiement</h3>
+        {% if factures_en_retard %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>N° Facture</th>
+                        <th>Client</th>
+                        <th>Date de facturation</th>
+                        <th>Montant</th>
+                        <th>Jours de retard</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for facture in factures_en_retard %}
+                    <tr>
+                        <td><strong>{{ facture.id }}</strong></td>
+                        <td>{{ facture.commande.client.nom }}</td>
+                        <td>{{ facture.date_facturation|date:"d/m/Y" }}</td>
+                        <td class="montant montant-negatif">{{ facture.montant_total|floatformat:2 }}€</td>
+                        <td>
+                            <span style="color: #dc3545; font-weight: bold;">
+                                {{ facture.jours_retard }} jours
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">✅ Aucune facture en retard de paiement.</div>
+        {% endif %}
+    </div>
+    
+    <div class="section">
+        <h3>📈 Analyse de Trésorerie</h3>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value">{{ tresorerie.encaissements_30j|floatformat:0|default:0 }}€</div>
+                <div class="kpi-label">Encaissements (30 derniers jours)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ tresorerie.previsions_30j|floatformat:0|default:0 }}€</div>
+                <div class="kpi-label">Prévisions (30 prochains jours)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ tresorerie.creances_totales|floatformat:0|default:0 }}€</div>
+                <div class="kpi-label">Créances totales</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ tresorerie.age_moyen_creances|default:0 }}</div>
+                <div class="kpi-label">Âge moyen des créances (jours)</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>📊 Graphique d'Évolution (Placeholder)</h3>
+        <div class="chart-container">
+            <div>
+                <p style="margin: 0; font-size: 1.2em;">📊 Graphique d'évolution du CA</p>
+                <p style="margin: 10px 0 0 0; color: #999;">
+                    Intégration Chart.js ou autre bibliothèque de graphiques recommandée
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Script pour les filtres de date automatiques
+document.addEventListener('DOMContentLoaded', function() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    
+    // Si aucune date n'est définie, définir les 30 derniers jours
+    if (!dateDebut.value && !dateFin.value) {
+        const aujourd_hui = new Date();
+        const il_y_a_30_jours = new Date();
+        il_y_a_30_jours.setDate(aujourd_hui.getDate() - 30);
+        
+        dateDebut.value = il_y_a_30_jours.toISOString().split('T')[0];
+        dateFin.value = aujourd_hui.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

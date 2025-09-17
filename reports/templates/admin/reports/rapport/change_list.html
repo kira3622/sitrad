@@ -1,0 +1,136 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .reports-dashboard {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .reports-dashboard h2 {
+        margin: 0 0 15px 0;
+        font-size: 1.5em;
+    }
+    
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .report-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .report-card:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .report-card a {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .report-card a:hover {
+        color: white;
+        text-decoration: none;
+    }
+    
+    .report-icon {
+        font-size: 2em;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .main-dashboard-btn {
+        background: #28a745;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.1em;
+        display: inline-block;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .main-dashboard-btn:hover {
+        background: #218838;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content_title %}
+<h1>📊 Gestion des Rapports</h1>
+{% endblock %}
+
+{% block result_list %}
+<div class="reports-dashboard">
+    <h2>🚀 Accès Rapide aux Rapports</h2>
+    <p>Accédez rapidement à tous vos rapports d'analyse et de gestion.</p>
+    
+    <a href="{{ reports_links.dashboard }}" class="main-dashboard-btn">
+        📊 Dashboard Principal des Rapports
+    </a>
+    
+    <div class="reports-grid">
+        <div class="report-card">
+            <a href="{{ reports_links.production }}">
+                <span class="report-icon">🏭</span>
+                <div>Rapport de Production</div>
+                <small>Ordres, formules, efficacité</small>
+            </a>
+        </div>
+        
+        <div class="report-card">
+            <a href="{{ reports_links.commandes }}">
+                <span class="report-icon">📋</span>
+                <div>Rapport de Commandes</div>
+                <small>Statuts, délais, volumes</small>
+            </a>
+        </div>
+        
+        <div class="report-card">
+            <a href="{{ reports_links.commercial }}">
+                <span class="report-icon">💼</span>
+                <div>Rapport Commercial</div>
+                <small>CA, clients, tendances</small>
+            </a>
+        </div>
+        
+        <div class="report-card">
+            <a href="{{ reports_links.stock }}">
+                <span class="report-icon">📦</span>
+                <div>Rapport de Stock</div>
+                <small>Niveaux, mouvements, alertes</small>
+            </a>
+        </div>
+        
+        <div class="report-card">
+            <a href="{{ reports_links.financier }}">
+                <span class="report-icon">💰</span>
+                <div>Rapport Financier</div>
+                <small>Facturation, paiements, trésorerie</small>
+            </a>
+        </div>
+    </div>
+</div>
+
+{{ block.super }}
+{% endblock %}
