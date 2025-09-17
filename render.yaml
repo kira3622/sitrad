@@ -5,6 +5,7 @@ services:
     plan: free
     buildCommand: "./build.sh"
     startCommand: "gunicorn beton_project.wsgi:application"
+    preDeployCommand: "python create_superuser.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -24,6 +25,10 @@ services:
         value: admin@example.com
       - key: DJANGO_SUPERUSER_PASSWORD
         generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: beton-db
+          property: connectionString
 
 databases:
   - name: beton-db

@@ -99,12 +99,9 @@ WSGI_APPLICATION = 'beton_project.wsgi.application'
 if 'DATABASE_URL' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require=False,  # Changé pour éviter les erreurs SSL
-            options={
-                'sslmode': 'prefer',  # Préfère SSL mais ne l'exige pas
-            }
         )
     }
 else:
