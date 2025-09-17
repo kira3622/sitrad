@@ -1,77 +1,51 @@
-#!/bin/bash
-
-# Configuration bash stricte
+#!/usr/bin/env bash
+# Script de build pour Render - Version améliorée
 set -o errexit
-set -o pipefail
-set -o nounset
 
-echo "=== Début du script de construction ==="
-
-# Installation des dépendances
-echo "Installation des dépendances..."
+echo "🔄 Installation des dépendances..."
 pip install -r requirements.txt
 
-# Vérification de l'installation Django
-echo "Vérification de l'installation Django..."
-python -c "import django; print('Django version:', django.get_version())"
+echo "🔄 Vérification de la base de données..."
+python -c "
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beton_project.settings')
+django.setup()
+from django.db import connection
+try:
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT 1')
+    print('✅ Connexion DB OK')
+except Exception as e:
+    print(f'❌ Erreur DB: {e}')
+    exit(1)
+"
 
-# Test de connexion à la base de données
-echo "Test de connexion à la base de données..."
-python manage.py check --database default
+echo "🔄 Exécution des migrations..."
+python manage.py migrate --noinput
 
-# Affichage de l'état des migrations
-echo "État actuel des migrations:"
-python manage.py showmigrations
+echo "🔄 Collecte des fichiers statiques..."
+python manage.py collectstatic --noinput
 
-# Tentative 1: Migration normale
-echo "=== Tentative 1: Migration normale ==="
-python manage.py makemigrations
-if python manage.py migrate; then
-    echo "Migration normale réussie!"
-else
-    echo "Migration normale échouée, tentative avec --run-syncdb..."
-    
-    # Tentative 2: Migration avec --run-syncdb
-    echo "=== Tentative 2: Migration avec --run-syncdb ==="
-    if python manage.py migrate --run-syncdb; then
-        echo "Migration avec --run-syncdb réussie!"
-    else
-        echo "Migration avec --run-syncdb échouée, migration séquentielle..."
-        
-        # Tentative 3: Migration séquentielle des apps
-        echo "=== Tentative 3: Migration séquentielle ==="
-        
-        # Apps core Django d'abord
-        for app in contenttypes auth admin sessions; do
-            echo "Migration de l'app core: $app"
-            python manage.py migrate $app || echo "Échec de migration pour $app, continuation..."
-        done
-        
-        # Apps personnalisées ensuite
-        for app in inventory stock customers orders production formulas logistics billing reports; do
-            echo "Migration de l'app personnalisée: $app"
-            python manage.py migrate $app --run-syncdb || echo "Échec de migration pour $app, continuation..."
-        done
-    fi
-fi
-
-# Collecte des fichiers statiques
-echo "Collecte des fichiers statiques..."
-python manage.py collectstatic --noinput || echo "Avertissement: Problème lors de la collecte des fichiers statiques"
-
-# Création du superuser si nécessaire
-echo "Vérification/Création du superuser..."
+echo "🔄 Création du superutilisateur si nécessaire..."
 python -c "
 import os
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beton_project.settings')
 django.setup()
 from django.contrib.auth.models import User
-if not User.objects.filter(is_superuser=True).exists():
-    User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
-    print('Superuser créé: admin/admin123')
-else:
-    print('Superuser existe déjà')
-" || echo "Avertissement: Problème lors de la création du superuser"
+try:
+    if not User.objects.filter(is_superuser=True).exists():
+        User.objects.create_superuser(
+            username=os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin'),
+            email=os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@example.com'),
+            password=os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123')
+        )
+        print('✅ Superutilisateur créé')
+    else:
+        print('✅ Superutilisateur existe')
+except Exception as e:
+    print(f'⚠️ Superutilisateur: {e}')
+"
 
-echo "=== Script terminé avec succès ==="
+echo "🎉 Build terminé avec succès!"
