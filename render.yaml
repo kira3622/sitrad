@@ -14,20 +14,8 @@ services:
         value: False
       - key: WEB_CONCURRENCY
         value: 4
-
-databases:
-  - name: beton-db
-    databaseName: beton_project
-    user: beton_user
-    plan: free
-
-envVarGroups:
-  - name: django-config
-    envVars:
       - key: SECRET_KEY
         generateValue: true
-      - key: DEBUG
-        value: False
       - key: ALLOWED_HOSTS
         value: .onrender.com
       - key: DJANGO_SUPERUSER_USERNAME
@@ -36,3 +24,9 @@ envVarGroups:
         value: admin@example.com
       - key: DJANGO_SUPERUSER_PASSWORD
         generateValue: true
+
+databases:
+  - name: beton-db
+    databaseName: beton_project
+    user: beton_user
+    plan: free
