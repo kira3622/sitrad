@@ -22,16 +22,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-p@d@^s-=+^db)j4*#*v0@4u!y5o$v*@#@_#&_lixw#&_(-d*!j'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p@d@^s-=+^db)j4*#*v0@4u!y5o$v*@#@_#&_lixw#&_(-d*!j')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1']
+# Configuration ALLOWED_HOSTS pour production et développement
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
+# Ajout automatique du hostname Render
 RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_HOSTNAME)
+
+# Support pour les domaines personnalisés sur Render
+ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS.extend([host.strip() for host in ALLOWED_HOSTS_ENV.split(',')])
 
 
 # Application definition
@@ -222,3 +229,9 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# Import des paramètres de production si nécessaire
+try:
+    from .production_settings import *
+except ImportError:
+    pass

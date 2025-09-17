@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: beton-project
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn beton_project.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: beton_project.settings
+      - key: DEBUG
+        value: False
+      - key: WEB_CONCURRENCY
+        value: 4
+
+databases:
+  - name: beton-db
+    databaseName: beton_project
+    user: beton_user
+    plan: free
+
+envVarGroups:
+  - name: django-config
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@example.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true
