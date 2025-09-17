@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: "./build.sh"
     startCommand: "gunicorn beton_project.wsgi:application"
-    preDeployCommand: "python create_superuser.py"
+    preDeployCommand: "python manage.py migrate --noinput && python create_superuser.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
