@@ -65,6 +65,7 @@ def preview_sorties_ordre(request, ordre_id):
                     'quantite_necessaire': sortie['quantite_necessaire'],
                     'unite': sortie['matiere_premiere'].unite_mesure,
                     'stock_actuel': sortie['matiere_premiere'].stock_actuel,
+                    'stock_apres_deduction': sortie['matiere_premiere'].stock_actuel - sortie['quantite_necessaire'],
                     'stock_suffisant': sortie['matiere_premiere'].stock_actuel >= sortie['quantite_necessaire']
                 }
                 for sortie in sorties_prevues

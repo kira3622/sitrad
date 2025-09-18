@@ -26,6 +26,7 @@
                 <th>Quantité Nécessaire</th>
                 <th>Unité</th>
                 <th>Stock Actuel</th>
+                <th>Stock Après Déduction</th>
                 <th>Statut Stock</th>
             </tr>
         </thead>
@@ -33,9 +34,15 @@
             {% for matiere in preview_data.matieres %}
             <tr class="{% if not matiere.stock_suffisant %}insufficient-stock{% endif %}">
                 <td>{{ matiere.nom }}</td>
-                <td>{{ matiere.quantite_necessaire }}</td>
+                <td class="quantite-necessaire">{{ matiere.quantite_necessaire }}</td>
                 <td>{{ matiere.unite }}</td>
-                <td>{{ matiere.stock_actuel }}</td>
+                <td class="stock-avant">{{ matiere.stock_actuel }}</td>
+                <td class="stock-apres {% if matiere.stock_apres_deduction < 0 %}stock-negatif{% endif %}">
+                    {{ matiere.stock_apres_deduction }}
+                    {% if matiere.stock_apres_deduction < 0 %}
+                        <span class="stock-warning">⚠️</span>
+                    {% endif %}
+                </td>
                 <td>
                     {% if matiere.stock_suffisant %}
                         <span class="status-calculated">✅ Suffisant</span>
@@ -124,6 +131,27 @@
 
 .cancel-link {
     margin-left: 10px;
+}
+
+.quantite-necessaire {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.stock-avant {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.stock-apres {
+    font-weight: bold;
+}
+
+.stock-negatif {
+    color: #dc3545;
+    background-color: #f8d7da;
+    padding: 4px;
+    border-radius: 3px;
 }
 </style>
 {% endblock %}
