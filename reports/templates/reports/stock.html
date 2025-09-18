@@ -367,11 +367,13 @@
                             -{{ matiere.sorties|default:0|floatformat:1 }}
                         </td>
                         <td style="font-weight: bold;">
-                            {% with solde=matiere.entrees|default:0|add:matiere.sorties|default:0|mul:-1 %}
-                                {% if solde >= 0 %}
-                                    <span style="color: #28a745;">+{{ solde|floatformat:1 }}</span>
+                            {% with entrees=matiere.entrees|default:0 sorties=matiere.sorties|default:0 %}
+                                {% if entrees > sorties %}
+                                    <span style="color: #28a745;">+{{ entrees|floatformat:1 }}</span>
+                                {% elif sorties > entrees %}
+                                    <span style="color: #dc3545;">-{{ sorties|floatformat:1 }}</span>
                                 {% else %}
-                                    <span style="color: #dc3545;">{{ solde|floatformat:1 }}</span>
+                                    <span style="color: #666;">0.0</span>
                                 {% endif %}
                             {% endwith %}
                         </td>
