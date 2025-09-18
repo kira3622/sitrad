@@ -1,3 +1,4 @@
+# Configuration Render pour beton-project - Force deployment
 services:
   - type: web
     name: beton-project
