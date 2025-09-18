@@ -255,15 +255,15 @@
     
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-value">{{ ca_stats.ca_total|floatformat:0 }}€</div>
+            <div class="stat-value">{{ ca_stats.ca_total|floatformat:0 }} DH</div>
             <div class="stat-label">Chiffre d'affaires total</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ ca_stats.ca_paye|floatformat:0 }}€</div>
+            <div class="stat-value">{{ ca_stats.ca_paye|floatformat:0 }} DH</div>
             <div class="stat-label">CA encaissé</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ ca_stats.ca_en_attente|floatformat:0 }}€</div>
+            <div class="stat-value">{{ ca_stats.ca_en_attente|floatformat:0 }} DH</div>
             <div class="stat-label">CA en attente</div>
         </div>
         <div class="stat-card">
@@ -280,7 +280,7 @@
                 <div class="progress-fill" style="width: {% if ca_stats.ca_total > 0 %}{% widthratio ca_stats.ca_paye ca_stats.ca_total 100 %}{% else %}0{% endif %}%"></div>
             </div>
             <p style="margin-top: 10px; text-align: center;">
-                {{ ca_stats.ca_paye|floatformat:0 }}€ / {{ ca_stats.ca_total|floatformat:0 }}€ 
+                {{ ca_stats.ca_paye|floatformat:0 }} DH / {{ ca_stats.ca_total|floatformat:0 }} DH 
                 ({% if ca_stats.ca_total > 0 %}{% widthratio ca_stats.ca_paye ca_stats.ca_total 100 %}{% else %}0{% endif %}%)
             </p>
         </div>
@@ -314,9 +314,9 @@
                     {% for client in ca_par_client %}
                     <tr>
                         <td>{{ client.commande__client__nom }}</td>
-                        <td class="currency">{{ client.ca_total|floatformat:0 }}€</td>
+                        <td class="currency">{{ client.ca_total|floatformat:0 }} DH</td>
                         <td>{{ client.nombre_factures }}</td>
-                        <td class="currency">{% widthratio client.ca_total client.nombre_factures 1 %}€</td>
+                        <td class="currency">{% widthratio client.ca_total client.nombre_factures 1 %} DH</td>
                         <td>{% if ca_stats.ca_total > 0 %}{% widthratio client.ca_total ca_stats.ca_total 100 %}%{% else %}0%{% endif %}</td>
                     </tr>
                     {% endfor %}
@@ -345,7 +345,7 @@
                     <tr>
                         <td>{{ client.nom }}</td>
                         <td>{{ client.nombre_commandes }}</td>
-                        <td class="currency">{{ client.ca_total|default:0|floatformat:0 }}€</td>
+                        <td class="currency">{{ client.ca_total|default:0|floatformat:0 }} DH</td>
                         <td>{{ client.derniere_commande|date:"d/m/Y"|default:"N/A" }}</td>
                         <td>
                             {% if client.nombre_commandes >= 10 %}
@@ -383,9 +383,9 @@
                     {% for mois in ca_mensuel %}
                     <tr>
                         <td>{{ mois.mois }}</td>
-                        <td class="currency">{{ mois.ca|floatformat:0 }}€</td>
+                        <td class="currency">{{ mois.ca|floatformat:0 }} DH</td>
                         <td>{{ mois.nombre_factures }}</td>
-                        <td class="currency">{% if mois.nombre_factures > 0 %}{% widthratio mois.ca mois.nombre_factures 1 %}€{% else %}0€{% endif %}</td>
+                        <td class="currency">{% if mois.nombre_factures > 0 %}{% widthratio mois.ca mois.nombre_factures 1 %} DH{% else %}0 DH{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -412,9 +412,9 @@
                     {% for geo in repartition_geo|slice:":10" %}
                     <tr>
                         <td>{{ geo.commande__client__adresse|default:"Non renseigné" }}</td>
-                        <td class="currency">{{ geo.ca|floatformat:0 }}€</td>
+                        <td class="currency">{{ geo.ca|floatformat:0 }} DH</td>
                         <td>{{ geo.nombre_commandes }}</td>
-                        <td class="currency">{% widthratio geo.ca geo.nombre_commandes 1 %}€</td>
+                        <td class="currency">{% widthratio geo.ca geo.nombre_commandes 1 %} DH</td>
                         <td>{% if ca_stats.ca_total > 0 %}{% widthratio geo.ca ca_stats.ca_total 100 %}%{% else %}0%{% endif %}</td>
                     </tr>
                     {% endfor %}

@@ -319,15 +319,15 @@
             <div class="stat-label">Factures totales</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ stats_factures.ca_total|floatformat:0|default:0 }}€</div>
+            <div class="stat-value">{{ stats_factures.ca_total|floatformat:0|default:0 }} DH</div>
             <div class="stat-label">Chiffre d'affaires</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ stats_factures.ca_paye|floatformat:0|default:0 }}€</div>
+            <div class="stat-value">{{ stats_factures.ca_paye|floatformat:0|default:0 }} DH</div>
             <div class="stat-label">CA encaissé</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{{ stats_factures.ca_en_attente|floatformat:0|default:0 }}€</div>
+            <div class="stat-value">{{ stats_factures.ca_en_attente|floatformat:0|default:0 }} DH</div>
             <div class="stat-label">CA en attente</div>
         </div>
     </div>
@@ -336,7 +336,7 @@
     <div class="highlight-box">
         <h4>⚠️ Attention - Créances en attente</h4>
         <p>
-            <strong>{{ stats_factures.ca_en_attente|floatformat:0 }}€</strong> de chiffre d'affaires en attente de paiement.
+            <strong>{{ stats_factures.ca_en_attente|floatformat:0 }} DH</strong> de chiffre d'affaires en attente de paiement.
             Cela représente <strong>{{ stats_factures.pourcentage_en_attente|floatformat:1 }}%</strong> du CA total.
         </p>
     </div>
@@ -346,7 +346,7 @@
         <h3>📊 Indicateurs Clés de Performance</h3>
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-value">{{ stats_factures.montant_moyen|floatformat:0|default:0 }}€</div>
+                <div class="kpi-value">{{ stats_factures.montant_moyen|floatformat:0|default:0 }} DH</div>
                 <div class="kpi-label">Montant moyen par facture</div>
             </div>
             <div class="kpi-card">
@@ -388,7 +388,7 @@
                             </span>
                         </td>
                         <td>{{ statut.nombre }}</td>
-                        <td class="montant">{{ statut.montant_total|floatformat:2 }}€</td>
+                        <td class="montant">{{ statut.montant_total|floatformat:2 }} DH</td>
                         <td>{{ statut.pourcentage|floatformat:1 }}%</td>
                     </tr>
                     {% endfor %}
@@ -417,8 +417,8 @@
                     <tr>
                         <td><strong>{{ client.commande__client__nom }}</strong></td>
                         <td>{{ client.nombre_factures }}</td>
-                        <td class="montant montant-positif">{{ client.ca_total|floatformat:2 }}€</td>
-                        <td>{{ client.ca_moyen|floatformat:2 }}€</td>
+                        <td class="montant montant-positif">{{ client.ca_total|floatformat:2 }} DH</td>
+                        <td>{{ client.ca_moyen|floatformat:2 }} DH</td>
                         <td>{{ client.derniere_facture|date:"d/m/Y" }}</td>
                     </tr>
                     {% endfor %}
@@ -446,7 +446,7 @@
                     <tr>
                         <td>{{ mois.mois|date:"F Y" }}</td>
                         <td>{{ mois.nombre_factures }}</td>
-                        <td class="montant montant-positif">{{ mois.ca_mensuel|floatformat:2 }}€</td>
+                        <td class="montant montant-positif">{{ mois.ca_mensuel|floatformat:2 }} DH</td>
                         <td>
                             {% if mois.evolution %}
                                 {% if mois.evolution > 0 %}
@@ -486,7 +486,7 @@
                         <td><strong>{{ facture.id }}</strong></td>
                         <td>{{ facture.commande.client.nom }}</td>
                         <td>{{ facture.date_facturation|date:"d/m/Y" }}</td>
-                        <td class="montant montant-negatif">{{ facture.montant_total|floatformat:2 }}€</td>
+                        <td class="montant montant-negatif">{{ facture.montant_total|floatformat:2 }} DH</td>
                         <td>
                             <span style="color: #dc3545; font-weight: bold;">
                                 {{ facture.jours_retard }} jours
@@ -505,15 +505,15 @@
         <h3>📈 Analyse de Trésorerie</h3>
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-value">{{ tresorerie.encaissements_30j|floatformat:0|default:0 }}€</div>
+                <div class="kpi-value">{{ tresorerie.encaissements_30j|floatformat:0|default:0 }} DH</div>
                 <div class="kpi-label">Encaissements (30 derniers jours)</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-value">{{ tresorerie.previsions_30j|floatformat:0|default:0 }}€</div>
+                <div class="kpi-value">{{ tresorerie.previsions_30j|floatformat:0|default:0 }} DH</div>
                 <div class="kpi-label">Prévisions (30 prochains jours)</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-value">{{ tresorerie.creances_totales|floatformat:0|default:0 }}€</div>
+                <div class="kpi-value">{{ tresorerie.creances_totales|floatformat:0|default:0 }} DH</div>
                 <div class="kpi-label">Créances totales</div>
             </div>
             <div class="kpi-card">
