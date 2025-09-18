@@ -10,7 +10,7 @@ class Facture(models.Model):
     ]
     commande = models.OneToOneField(Commande, on_delete=models.CASCADE)
     date_facturation = models.DateField(auto_now_add=True)
-    montant_total = models.DecimalField(max_digits=10, decimal_places=2)
+    montant_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, default=0)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='brouillon')
 
     def __str__(self):
@@ -22,6 +22,13 @@ class LigneFacture(models.Model):
     quantite = models.DecimalField(max_digits=10, decimal_places=2)
     prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)
     montant_ligne = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def save(self, *args, **kwargs):
+        # Calculer automatiquement le montant de la ligne
+        self.montant_ligne = self.quantite * self.prix_unitaire
+        super().save(*args, **kwargs)
+        # Mettre à jour le montant total de la facture
+        self.facture.save()
 
     def __str__(self):
         return f"Ligne pour facture {self.facture.id}: {self.description}"

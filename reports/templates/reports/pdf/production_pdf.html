@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 12px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        .stats-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .stat-item {
+            display: table-cell;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <p>Période : {{ date_debut }} au {{ date_fin }}</p>
+        <p>Généré le {{ "now"|date:"d/m/Y à H:i" }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Statistiques de Production</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats_production.total_ordres }}</div>
+                <div class="stat-label">Total Ordres</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats_production.ordres_termines }}</div>
+                <div class="stat-label">Ordres Terminés</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats_production.ordres_en_cours }}</div>
+                <div class="stat-label">Ordres En Cours</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats_production.quantite_totale_produite|floatformat:2 }}</div>
+                <div class="stat-label">Quantité Produite (m³)</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats_production.efficacite|floatformat:1 }}%</div>
+                <div class="stat-label">Efficacité</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Ordres de Production</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>N° Ordre</th>
+                    <th>Date</th>
+                    <th>Formule</th>
+                    <th>Client</th>
+                    <th>Quantité (m³)</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ordre in ordres %}
+                <tr>
+                    <td>{{ ordre.id }}</td>
+                    <td>{{ ordre.date_production|date:"d/m/Y" }}</td>
+                    <td>{{ ordre.formule.nom }}</td>
+                    <td>{{ ordre.commande.client.nom }}</td>
+                    <td class="text-right">{{ ordre.quantite_produire|floatformat:2 }}</td>
+                    <td class="text-center">{{ ordre.get_statut_display }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">Aucun ordre de production dans cette période</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if production_par_formule %}
+    <div class="section">
+        <div class="section-title">Production par Formule</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Formule</th>
+                    <th>Résistance</th>
+                    <th>Quantité Planifiée (m³)</th>
+                    <th>Nombre d'Ordres</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for formule in production_par_formule %}
+                <tr>
+                    <td>{{ formule.formule__nom }}</td>
+                    <td class="text-center">{{ formule.formule__resistance_requise|default:"-" }}</td>
+                    <td class="text-right">{{ formule.quantite_planifiee|floatformat:2 }}</td>
+                    <td class="text-center">{{ formule.nombre_ordres }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</body>
+</html>

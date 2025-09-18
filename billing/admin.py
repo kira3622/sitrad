@@ -7,16 +7,31 @@ class LigneFactureInline(admin.TabularInline):
     model = LigneFacture
     extra = 1
     readonly_fields = ('montant_ligne',)
+    fields = ('description', 'quantite', 'prix_unitaire', 'montant_ligne')
 
 @admin.register(Facture)
 class FactureAdmin(admin.ModelAdmin):
     list_display = ('id', 'commande', 'date_facturation', 'montant_total', 'statut', 'view_pdf_link')
     list_filter = ('date_facturation', 'statut')
-    search_fields = ('commande__id', 'commande__client__nom', 'reference')
+    search_fields = ('commande__id', 'commande__client__nom')
     inlines = [LigneFactureInline]
-    readonly_fields = ('montant_total',)
+    readonly_fields = ('montant_total', 'date_facturation')
+    fields = ('commande', 'statut', 'date_facturation', 'montant_total')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Recalculer le montant total après sauvegarde
+        obj.montant_total = obj.calculer_montant_total()
+        obj.save(update_fields=['montant_total'])
 
     def view_pdf_link(self, obj):
-        url = reverse('facture_pdf', args=[obj.id])
-        return format_html('<a href="{url}">Voir PDF</a>', url=url)
+        if obj.id:
+            url = reverse('facture_pdf', args=[obj.id])
+            return format_html('<a href="{url}">Voir PDF</a>', url=url)
+        return "Sauvegarder d'abord"
     view_pdf_link.short_description = "Facture PDF"
+
+@admin.register(LigneFacture)
+class LigneFactureAdmin(admin.ModelAdmin):
+    list_display = ('facture', 'description', 'quantite', 'prix_unitaire', 'montant_ligne')
+    readonly_fields = ('montant_ligne',)

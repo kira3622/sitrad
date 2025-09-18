@@ -431,10 +431,11 @@ def export_rapport_pdf(request, type_rapport):
         return HttpResponse("La bibliothèque xhtml2pdf n'est pas installée.", status=500)
     
     # Déterminer le template et les données selon le type de rapport
+    # Dans la fonction export_rapport_pdf, ligne ~436
     if type_rapport == 'production':
-        context = _get_production_data(request)
-        template_path = 'reports/pdf/production_pdf.html'
-        filename = f'rapport_production_{timezone.now().strftime("%Y%m%d")}.pdf'
+    context = _get_production_data(request)
+    template_path = 'reports/production.html'  # Utiliser le template existant temporairement
+    filename = f'rapport_production_{timezone.now().strftime("%Y%m%d")}.pdf'
     elif type_rapport == 'commandes':
         context = _get_commandes_data(request)
         template_path = 'reports/pdf/commandes_pdf.html'
@@ -472,8 +473,73 @@ def export_rapport_pdf(request, type_rapport):
 
 # Fonctions utilitaires pour récupérer les données
 def _get_production_data(request):
-    # Logique similaire à rapport_production mais simplifiée pour PDF
-    pass
+    """Récupère les données de production pour l'export PDF"""
+    # Filtres de date
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if not date_debut:
+        date_debut = (timezone.now() - timedelta(days=30)).date()
+    else:
+        date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+    
+    if not date_fin:
+        date_fin = timezone.now().date()
+    else:
+        date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+    
+    # Ordres de production dans la période
+    ordres = OrdreProduction.objects.filter(
+        date_production__range=[date_debut, date_fin]
+    ).select_related('commande', 'formule')
+    
+    # Calcul de la quantité produite : utiliser les lots s'ils existent, sinon les ordres terminés
+    quantite_lots = LotProduction.objects.filter(
+        ordre_production__in=ordres
+    ).aggregate(total=Sum('quantite_produite'))['total'] or 0
+    
+    # Si aucun lot n'existe, utiliser la quantité des ordres terminés
+    if quantite_lots == 0:
+        quantite_produite = ordres.filter(statut='termine').aggregate(
+            total=Sum('quantite_produire')
+        )['total'] or 0
+    else:
+        quantite_produite = quantite_lots
+    
+    # Statistiques de production
+    stats_production = {
+        'total_ordres': ordres.count(),
+        'ordres_termines': ordres.filter(statut='termine').count(),
+        'ordres_en_cours': ordres.filter(statut='en_cours').count(),
+        'quantite_totale_planifiee': ordres.aggregate(total=Sum('quantite_produire'))['total'] or 0,
+        'quantite_totale_produite': quantite_produite,
+    }
+    
+    # Efficacité de production
+    if stats_production['quantite_totale_planifiee'] > 0:
+        stats_production['efficacite'] = (
+            stats_production['quantite_totale_produite'] / 
+            stats_production['quantite_totale_planifiee'] * 100
+        )
+    else:
+        stats_production['efficacite'] = 0
+    
+    # Production par formule
+    production_par_formule = ordres.values(
+        'formule__nom', 'formule__resistance_requise'
+    ).annotate(
+        quantite_planifiee=Sum('quantite_produire'),
+        nombre_ordres=Count('id')
+    ).order_by('-quantite_planifiee')
+    
+    return {
+        'title': 'Rapport de Production',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'stats_production': stats_production,
+        'ordres': ordres,
+        'production_par_formule': production_par_formule,
+    }
 
 def _get_commandes_data(request):
     # Logique similaire à rapport_commandes mais simplifiée pour PDF
