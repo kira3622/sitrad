@@ -48,15 +48,26 @@ def rapport_production(request):
         date_production__range=[date_debut, date_fin]
     ).select_related('commande', 'formule')
     
+    # Calcul de la quantité produite : utiliser les lots s'ils existent, sinon les ordres terminés
+    quantite_lots = LotProduction.objects.filter(
+        ordre_production__in=ordres
+    ).aggregate(total=Sum('quantite_produite'))['total'] or 0
+    
+    # Si aucun lot n'existe, utiliser la quantité des ordres terminés
+    if quantite_lots == 0:
+        quantite_produite = ordres.filter(statut='termine').aggregate(
+            total=Sum('quantite_produire')
+        )['total'] or 0
+    else:
+        quantite_produite = quantite_lots
+    
     # Statistiques de production
     stats_production = {
         'total_ordres': ordres.count(),
         'ordres_termines': ordres.filter(statut='termine').count(),
         'ordres_en_cours': ordres.filter(statut='en_cours').count(),
         'quantite_totale_planifiee': ordres.aggregate(total=Sum('quantite_produire'))['total'] or 0,
-        'quantite_totale_produite': LotProduction.objects.filter(
-            ordre_production__in=ordres
-        ).aggregate(total=Sum('quantite_produite'))['total'] or 0,
+        'quantite_totale_produite': quantite_produite,
     }
     
     # Efficacité de production
