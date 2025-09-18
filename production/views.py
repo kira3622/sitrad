@@ -57,8 +57,24 @@ def preview_sorties_ordre(request, ordre_id):
         sorties_prevues = ordre.calculer_sorties_matieres()
         verification_stock = ordre.verifier_stock_disponible()
         
+        # Préparer les données pour le template
+        preview_data = {
+            'matieres': [
+                {
+                    'nom': sortie['matiere_premiere'].nom,
+                    'quantite_necessaire': sortie['quantite_necessaire'],
+                    'unite': sortie['matiere_premiere'].unite_mesure,
+                    'stock_actuel': sortie['matiere_premiere'].stock_actuel,
+                    'stock_suffisant': sortie['matiere_premiere'].stock_actuel >= sortie['quantite_necessaire']
+                }
+                for sortie in sorties_prevues
+            ],
+            'stock_suffisant': verification_stock['stock_suffisant']
+        }
+        
         context = {
             'ordre': ordre,
+            'preview_data': preview_data,
             'sorties_prevues': sorties_prevues,
             'verification_stock': verification_stock,
             'total_matieres': len(sorties_prevues)
@@ -94,13 +110,25 @@ def preview_sorties_ordre(request, ordre_id):
         return render(request, 'production/preview_sorties.html', context)
     
     except Exception as e:
+        # Préparer les données d'erreur pour le template
+        preview_data = {
+            'error': str(e),
+            'matieres': None
+        }
+        
+        context = {
+            'ordre': ordre,
+            'preview_data': preview_data
+        }
+        
         if request.headers.get('Accept') == 'application/json':
             return JsonResponse({
                 'success': False,
                 'message': f"Erreur : {str(e)}"
             })
+        
         messages.error(request, f"Erreur lors de la prévisualisation : {str(e)}")
-        return redirect('admin:production_ordreproduction_changelist')
+        return render(request, 'production/preview_sorties.html', context)
 
 @login_required
 @require_POST
