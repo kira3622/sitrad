@@ -19,25 +19,60 @@ class OrdreProduction(models.Model):
         Calcule les quantités de matières premières nécessaires pour cet ordre de production
         basé sur la formule et la quantité à produire.
         """
-        sorties_calculees = []
-        
-        # Récupérer la composition de la formule
-        compositions = self.formule.composition.all()
-        
-        for composition in compositions:
-            # Calculer la quantité nécessaire proportionnellement
+        try:
+            sorties_calculees = []
+            
+            # Vérifications préliminaires
+            if not self.formule:
+                raise ValueError("Aucune formule associée à cet ordre de production")
+            
+            if not self.quantite_produire or self.quantite_produire <= 0:
+                raise ValueError("Quantité à produire invalide ou nulle")
+            
+            if not self.formule.quantite_produite_reference or self.formule.quantite_produite_reference <= 0:
+                raise ValueError(f"Quantité de référence invalide pour la formule '{self.formule.nom}' (valeur: {self.formule.quantite_produite_reference})")
+            
+            # Récupérer la composition de la formule
+            compositions = self.formule.composition.all()
+            
+            if not compositions.exists():
+                raise ValueError(f"La formule '{self.formule.nom}' n'a pas de composition définie (aucune matière première)")
+            
+            # Calculer le facteur de multiplication
             quantite_reference = self.formule.quantite_produite_reference
             facteur_multiplication = self.quantite_produire / quantite_reference
-            quantite_necessaire = composition.quantite * facteur_multiplication
             
-            sorties_calculees.append({
-                'matiere_premiere': composition.matiere_premiere,
-                'quantite_necessaire': quantite_necessaire,
-                'quantite_formule': composition.quantite,
-                'facteur': facteur_multiplication
-            })
-        
-        return sorties_calculees
+            for composition in compositions:
+                # Vérifications pour chaque composition
+                if not composition.matiere_premiere:
+                    continue  # Ignorer les compositions sans matière première
+                
+                if not composition.quantite or composition.quantite <= 0:
+                    continue  # Ignorer les quantités nulles ou négatives
+                
+                # Calculer la quantité nécessaire proportionnellement
+                quantite_necessaire = composition.quantite * facteur_multiplication
+                
+                sorties_calculees.append({
+                    'matiere_premiere': composition.matiere_premiere,
+                    'quantite_necessaire': quantite_necessaire,
+                    'quantite_formule': composition.quantite,
+                    'facteur': facteur_multiplication
+                })
+            
+            if not sorties_calculees:
+                raise ValueError("Aucune matière première valide trouvée dans la composition de la formule")
+            
+            return sorties_calculees
+            
+        except Exception as e:
+            # Log l'erreur pour le débogage
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Erreur lors du calcul des sorties pour l'ordre {self.id}: {str(e)}")
+            
+            # Relancer l'exception avec plus de contexte
+            raise ValueError(f"Impossible de calculer les sorties de matières: {str(e)}")
 
     def verifier_stock_disponible(self):
         """
