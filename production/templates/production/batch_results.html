@@ -1,0 +1,162 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Résultats Calcul en Lot - Sorties Matières{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>Résultats du calcul en lot des sorties de matières</h1>
+    
+    <div class="calculation-summary">
+        <h2>Résumé du traitement</h2>
+        <p><strong>Ordres traités:</strong> {{ results.total_processed }}</p>
+        <p><strong>Succès:</strong> {{ results.success_count }}</p>
+        <p><strong>Erreurs:</strong> {{ results.error_count }}</p>
+        <p><strong>Déjà calculés:</strong> {{ results.already_calculated_count }}</p>
+    </div>
+
+    {% if results.success_list %}
+    <h3>✅ Ordres traités avec succès:</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ordre ID</th>
+                <th>Commande</th>
+                <th>Formule</th>
+                <th>Quantité</th>
+                <th>Matières Calculées</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordre in results.success_list %}
+            <tr>
+                <td><a href="{% url 'admin:production_ordreproduction_change' ordre.id %}">#{{ ordre.id }}</a></td>
+                <td>{{ ordre.commande }}</td>
+                <td>{{ ordre.formule.nom }}</td>
+                <td>{{ ordre.quantite_produire }}</td>
+                <td>{{ ordre.sorties_count }} matières</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if results.error_list %}
+    <h3>❌ Ordres avec erreurs:</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ordre ID</th>
+                <th>Commande</th>
+                <th>Formule</th>
+                <th>Erreur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in results.error_list %}
+            <tr class="error-row">
+                <td><a href="{% url 'admin:production_ordreproduction_change' item.ordre.id %}">#{{ item.ordre.id }}</a></td>
+                <td>{{ item.ordre.commande }}</td>
+                <td>{{ item.ordre.formule.nom }}</td>
+                <td class="error-message">{{ item.error }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if results.already_calculated_list %}
+    <h3>ℹ️ Ordres déjà calculés (ignorés):</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ordre ID</th>
+                <th>Commande</th>
+                <th>Formule</th>
+                <th>Date Calcul</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordre in results.already_calculated_list %}
+            <tr class="already-calculated-row">
+                <td><a href="{% url 'admin:production_ordreproduction_change' ordre.id %}">#{{ ordre.id }}</a></td>
+                <td>{{ ordre.commande }}</td>
+                <td>{{ ordre.formule.nom }}</td>
+                <td>{{ ordre.date_modification|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% if results.stock_warnings %}
+    <div class="messagelist">
+        <div class="warning">
+            <h4>⚠️ Avertissements de stock:</h4>
+            <ul>
+                {% for warning in results.stock_warnings %}
+                <li>{{ warning }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="submit-row">
+        <a href="{% url 'admin:production_ordreproduction_changelist' %}" class="button default">Retour à la liste</a>
+        {% if results.error_count > 0 %}
+        <a href="#" onclick="window.print()" class="button">Imprimer le rapport</a>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.calculation-summary {
+    background-color: #e9ecef;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.error-row {
+    background-color: #f8d7da;
+}
+
+.already-calculated-row {
+    background-color: #d1ecf1;
+}
+
+.error-message {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.submit-row {
+    margin-top: 20px;
+    padding: 10px 0;
+}
+
+@media print {
+    .submit-row {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

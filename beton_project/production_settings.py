@@ -1,8 +1,8 @@
 # Configuration de sécurité pour la production sur Render
 import os
 
-# Configuration HTTPS pour la production
-if not os.environ.get('DEBUG', 'False') == 'True':
+# Configuration HTTPS pour la production uniquement (pas en développement local)
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME') and not os.environ.get('DEBUG', 'False') == 'True':
     # HTTPS/SSL Configuration
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000  # 1 an

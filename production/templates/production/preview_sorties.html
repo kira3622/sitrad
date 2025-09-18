@@ -1,0 +1,129 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Prévisualisation Sorties Matières - Ordre #{{ ordre.id }}{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>Prévisualisation des sorties de matières</h1>
+    
+    <div class="calculation-summary">
+        <h2>Ordre de Production #{{ ordre.id }}</h2>
+        <p><strong>Commande:</strong> {{ ordre.commande }}</p>
+        <p><strong>Formule:</strong> {{ ordre.formule.nom }}</p>
+        <p><strong>Quantité à produire:</strong> {{ ordre.quantite_produire }}</p>
+        <p><strong>Date de production:</strong> {{ ordre.date_production }}</p>
+        <p><strong>Statut:</strong> {{ ordre.get_statut_display }}</p>
+    </div>
+
+    {% if preview_data.matieres %}
+    <h3>Matières premières nécessaires:</h3>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Matière Première</th>
+                <th>Quantité Nécessaire</th>
+                <th>Unité</th>
+                <th>Stock Actuel</th>
+                <th>Statut Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for matiere in preview_data.matieres %}
+            <tr class="{% if not matiere.stock_suffisant %}insufficient-stock{% endif %}">
+                <td>{{ matiere.nom }}</td>
+                <td>{{ matiere.quantite_necessaire }}</td>
+                <td>{{ matiere.unite }}</td>
+                <td>{{ matiere.stock_actuel }}</td>
+                <td>
+                    {% if matiere.stock_suffisant %}
+                        <span class="status-calculated">✅ Suffisant</span>
+                    {% else %}
+                        <span class="stock-warning">⚠️ Insuffisant</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if not preview_data.stock_suffisant %}
+    <div class="messagelist">
+        <div class="warning">
+            <strong>⚠️ Attention:</strong> Le stock est insuffisant pour certaines matières premières. 
+            Le calcul peut être effectué mais des mouvements de stock négatifs seront créés.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="submit-row">
+        <form method="post" action="{% url 'production:calculer_sorties_ordre' ordre.id %}">
+            {% csrf_token %}
+            <input type="submit" value="Confirmer et Calculer" class="default" />
+            <a href="{% url 'admin:production_ordreproduction_changelist' %}" class="button cancel-link">Annuler</a>
+        </form>
+    </div>
+
+    {% else %}
+    <div class="messagelist">
+        <div class="error">
+            <strong>Erreur:</strong> {{ preview_data.error|default:"Impossible de calculer les sorties de matières pour cet ordre." }}
+        </div>
+    </div>
+    
+    <div class="submit-row">
+        <a href="{% url 'admin:production_ordreproduction_changelist' %}" class="button cancel-link">Retour</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.calculation-summary {
+    background-color: #e9ecef;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.insufficient-stock {
+    background-color: #f8d7da;
+}
+
+.status-calculated {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.stock-warning {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.submit-row {
+    margin-top: 20px;
+    padding: 10px 0;
+}
+
+.cancel-link {
+    margin-left: 10px;
+}
+</style>
+{% endblock %}
