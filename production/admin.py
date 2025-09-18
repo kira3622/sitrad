@@ -11,9 +11,10 @@ class LotProductionInline(admin.TabularInline):
 
 @admin.register(OrdreProduction)
 class OrdreProductionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'commande', 'formule', 'quantite_produire', 'date_production', 'statut', 'matieres_sorties_calculees', 'actions_sorties')
+    list_display = ('numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'date_production', 'statut', 'matieres_sorties_calculees', 'actions_sorties')
     list_filter = ('statut', 'date_production', 'matieres_sorties_calculees')
-    search_fields = ('commande__client__nom', 'formule__nom')
+    search_fields = ('numero_bon', 'commande__client__nom', 'formule__nom')
+    fields = ('numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'statut')
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
     

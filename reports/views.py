@@ -433,9 +433,9 @@ def export_rapport_pdf(request, type_rapport):
     # Déterminer le template et les données selon le type de rapport
     # Dans la fonction export_rapport_pdf, ligne ~436
     if type_rapport == 'production':
-    context = _get_production_data(request)
-    template_path = 'reports/production.html'  # Utiliser le template existant temporairement
-    filename = f'rapport_production_{timezone.now().strftime("%Y%m%d")}.pdf'
+        context = _get_production_data(request)
+        template_path = 'reports/pdf/production_pdf.html'
+        filename = f'rapport_production_{timezone.now().strftime("%Y%m%d")}.pdf'
     elif type_rapport == 'commandes':
         context = _get_commandes_data(request)
         template_path = 'reports/pdf/commandes_pdf.html'

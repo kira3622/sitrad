@@ -19,10 +19,8 @@ class FactureAdmin(admin.ModelAdmin):
     fields = ('commande', 'statut', 'date_facturation', 'montant_total')
 
     def save_model(self, request, obj, form, change):
+        # Le calcul du montant total est maintenant automatique dans le modèle
         super().save_model(request, obj, form, change)
-        # Recalculer le montant total après sauvegarde
-        obj.montant_total = obj.calculer_montant_total()
-        obj.save(update_fields=['montant_total'])
 
     def view_pdf_link(self, obj):
         if obj.id:

@@ -4,6 +4,7 @@ from orders.models import Commande
 from formulas.models import FormuleBeton
 
 class OrdreProduction(models.Model):
+    numero_bon = models.CharField(max_length=20, unique=True, null=True, blank=True, help_text="Numéro de bon de production")
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE)
     formule = models.ForeignKey(FormuleBeton, on_delete=models.CASCADE)
     quantite_produire = models.DecimalField(max_digits=10, decimal_places=2)
@@ -11,8 +12,33 @@ class OrdreProduction(models.Model):
     statut = models.CharField(max_length=20, choices=[('planifie', 'Planifié'), ('en_cours', 'En cours'), ('termine', 'Terminé'), ('annule', 'Annulé')], default='planifie')
     matieres_sorties_calculees = models.BooleanField(default=False)  # Pour éviter les doublons
 
+    def save(self, *args, **kwargs):
+        if not self.numero_bon:
+            # Générer un numéro de bon automatique
+            from datetime import datetime
+            date_str = datetime.now().strftime("%Y%m%d")
+            
+            # Trouver le dernier numéro pour aujourd'hui
+            derniers_ordres = OrdreProduction.objects.filter(
+                numero_bon__startswith=f"BP{date_str}"
+            ).order_by('-numero_bon')
+            
+            if derniers_ordres.exists():
+                dernier_numero = derniers_ordres.first().numero_bon
+                # Extraire le numéro séquentiel (les 3 derniers chiffres)
+                try:
+                    sequence = int(dernier_numero[-3:]) + 1
+                except (ValueError, IndexError):
+                    sequence = 1
+            else:
+                sequence = 1
+            
+            self.numero_bon = f"BP{date_str}{sequence:03d}"
+        
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Ordre de production {self.id} pour la commande {self.commande.id}"
+        return f"Bon {self.numero_bon} - Ordre de production {self.id} pour la commande {self.commande.id}"
 
     def calculer_sorties_matieres(self):
         """
