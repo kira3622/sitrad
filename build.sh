@@ -16,9 +16,6 @@ pip install -r requirements.txt
 echo "🔄 Vérification de Django..."
 python -c "import django; print('Django version:', django.get_version())"
 
-# Exécution des migrations
-echo "🔄 Exécution des migrations..."
-python manage.py migrate --noinput
 
 # Collecte des fichiers statiques
 echo "🔄 Collecte des fichiers statiques..."
