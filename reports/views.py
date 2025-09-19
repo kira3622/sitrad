@@ -262,28 +262,21 @@ def rapport_commercial(request):
 # ==================== RAPPORTS DE STOCK ====================
 
 def rapport_stock(request):
-    """Rapport de stock avec niveaux, mouvements et alertes"""
-    # Seuils d'alerte (peuvent être configurés)
-    seuil_critique = Decimal('10.0')
-    seuil_bas = Decimal('50.0')
-    
-    # Stock actuel de toutes les matières premières
+    """Rapport de stock avec niveaux, mouvements et alertes (seuils par matière)"""
+    # Stock actuel de toutes les matières premières avec leurs seuils individuels
     matieres_premieres = MatierePremiere.objects.all()
     stocks_actuels = []
     
     for matiere in matieres_premieres:
         stock_actuel = matiere.stock_actuel
-        niveau_alerte = 'normal'
-        
-        if stock_actuel <= seuil_critique:
-            niveau_alerte = 'critique'
-        elif stock_actuel <= seuil_bas:
-            niveau_alerte = 'bas'
+        niveau_alerte = matiere.statut_stock  # Utilise la méthode du modèle
         
         stocks_actuels.append({
             'matiere': matiere,
             'stock_actuel': stock_actuel,
-            'niveau_alerte': niveau_alerte
+            'niveau_alerte': niveau_alerte,
+            'seuil_critique': matiere.seuil_critique,
+            'seuil_bas': matiere.seuil_bas,
         })
     
     # Mouvements récents (30 derniers jours)
@@ -320,6 +313,14 @@ def rapport_stock(request):
     # Alertes de stock
     alertes = [stock for stock in stocks_actuels if stock['niveau_alerte'] in ['critique', 'bas']]
     
+    # Statistiques des seuils
+    stats_seuils = {
+        'total_matieres': len(stocks_actuels),
+        'matieres_critiques': len([s for s in stocks_actuels if s['niveau_alerte'] == 'critique']),
+        'matieres_bas': len([s for s in stocks_actuels if s['niveau_alerte'] == 'bas']),
+        'matieres_normales': len([s for s in stocks_actuels if s['niveau_alerte'] == 'normal']),
+    }
+    
     context = {
         'title': 'Rapport de Stock',
         'stocks_actuels': stocks_actuels,
@@ -328,8 +329,7 @@ def rapport_stock(request):
         'mouvements_par_matiere': mouvements_par_matiere,
         'evolution_stock': evolution_stock,
         'alertes': alertes,
-        'seuil_critique': seuil_critique,
-        'seuil_bas': seuil_bas,
+        'stats_seuils': stats_seuils,
     }
     
     return render(request, 'reports/stock.html', context)
