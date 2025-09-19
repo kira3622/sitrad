@@ -719,31 +719,48 @@ def rapport_mouvements_par_jour(request):
             data['solde_fin'] = data['solde_debut'] + data['entrees'] - data['sorties']
     
     # Statistiques générales
-    stats_generales = mouvements_query.aggregate(
+    stats_data = mouvements_query.aggregate(
         total_entrees=Sum('quantite', filter=Q(type_mouvement='entree')) or 0,
         total_sorties=Sum('quantite', filter=Q(type_mouvement='sortie')) or 0,
-        nombre_mouvements=Count('id')
+        total_mouvements=Count('id')
     )
     
+    # Calcul du solde net
+    stats_data['solde_net'] = (stats_data['total_entrees'] or 0) - (stats_data['total_sorties'] or 0)
+    
     # Résumé par matière première
-    resume_par_matiere = mouvements_query.values('matiere_premiere__nom').annotate(
+    resume_par_matiere_data = mouvements_query.values('matiere_premiere__nom').annotate(
         total_entrees=Sum('quantite', filter=Q(type_mouvement='entree')) or 0,
         total_sorties=Sum('quantite', filter=Q(type_mouvement='sortie')) or 0,
-        nombre_mouvements=Count('id')
+        nb_mouvements=Count('id')
     ).order_by('matiere_premiere__nom')
+    
+    # Formatage du résumé par matière avec calcul du solde net
+    resume_par_matiere = []
+    for item in resume_par_matiere_data:
+        resume_par_matiere.append({
+            'matiere': item['matiere_premiere__nom'],
+            'nb_mouvements': item['nb_mouvements'],
+            'total_entrees': item['total_entrees'] or 0,
+            'total_sorties': item['total_sorties'] or 0,
+            'solde_net': (item['total_entrees'] or 0) - (item['total_sorties'] or 0)
+        })
     
     # Liste des matières premières pour le filtre
     matieres_premieres = MatierePremiere.objects.all().order_by('nom')
+    
+    # Liste des mouvements pour l'affichage
+    mouvements = mouvements_query.order_by('-date_mouvement')
     
     context = {
         'title': 'Mouvements par Matière Première par Jour',
         'date_debut': date_debut,
         'date_fin': date_fin,
-        'matiere_selectionnee': matiere_id,
-        'mouvements_par_jour': dict(sorted(mouvements_par_jour.items(), reverse=True)),
-        'stats_generales': stats_generales,
+        'matiere_id': matiere_id,
+        'mouvements': mouvements,
+        'stats': stats_data,
         'resume_par_matiere': resume_par_matiere,
-        'matieres_premieres': matieres_premieres,
+        'matieres': matieres_premieres,
     }
     
     return render(request, 'reports/mouvements_par_jour.html', context)
