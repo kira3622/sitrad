@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
 from django.db.models import Sum, Count, Avg, Q, Max
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -230,8 +231,8 @@ def rapport_commercial(request):
     ).filter(nombre_commandes__gt=0).order_by('-ca_total')
     
     # CA mensuel
-    ca_mensuel = factures.extra(
-        select={'mois': "strftime('%%Y-%%m', date_facturation)"}
+    ca_mensuel = factures.annotate(
+        mois=TruncMonth('date_facturation')
     ).values('mois').annotate(
         ca=Sum('montant_total'),
         nombre_factures=Count('id')
@@ -443,8 +444,8 @@ def rapport_financier(request):
         })
     
     # Évolution du CA mensuel avec calcul d'évolution
-    ca_mensuel_raw = factures.extra(
-        select={'mois': "strftime('%%Y-%%m', date_facturation)"}
+    ca_mensuel_raw = factures.annotate(
+        mois=TruncMonth('date_facturation')
     ).values('mois').annotate(
         ca_mensuel=Sum('montant_total'),
         ca_paye=Sum('montant_total', filter=Q(statut='payee')),
