@@ -1,0 +1,175 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+(function() {
+    console.log('=== CHANTIER FILTER SCRIPT LOADED ===');
+    
+    function debugAllSelects() {
+        console.log('=== DEBUGGING ALL SELECT ELEMENTS ===');
+        var allSelects = document.querySelectorAll('select');
+        console.log('Total select elements found:', allSelects.length);
+        
+        allSelects.forEach(function(select, index) {
+            console.log('Select', index + ':', {
+                id: select.id,
+                name: select.name,
+                className: select.className,
+                tagName: select.tagName
+            });
+        });
+        
+        // Chercher spécifiquement les champs client et chantier
+        var clientFields = document.querySelectorAll('select[name*="client"], select[id*="client"]');
+        var chantierFields = document.querySelectorAll('select[name*="chantier"], select[id*="chantier"]');
+        
+        console.log('Client fields found:', clientFields.length);
+        clientFields.forEach(function(field, index) {
+            console.log('Client field', index + ':', {
+                id: field.id,
+                name: field.name,
+                value: field.value
+            });
+        });
+        
+        console.log('Chantier fields found:', chantierFields.length);
+        chantierFields.forEach(function(field, index) {
+            console.log('Chantier field', index + ':', {
+                id: field.id,
+                name: field.name,
+                value: field.value
+            });
+        });
+    }
+    
+    function initChantierFilter() {
+        console.log('=== INITIALIZING CHANTIER FILTER ===');
+        
+        // Debug tous les selects
+        debugAllSelects();
+        
+        // Essayer de trouver les champs avec différentes stratégies
+        var clientSelect = document.querySelector('select[name="client"]') || 
+                          document.querySelector('#id_client') ||
+                          document.querySelector('select[id*="client"]');
+                          
+        var chantierSelect = document.querySelector('select[name="chantier"]') || 
+                            document.querySelector('#id_chantier') ||
+                            document.querySelector('select[id*="chantier"]');
+        
+        console.log('Client select found:', !!clientSelect);
+        console.log('Chantier select found:', !!chantierSelect);
+        
+        if (clientSelect) {
+            console.log('Client select details:', {
+                id: clientSelect.id,
+                name: clientSelect.name,
+                value: clientSelect.value,
+                options: clientSelect.options.length
+            });
+        }
+        
+        if (chantierSelect) {
+            console.log('Chantier select details:', {
+                id: chantierSelect.id,
+                name: chantierSelect.name,
+                value: chantierSelect.value,
+                options: chantierSelect.options.length
+            });
+        }
+        
+        if (!clientSelect || !chantierSelect) {
+            console.log('Elements not found, retrying in 1000ms...');
+            setTimeout(initChantierFilter, 1000);
+            return;
+        }
+        
+        console.log('=== SETTING UP FILTER FUNCTIONALITY ===');
+        
+        function filterChantiers() {
+            var clientId = clientSelect.value;
+            console.log('=== FILTERING CHANTIERS ===');
+            console.log('Client ID:', clientId);
+            
+            if (!clientId) {
+                console.log('No client selected, clearing chantiers');
+                chantierSelect.innerHTML = '<option value="">---------</option>';
+                return;
+            }
+            
+            var url = '/admin/orders/commande/ajax/filter-chantiers/?client_id=' + clientId;
+            console.log('Fetching from URL:', url);
+            
+            fetch(url)
+                .then(function(response) {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    console.log('=== DATA RECEIVED ===');
+                    console.log('Full response:', data);
+                    
+                    // Vider le select
+                    chantierSelect.innerHTML = '<option value="">---------</option>';
+                    
+                    if (data.chantiers && data.chantiers.length > 0) {
+                        console.log('Adding', data.chantiers.length, 'chantiers');
+                        data.chantiers.forEach(function(chantier) {
+                            console.log('Adding chantier:', chantier);
+                            var option = document.createElement('option');
+                            option.value = chantier.id;
+                            option.textContent = chantier.nom;
+                            chantierSelect.appendChild(option);
+                        });
+                    } else {
+                        console.log('No chantiers found for this client');
+                    }
+                    
+                    console.log('Final chantier options count:', chantierSelect.options.length);
+                })
+                .catch(function(error) {
+                    console.error('=== ERROR FETCHING CHANTIERS ===');
+                    console.error('Error:', error);
+                });
+        }
+        
+        // Attacher l'événement
+        console.log('=== ATTACHING EVENT LISTENER ===');
+        clientSelect.addEventListener('change', function() {
+            console.log('=== CLIENT CHANGED ===');
+            console.log('New value:', this.value);
+            filterChantiers();
+        });
+        
+        // Test initial
+        console.log('=== INITIAL SETUP COMPLETE ===');
+        console.log('Current client value:', clientSelect.value);
+        
+        if (clientSelect.value) {
+            console.log('Running initial filter...');
+            filterChantiers();
+        }
+    }
+    
+    // Attendre que la page soit prête
+    function waitForPageReady() {
+        if (document.readyState === 'loading') {
+            console.log('Page still loading, waiting for DOMContentLoaded...');
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOMContentLoaded fired');
+                setTimeout(initChantierFilter, 500);
+            });
+        } else {
+            console.log('Page already loaded, initializing immediately...');
+            setTimeout(initChantierFilter, 500);
+        }
+    }
+    
+    waitForPageReady();
+})();
+</script>
+{% endblock %}
