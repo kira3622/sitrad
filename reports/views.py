@@ -650,3 +650,100 @@ def _get_stock_data(request):
 def _get_financier_data(request):
     # Logique similaire à rapport_financier mais simplifiée pour PDF
     pass
+
+
+def rapport_mouvements_par_jour(request):
+    """
+    Vue pour le rapport détaillé des mouvements par matière première par jour
+    """
+    from datetime import datetime, timedelta
+    from django.db.models import Sum, Count, Q
+    from django.utils import timezone
+    from stock.models import MouvementStock
+    from inventory.models import MatierePremiere
+    
+    # Récupération des paramètres de filtrage
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    matiere_id = request.GET.get('matiere_premiere')
+    
+    # Dates par défaut (30 derniers jours)
+    if not date_fin:
+        date_fin = timezone.now().date()
+    else:
+        date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+    
+    if not date_debut:
+        date_debut = date_fin - timedelta(days=30)
+    else:
+        date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+    
+    # Filtrage des mouvements
+    mouvements_query = MouvementStock.objects.filter(
+        date_mouvement__date__gte=date_debut,
+        date_mouvement__date__lte=date_fin
+    ).select_related('matiere_premiere')
+    
+    if matiere_id:
+        mouvements_query = mouvements_query.filter(matiere_premiere_id=matiere_id)
+    
+    # Regroupement par jour et matière première
+    mouvements_par_jour = {}
+    for mouvement in mouvements_query.order_by('date_mouvement'):
+        jour = mouvement.date_mouvement.date()
+        matiere = mouvement.matiere_premiere.nom
+        
+        if jour not in mouvements_par_jour:
+            mouvements_par_jour[jour] = {}
+        
+        if matiere not in mouvements_par_jour[jour]:
+            mouvements_par_jour[jour][matiere] = {
+                'entrees': 0,
+                'sorties': 0,
+                'mouvements': [],
+                'solde_debut': 0,
+                'solde_fin': 0
+            }
+        
+        if mouvement.type_mouvement == 'entree':
+            mouvements_par_jour[jour][matiere]['entrees'] += mouvement.quantite
+        else:
+            mouvements_par_jour[jour][matiere]['sorties'] += mouvement.quantite
+        
+        mouvements_par_jour[jour][matiere]['mouvements'].append(mouvement)
+    
+    # Calcul des soldes quotidiens
+    for jour in sorted(mouvements_par_jour.keys()):
+        for matiere in mouvements_par_jour[jour]:
+            data = mouvements_par_jour[jour][matiere]
+            data['solde_fin'] = data['solde_debut'] + data['entrees'] - data['sorties']
+    
+    # Statistiques générales
+    stats_generales = mouvements_query.aggregate(
+        total_entrees=Sum('quantite', filter=Q(type_mouvement='entree')) or 0,
+        total_sorties=Sum('quantite', filter=Q(type_mouvement='sortie')) or 0,
+        nombre_mouvements=Count('id')
+    )
+    
+    # Résumé par matière première
+    resume_par_matiere = mouvements_query.values('matiere_premiere__nom').annotate(
+        total_entrees=Sum('quantite', filter=Q(type_mouvement='entree')) or 0,
+        total_sorties=Sum('quantite', filter=Q(type_mouvement='sortie')) or 0,
+        nombre_mouvements=Count('id')
+    ).order_by('matiere_premiere__nom')
+    
+    # Liste des matières premières pour le filtre
+    matieres_premieres = MatierePremiere.objects.all().order_by('nom')
+    
+    context = {
+        'title': 'Mouvements par Matière Première par Jour',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'matiere_selectionnee': matiere_id,
+        'mouvements_par_jour': dict(sorted(mouvements_par_jour.items(), reverse=True)),
+        'stats_generales': stats_generales,
+        'resume_par_matiere': resume_par_matiere,
+        'matieres_premieres': matieres_premieres,
+    }
+    
+    return render(request, 'reports/mouvements_par_jour.html', context)

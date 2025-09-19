@@ -12,6 +12,7 @@ urlpatterns = [
     path('commandes/', views.rapport_commandes, name='commandes'),
     path('commercial/', views.rapport_commercial, name='commercial'),
     path('stock/', views.rapport_stock, name='stock'),
+    path('mouvements-par-jour/', views.rapport_mouvements_par_jour, name='mouvements_par_jour'),
     path('financier/', views.rapport_financier, name='financier'),
     
     # Export PDF
