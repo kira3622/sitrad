@@ -22,7 +22,7 @@ class FactureAdmin(admin.ModelAdmin):
     list_filter = ('date_facturation', 'statut')
     search_fields = ('commande__id', 'commande__client__nom')
     inlines = [LigneFactureInline]
-    readonly_fields = ('montant_total', 'date_facturation')
+    readonly_fields = ('montant_total', 'date_facturation', 'view_pdf_link')
     fields = ('commande', 'statut', 'date_facturation', 'montant_total')
 
     def save_model(self, request, obj, form, change):
