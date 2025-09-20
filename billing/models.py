@@ -51,13 +51,15 @@ class Facture(models.Model):
         if not self.reference:
             self.reference = f"F{timezone.now().year}{str(self.id or '').zfill(4)}"
         
+        # Sauvegarder d'abord pour avoir un ID et que date_facturation soit définie
+        super().save(*args, **kwargs)
+        
         # Calculer la date de règlement si elle n'est pas définie
-        if not self.date_reglement and self.delai_reglement:
+        if not self.date_reglement and self.delai_reglement and self.date_facturation:
             from datetime import timedelta
             self.date_reglement = self.date_facturation + timedelta(days=self.delai_reglement)
-        
-        # Sauvegarder d'abord pour avoir un ID
-        super().save(*args, **kwargs)
+            # Sauvegarder à nouveau pour mettre à jour date_reglement
+            super().save(update_fields=['date_reglement'])
         
         # Puis calculer et mettre à jour les montants
         self.calculer_montants()
