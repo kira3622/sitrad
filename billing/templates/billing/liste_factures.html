@@ -1,0 +1,80 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Liste des factures{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Liste des factures</h3>
+                    <div class="card-tools">
+                        <form method="get" class="form-inline">
+                            <select name="statut" class="form-control form-control-sm mr-2">
+                                <option value="">Tous les statuts</option>
+                                {% for value, label in statuts %}
+                                <option value="{{ value }}" {% if value == statut_filtre %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Filtrer</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>N° Facture</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th>Montant TTC</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for facture in factures %}
+                            <tr>
+                                <td>{{ facture.get_numero_facture }}</td>
+                                <td>
+                                    {% if facture.commande.client %}
+                                        {{ facture.commande.client.nom }}
+                                    {% else %}
+                                        Client non défini
+                                    {% endif %}
+                                </td>
+                                <td>{{ facture.date_facturation|date:"d/m/Y" }}</td>
+                                <td>{{ facture.montant_total|floatformat:2 }} DH</td>
+                                <td>
+                                    <span class="badge badge-{% if facture.statut == 'payee' %}success{% elif facture.statut == 'envoyee' %}info{% elif facture.statut == 'annulee' %}danger{% else %}secondary{% endif %}">
+                                        {{ facture.get_statut_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'billing:facture_preview' facture.id %}" 
+                                       class="btn btn-sm btn-info" title="Aperçu">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'billing:facture_pdf' facture.id %}" 
+                                       class="btn btn-sm btn-primary" title="Télécharger PDF">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">Aucune facture trouvée</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

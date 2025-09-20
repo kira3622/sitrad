@@ -2,150 +2,310 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Facture {{ facture.id }}</title>
+    <title>Facture {{ facture.get_numero_facture }}</title>
     <style>
         @page {
             size: a4 portrait;
-            margin: 1cm;
+            margin: 0.5cm;
         }
         body {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            font-size: 12px;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            line-height: 1.2;
+            color: #333;
+            margin: 0;
+            padding: 0;
         }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            width: 100%;
+            margin-bottom: 15px;
         }
-        .header .logo {
-            width: 150px;
-        }
-        .header .company-details {
-            text-align: right;
-        }
-        .invoice-details {
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .client-details, .invoice-info {
-            width: 48%;
-        }
-        .client-details p, .invoice-info p {
-            margin: 5px 0;
-        }
-        .items-table {
-            margin-top: 20px;
+        .header-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .items-table th, .items-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        .header-table td {
+            vertical-align: top;
+            padding: 5px;
+        }
+        .logo-section {
+            width: 30%;
             text-align: left;
         }
+        .company-details {
+            width: 70%;
+            text-align: right;
+            font-size: 8px;
+            line-height: 1.1;
+        }
+        .company-details p {
+            margin: 1px 0;
+        }
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .invoice-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+        .invoice-details {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .details-table td {
+            width: 50%;
+            vertical-align: top;
+            padding: 5px;
+        }
+        .section-title {
+            font-size: 11px;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            border-bottom: 1px solid #bdc3c7;
+            padding-bottom: 2px;
+            font-weight: bold;
+        }
+        .section-content p {
+            margin: 2px 0;
+            font-size: 9px;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
         .items-table th {
-            background-color: #f2f2f2;
+            background-color: #34495e;
+            color: white;
+            padding: 6px 4px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: bold;
+            border: 1px solid #34495e;
+        }
+        .items-table td {
+            border: 1px solid #bdc3c7;
+            padding: 4px;
+            font-size: 9px;
+        }
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
         }
         .totals {
-            margin-top: 20px;
+            margin-top: 10px;
             float: right;
-            width: 40%;
+            width: 35%;
         }
         .totals table {
             width: 100%;
+            border-collapse: collapse;
         }
         .totals td {
-            padding: 5px;
+            padding: 4px;
+            border: 1px solid #bdc3c7;
+            font-size: 9px;
+        }
+        .totals .total-final {
+            background-color: #34495e;
+            color: white;
+            font-weight: bold;
+        }
+        .amount-words {
+            clear: both;
+            margin-top: 15px;
+            padding: 8px;
+            background-color: #ecf0f1;
+            border-left: 3px solid #3498db;
+            font-style: italic;
+            font-size: 9px;
         }
         .footer {
             position: fixed;
-            bottom: 0;
+            bottom: 0.5cm;
             width: 100%;
             text-align: center;
-            font-size: 10px;
+            font-size: 8px;
+            color: #7f8c8d;
+            border-top: 1px solid #bdc3c7;
+            padding-top: 5px;
+        }
+        .payment-info {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            font-size: 8px;
+        }
+        .payment-info h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+            font-size: 9px;
+        }
+        .payment-info p {
+            margin: 2px 0;
+        }
+        .content-wrapper {
+            position: relative;
+            padding-bottom: 2cm;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <img src="/static/images/logo.png" alt="Logo" class="logo">
-        <div class="company-details">
-            <p><strong>Capital:</strong> 10 000 000.00 DH</p>
-            <p><strong>IF:</strong> 3383587</p>
-            <p><strong>RC:</strong> 74157</p>
-            <p><strong>ICE:</strong> 000096411000092</p>
-            <p><strong>CNSS:</strong> 7938220</p>
-            <p><strong>Adresse:</strong> N11 IMM 05 RES. EL OSRA AV.TARIK BEN ZIAD-TEMARA</p>
-            <p><strong>TEL:</strong> 06 61 63 75 18</p>
-            <p><strong>Email:</strong> sitrad.office@gmail.com</p>
-            <p><strong>Patente:</strong> 26944649</p>
+    <div class="content-wrapper">
+        <div class="header">
+            <table class="header-table">
+                <tr>
+                    <td class="logo-section">
+                        <div class="company-name">SITRAD S.A.R.L</div>
+                    </td>
+                    <td class="company-details">
+                        <p><strong>SITRAD S.A.R.L</strong></p>
+                        <p><strong>Capital:</strong> 10 000 000.00 DH</p>
+                        <p><strong>IF:</strong> 3383587</p>
+                        <p><strong>RC:</strong> 74157</p>
+                        <p><strong>ICE:</strong> 000096411000092</p>
+                        <p><strong>CNSS:</strong> 7938220</p>
+                        <p><strong>Adresse:</strong> N11 IMM 05 RES. EL OSRA<br>AV.TARIK BEN ZIAD-TEMARA</p>
+                        <p><strong>TEL:</strong> 06 61 63 75 18</p>
+                        <p><strong>Email:</strong> sitrad.office@gmail.com</p>
+                        <p><strong>Patente:</strong> 26944649</p>
+                    </td>
+                </tr>
+            </table>
         </div>
-    </div>
 
-    <h1>Facture N° F{{ facture.id }}</h1>
+        <h1 class="invoice-title">FACTURE N° {{ facture.get_numero_facture }}</h1>
 
-    <div class="invoice-details">
-        <div class="client-details">
-            <p><strong>Client:</strong> {{ facture.commande.client.nom }}</p>
-            <p><strong>ICE:</strong> {{ facture.commande.client.ice }}</p>
-            <p><strong>Code client:</strong> {{ facture.commande.client.code_client }}</p>
-            <p><strong>Mode de règlement:</strong> {{ facture.get_mode_reglement_display }}</p>
-            <p><strong>Date du règlement:</strong> {{ facture.date_reglement|date:"d/m/Y" }}</p>
-            <p><strong>Numéro du règlement:</strong> {{ facture.numero_reglement }}</p>
-            <p><strong>Délai de règlement:</strong> {{ facture.delai_reglement }} jours</p>
-            <p><strong>Objet:</strong> {{ facture.objet }}</p>
+        <div class="invoice-details">
+            <table class="details-table">
+                <tr>
+                    <td>
+                        <div class="section-title">FACTURER À</div>
+                        <div class="section-content">
+                            {% if facture.commande.client %}
+                            <p><strong>{{ facture.commande.client.nom }}</strong></p>
+                            {% if facture.commande.client.ice %}
+                            <p><strong>ICE:</strong> {{ facture.commande.client.ice }}</p>
+                            {% endif %}
+                            {% if facture.commande.client.code_client %}
+                            <p><strong>Code client:</strong> {{ facture.commande.client.code_client }}</p>
+                            {% endif %}
+                            {% if facture.commande.client.adresse %}
+                            <p><strong>Adresse:</strong> {{ facture.commande.client.adresse }}</p>
+                            {% endif %}
+                            {% else %}
+                            <p>Informations client non disponibles</p>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="section-title">INFORMATIONS FACTURE</div>
+                        <div class="section-content">
+                            <p><strong>Date:</strong> {{ facture.date_facturation|date:"d/m/Y" }}</p>
+                            {% if facture.reference %}
+                            <p><strong>Référence:</strong> {{ facture.reference }}</p>
+                            {% endif %}
+                            <p><strong>Objet:</strong> {{ facture.objet }}</p>
+                            <p><strong>Mode de règlement:</strong> {{ facture.get_mode_reglement_display }}</p>
+                            {% if facture.date_reglement %}
+                            <p><strong>Date d'échéance:</strong> {{ facture.date_reglement|date:"d/m/Y" }}</p>
+                            {% endif %}
+                            {% if facture.numero_reglement %}
+                            <p><strong>N° règlement:</strong> {{ facture.numero_reglement }}</p>
+                            {% endif %}
+                            <p><strong>Délai:</strong> {{ facture.delai_reglement }} jours</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
-        <div class="invoice-info">
-            <p><strong>Date:</strong> {{ facture.date_facturation|date:"d/m/Y" }}</p>
-            <p><strong>Référence:</strong> {{ facture.reference }}</p>
-        </div>
-    </div>
 
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th>Désignation</th>
-                <th>Ut</th>
-                <th>PU HT</th>
-                <th>Qté</th>
-                <th>Total HT</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ligne in facture.lignes.all %}
-            <tr>
-                <td>{{ ligne.description }}</td>
-                <td>{{ ligne.unite }}</td>
-                <td>{{ ligne.prix_unitaire }}</td>
-                <td>{{ ligne.quantite }}</td>
-                <td>{{ ligne.montant_ligne }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="totals">
-        <table>
-            <tr>
-                <td>Total HT</td>
-                <td>{{ facture.montant_ht }}</td>
-            </tr>
-            <tr>
-                <td>TVA 20%</td>
-                <td>{{ facture.montant_tva }}</td>
-            </tr>
-            <tr>
-                <td><strong>Total TTC</strong></td>
-                <td><strong>{{ facture.montant_total }}</strong></td>
-            </tr>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Désignation</th>
+                    <th style="width: 10%;" class="text-center">Unité</th>
+                    <th style="width: 10%;" class="text-right">Qté</th>
+                    <th style="width: 15%;" class="text-right">PU HT (DH)</th>
+                    <th style="width: 15%;" class="text-right">Total HT (DH)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in lignes %}
+                <tr>
+                    <td>{{ ligne.description }}</td>
+                    <td class="text-center">{{ ligne.get_unite_display }}</td>
+                    <td class="text-right">{{ ligne.quantite|floatformat:3 }}</td>
+                    <td class="text-right">{{ ligne.prix_unitaire|floatformat:2 }}</td>
+                    <td class="text-right">{{ ligne.montant_ligne|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Aucune ligne de facturation</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
+
+        <div class="totals">
+            <table>
+                <tr>
+                    <td><strong>Total HT</strong></td>
+                    <td class="text-right"><strong>{{ facture.montant_ht|floatformat:2 }} DH</strong></td>
+                </tr>
+                <tr>
+                    <td>TVA {{ facture.taux_tva|floatformat:0 }}%</td>
+                    <td class="text-right">{{ facture.montant_tva|floatformat:2 }} DH</td>
+                </tr>
+                <tr class="total-final">
+                    <td><strong>TOTAL TTC</strong></td>
+                    <td class="text-right"><strong>{{ facture.montant_total|floatformat:2 }} DH</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="amount-words">
+            <strong>Arrêtée la présente facture à la somme de :</strong><br>
+            {{ total_en_lettres|upper }}
+        </div>
+
+        {% if facture.mode_reglement != 'especes' %}
+        <div class="payment-info">
+            <h4>Informations de règlement</h4>
+            <p><strong>Mode de paiement :</strong> {{ facture.get_mode_reglement_display }}</p>
+            {% if facture.mode_reglement == 'virement' %}
+            <p><strong>RIB :</strong> Nous contacter pour les coordonnées bancaires</p>
+            {% endif %}
+            <p><strong>Date d'échéance :</strong> {{ facture.date_reglement|date:"d/m/Y" }}</p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+            <p>SITRAD S.A.R.L - Ensemble nous construisons l'avenir</p>
+            <p>Cette facture a été générée le {{ date_generation|date:"d/m/Y à H:i" }}</p>
+        </div>
     </div>
 
-    <p>Arrêtée la présente facture, à la somme en DH T.T.C de : {{ total_en_lettres }}</p>
-
-    <div class="footer">
-        <p>SITRAD S.A.R.L - Ensemble nous construisons l'avenir</p>
+    {% if preview_mode %}
+    <div style="position: fixed; top: 10px; right: 10px; background: #3498db; color: white; padding: 10px; border-radius: 5px;">
+        MODE APERÇU
     </div>
+    {% endif %}
 </body>
 </html>
