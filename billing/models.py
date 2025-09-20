@@ -104,8 +104,17 @@ class Facture(models.Model):
             super().save(update_fields=['montant_ht', 'montant_tva', 'montant_total'])
 
     def get_numero_facture(self):
-        """Retourne le numéro de facture formaté"""
-        return f"F{self.id:06d}"
+        """Retourne le numéro de facture formaté au format F00000/2025"""
+        if self.reference:
+            # Extraire l'année et le numéro séquentiel de la référence (ex: F20250001)
+            # Format de référence: F + YYYY + NNNN
+            if len(self.reference) >= 9 and self.reference.startswith('F'):
+                annee = self.reference[1:5]  # Extraire l'année (2025)
+                numero_seq = self.reference[5:]  # Extraire le numéro séquentiel (0001)
+                return f"F{numero_seq}/{annee}"
+        
+        # Fallback si pas de référence ou format inattendu
+        return f"F{self.id:06d}/{self.date_facturation.year}" if self.id else "F000000/2025"
 
     def __str__(self):
         return f"Facture {self.get_numero_facture()} - {self.commande.client.nom if hasattr(self.commande, 'client') else 'Client'}"
