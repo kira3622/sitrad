@@ -49,7 +49,25 @@ class Facture(models.Model):
     def save(self, *args, **kwargs):
         # Générer une référence automatique si elle n'existe pas
         if not self.reference:
-            self.reference = f"F{timezone.now().year}{str(self.id or '').zfill(4)}"
+            from datetime import datetime
+            annee = timezone.now().year
+            
+            # Trouver la dernière facture pour cette année
+            dernieres_factures = Facture.objects.filter(
+                reference__startswith=f"F{annee}"
+            ).order_by('-reference')
+            
+            if dernieres_factures.exists():
+                derniere_reference = dernieres_factures.first().reference
+                # Extraire le numéro séquentiel (les 4 derniers chiffres)
+                try:
+                    sequence = int(derniere_reference[-4:]) + 1
+                except (ValueError, IndexError):
+                    sequence = 1
+            else:
+                sequence = 1
+            
+            self.reference = f"F{annee}{sequence:04d}"
         
         # Sauvegarder d'abord pour avoir un ID et que date_facturation soit définie
         super().save(*args, **kwargs)
