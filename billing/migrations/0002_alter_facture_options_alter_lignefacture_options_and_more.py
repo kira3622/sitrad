@@ -68,7 +68,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='facture',
             name='reference',
-            field=models.CharField(blank=True, help_text='Référence de la facture', max_length=50, unique=True),
+            field=models.CharField(blank=True, help_text='Référence de la facture', max_length=50),
         ),
         migrations.AddField(
             model_name='facture',
