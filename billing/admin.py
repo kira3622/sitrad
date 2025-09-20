@@ -13,7 +13,7 @@ class LigneFactureInline(admin.TabularInline):
 class FactureAdmin(admin.ModelAdmin):
     def view_pdf_link(self, obj):
         if obj.id:
-            url = reverse('facture_pdf', args=[obj.id])
+            url = reverse('billing:facture_pdf', args=[obj.id])
             return format_html('<a href="{url}">Voir PDF</a>', url=url)
         return "Sauvegarder d'abord"
     view_pdf_link.short_description = "Facture PDF"
