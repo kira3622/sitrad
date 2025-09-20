@@ -1,0 +1,46 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block content %}
+{{ block.super }}
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Contenu original du dashboard -->
+    </div>
+    <div class="col-md-4">
+        <!-- Widget des activités récentes -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-history"></i>
+                    Activités Récentes Partagées
+                </h3>
+                <div class="card-tools">
+                    <a href="{% url 'activity:recent_activities' %}" class="btn btn-tool" title="Voir toutes">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% include 'activity/widget.html' with activities=recent_activities %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh du widget toutes les 60 secondes
+setInterval(function() {
+    fetch('{% url "activity:activity_widget" %}')
+        .then(response => response.text())
+        .then(html => {
+            const widget = document.querySelector('.activity-widget');
+            if (widget) {
+                widget.innerHTML = html;
+            }
+        })
+        .catch(error => console.log('Erreur lors du refresh:', error));
+}, 60000);
+</script>
+{% endblock %}

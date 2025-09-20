@@ -1,0 +1,78 @@
+{% load static %}
+
+<div class="activity-widget" style="max-height: 400px; overflow-y: auto;">
+    <style>
+        .activity-widget-item {
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+            font-size: 0.9em;
+        }
+        
+        .activity-widget-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-widget-user {
+            font-weight: bold;
+            color: #007cba;
+        }
+        
+        .activity-widget-time {
+            color: #666;
+            font-size: 0.8em;
+            float: right;
+        }
+        
+        .activity-widget-action {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 5px;
+        }
+        
+        .widget-action-create { background: #d4edda; color: #155724; }
+        .widget-action-update { background: #fff3cd; color: #856404; }
+        .widget-action-delete { background: #f8d7da; color: #721c24; }
+        .widget-action-view { background: #d1ecf1; color: #0c5460; }
+        .widget-action-login { background: #e2e3e5; color: #383d41; }
+        .widget-action-logout { background: #f8f9fa; color: #6c757d; }
+        
+        .activity-widget-description {
+            margin-top: 3px;
+            color: #333;
+        }
+        
+        .activity-widget-empty {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+    
+    {% if activities %}
+        {% for activity in activities %}
+        <div class="activity-widget-item">
+            <div class="activity-widget-time">{{ activity.timestamp|timesince }} ago</div>
+            <div>
+                <span class="activity-widget-user">{{ activity.user.get_full_name|default:activity.user.username }}</span>
+                <span class="activity-widget-action widget-action-{{ activity.action }}">{{ activity.get_action_display }}</span>
+            </div>
+            <div class="activity-widget-description">{{ activity.description|truncatechars:80 }}</div>
+        </div>
+        {% endfor %}
+        
+        <div style="text-align: center; margin-top: 10px;">
+            <a href="{% url 'activity:recent_activities' %}" class="btn btn-sm btn-outline-primary">
+                Voir toutes les activités
+            </a>
+        </div>
+    {% else %}
+        <div class="activity-widget-empty">
+            <i class="fas fa-info-circle"></i><br>
+            Aucune activité récente
+        </div>
+    {% endif %}
+</div>

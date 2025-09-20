@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p@d@^s-=+^db)j4*#*v0@
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Configuration ALLOWED_HOSTS pour production et développement
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
 # Ajout automatique du hostname Render
 RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'activity',
     'billing',
     'customers',
     'formulas',
@@ -69,6 +70,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'activity.user_middleware.CurrentUserMiddleware',
+    'activity.middleware.ActivityLogMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -78,13 +81,14 @@ ROOT_URLCONF = 'beton_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'activity.context_processors.recent_activities',
             ],
         },
     },
@@ -160,6 +164,9 @@ if os.environ.get('DEBUG') == 'False':
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# URL de connexion
+LOGIN_URL = '/admin/login/'
+
 JAZZMIN_SETTINGS = {
     "site_title": "Sitrad",
     "site_header": "Sitrad",
@@ -174,6 +181,7 @@ JAZZMIN_SETTINGS = {
     "search_model": ["auth.User", "orders.Commande"],
     "topmenu_links": [
         {"name": "Accueil", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Activités Récentes", "url": "activity:recent_activities", "permissions": ["auth.view_user"], "icon": "fas fa-history"},
         {"model": "auth.User"},
         {"app": "orders"},
     ],
@@ -189,6 +197,8 @@ JAZZMIN_SETTINGS = {
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
+        "activity": "fas fa-history",
+        "activity.activitylog": "fas fa-list-alt",
         "orders.commande": "fas fa-shopping-cart",
         "production.ordreproduction": "fas fa-industry",
         "logistics.livraison": "fas fa-truck",
