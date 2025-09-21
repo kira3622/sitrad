@@ -1,0 +1,537 @@
+{% extends 'fuel_management/base.html' %}
+
+{% block title %}Historique des Approvisionnements - Gestion du Gasoil{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="fas fa-truck me-2"></i>
+                Historique des Approvisionnements
+            </h2>
+            <div>
+                <a href="{% url 'fuel_management:dashboard' %}" class="btn btn-secondary btn-custom">
+                    <i class="fas fa-arrow-left me-2"></i>Retour au dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtres et Période
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-2">
+                        <label for="date_debut" class="form-label">Date début</label>
+                        <input type="date" class="form-control" id="date_debut" name="date_debut" 
+                               value="{{ request.GET.date_debut|default:date_debut }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date_fin" class="form-label">Date fin</label>
+                        <input type="date" class="form-control" id="date_fin" name="date_fin" 
+                               value="{{ request.GET.date_fin|default:date_fin }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fournisseur" class="form-label">Fournisseur</label>
+                        <select class="form-select" id="fournisseur" name="fournisseur">
+                            <option value="">Tous les fournisseurs</option>
+                            {% for fournisseur in fournisseurs %}
+                            <option value="{{ fournisseur.id }}" {% if request.GET.fournisseur == fournisseur.id|stringformat:"s" %}selected{% endif %}>
+                                {{ fournisseur.nom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="quantite_min" class="form-label">Quantité min (L)</label>
+                        <input type="number" class="form-control" id="quantite_min" name="quantite_min" 
+                               value="{{ request.GET.quantite_min }}" step="0.01">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-custom me-2">
+                            <i class="fas fa-search me-1"></i>Filtrer
+                        </button>
+                        <a href="{% url 'fuel_management:rapport_approvisionnement' %}" class="btn btn-secondary btn-custom me-2">
+                            <i class="fas fa-times me-1"></i>Reset
+                        </a>
+                        <button type="button" class="btn btn-success btn-custom" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Excel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques de la période -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_quantite|floatformat:0 }}</h3>
+                    <p class="mb-0">Litres approvisionnés</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-gas-pump"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_cout|floatformat:0 }}</h3>
+                    <p class="mb-0">€ coût total</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-euro-sign"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ nombre_livraisons }}</h3>
+                    <p class="mb-0">Livraisons</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-truck"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ prix_moyen|floatformat:3 }}</h3>
+                    <p class="mb-0">€/L prix moyen</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Graphique des approvisionnements par mois -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Évolution des Approvisionnements
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="approChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition par fournisseur -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Par Fournisseur
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="fournisseurChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Évolution des prix -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Évolution des Prix (€/L)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="prixChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des approvisionnements -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>
+                    Liste des Approvisionnements
+                </h5>
+                <div>
+                    <span class="badge bg-info">{{ approvisionnements.paginator.count }} résultat(s)</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-custom" id="approTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Fournisseur</th>
+                                <th>Quantité (L)</th>
+                                <th>Prix Unitaire (€/L)</th>
+                                <th>Prix Total (€)</th>
+                                <th>N° Bon</th>
+                                <th>Responsable</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appro in approvisionnements %}
+                            <tr>
+                                <td>
+                                    <strong>{{ appro.date|date:"d/m/Y" }}</strong>
+                                    <br><small class="text-muted">{{ appro.date|date:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    <strong>{{ appro.fournisseur.nom }}</strong>
+                                    {% if appro.fournisseur.telephone %}
+                                        <br><small class="text-muted">
+                                            <i class="fas fa-phone me-1"></i>{{ appro.fournisseur.telephone }}
+                                        </small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success fs-6">{{ appro.quantite|floatformat:0 }} L</span>
+                                </td>
+                                <td>{{ appro.prix_unitaire|floatformat:3 }} €</td>
+                                <td>
+                                    <strong class="text-primary">{{ appro.prix_total|floatformat:2 }} €</strong>
+                                </td>
+                                <td>
+                                    {% if appro.numero_bon %}
+                                        <span class="badge bg-secondary">{{ appro.numero_bon }}</span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if appro.responsable %}
+                                        {{ appro.responsable }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="/admin/fuel_management/approvisionnement/{{ appro.id }}/change/" 
+                                           class="btn btn-sm btn-outline-primary btn-custom" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-info btn-custom" 
+                                                onclick="showDetails({{ appro.id }})" title="Détails">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-3"></i>
+                                    <br>Aucun approvisionnement trouvé pour cette période
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if approvisionnements.has_other_pages %}
+                <nav aria-label="Navigation des approvisionnements" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if approvisionnements.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ approvisionnements.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in approvisionnements.paginator.page_range %}
+                            {% if approvisionnements.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > approvisionnements.number|add:'-3' and num < approvisionnements.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if approvisionnements.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ approvisionnements.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ approvisionnements.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour les détails -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Détails de l'Approvisionnement
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                <!-- Contenu chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique des approvisionnements par période
+const ctx1 = document.getElementById('approChart').getContext('2d');
+const approChart = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+        labels: {{ periodes|safe }},
+        datasets: [{
+            label: 'Quantité (L)',
+            data: {{ quantites_periode|safe }},
+            backgroundColor: 'rgba(52, 152, 219, 0.8)',
+            borderColor: '#3498db',
+            borderWidth: 2,
+            yAxisID: 'y'
+        }, {
+            label: 'Coût (€)',
+            data: {{ couts_periode|safe }},
+            backgroundColor: 'rgba(231, 76, 60, 0.8)',
+            borderColor: '#e74c3c',
+            borderWidth: 2,
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Quantité (L)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Coût (€)'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                }
+            }
+        }
+    }
+});
+
+// Graphique par fournisseur (camembert)
+const ctx2 = document.getElementById('fournisseurChart').getContext('2d');
+const fournisseurChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: {{ noms_fournisseurs|safe }},
+        datasets: [{
+            data: {{ quantites_fournisseurs|safe }},
+            backgroundColor: [
+                '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6',
+                '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#f1c40f'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Graphique d'évolution des prix
+const ctx3 = document.getElementById('prixChart').getContext('2d');
+const prixChart = new Chart(ctx3, {
+    type: 'line',
+    data: {
+        labels: {{ dates_prix|safe }},
+        datasets: [{
+            label: 'Prix unitaire (€/L)',
+            data: {{ prix_unitaires|safe }},
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: false,
+                title: {
+                    display: true,
+                    text: 'Prix (€/L)'
+                }
+            }
+        }
+    }
+});
+
+function showDetails(approId) {
+    // Simuler l'affichage des détails (à implémenter avec une vraie API)
+    const modalContent = document.getElementById('modalContent');
+    modalContent.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2">Chargement des détails...</p>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    modal.show();
+    
+    // Simuler un délai de chargement
+    setTimeout(() => {
+        modalContent.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Fonctionnalité en cours de développement. 
+                Vous pouvez consulter les détails via le lien "Modifier" qui vous mènera à l'interface d'administration.
+            </div>
+        `;
+    }, 1000);
+}
+
+function exportToExcel() {
+    const table = document.getElementById('approTable').cloneNode(true);
+    
+    // Supprimer la colonne Actions
+    const rows = table.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        if (cells.length > 7) {
+            cells[7].remove();
+        }
+    });
+    
+    let csv = 'Historique des Approvisionnements\n';
+    csv += 'Période: {{ date_debut }} au {{ date_fin }}\n';
+    csv += 'Total: {{ total_quantite|floatformat:0 }} L pour {{ total_cout|floatformat:2 }} €\n\n';
+    
+    const tableRows = table.querySelectorAll('tr');
+    
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        const rowData = [];
+        
+        cells.forEach(cell => {
+            let text = cell.textContent.trim();
+            text = text.replace(/\s+/g, ' ');
+            rowData.push('"' + text.replace(/"/g, '""') + '"');
+        });
+        
+        csv += rowData.join(',') + '\n';
+    });
+    
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'historique_approvisionnements_{{ date_debut }}_{{ date_fin }}.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Définir les dates par défaut
+document.addEventListener('DOMContentLoaded', function() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    
+    if (!dateDebut.value) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        dateDebut.value = firstDay.toISOString().split('T')[0];
+    }
+    
+    if (!dateFin.value) {
+        const today = new Date();
+        dateFin.value = today.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

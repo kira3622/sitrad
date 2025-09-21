@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'billing',
     'customers',
     'formulas',
+    'fuel_management',
     'inventory',
     'logistics',
     'orders',

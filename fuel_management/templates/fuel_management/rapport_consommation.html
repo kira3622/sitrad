@@ -1,0 +1,444 @@
+{% extends 'fuel_management/base.html' %}
+
+{% block title %}Rapport de Consommation - Gestion du Gasoil{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="fas fa-chart-line me-2"></i>
+                Rapport de Consommation par Engin
+            </h2>
+            <div>
+                <a href="{% url 'fuel_management:dashboard' %}" class="btn btn-secondary btn-custom">
+                    <i class="fas fa-arrow-left me-2"></i>Retour au dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtres et Période
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="date_debut" class="form-label">Date début</label>
+                        <input type="date" class="form-control" id="date_debut" name="date_debut" 
+                               value="{{ request.GET.date_debut|default:date_debut }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_fin" class="form-label">Date fin</label>
+                        <input type="date" class="form-control" id="date_fin" name="date_fin" 
+                               value="{{ request.GET.date_fin|default:date_fin }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="type_engin" class="form-label">Type d'engin</label>
+                        <select class="form-select" id="type_engin" name="type_engin">
+                            <option value="">Tous les types</option>
+                            {% for type in types_engin %}
+                            <option value="{{ type.id }}" {% if request.GET.type_engin == type.id|stringformat:"s" %}selected{% endif %}>
+                                {{ type.nom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-custom me-2">
+                            <i class="fas fa-search me-1"></i>Générer
+                        </button>
+                        <button type="button" class="btn btn-success btn-custom" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel me-1"></i>Excel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Résumé de la période -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_consommation|floatformat:0 }}</h3>
+                    <p class="mb-0">Litres consommés</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-gas-pump"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ nombre_engins }}</h3>
+                    <p class="mb-0">Engins actifs</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-truck"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ consommation_moyenne|floatformat:1 }}</h3>
+                    <p class="mb-0">L/jour moyen</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ cout_total|floatformat:0 }}</h3>
+                    <p class="mb-0">€ coût estimé</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-euro-sign"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Graphique de consommation par engin -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Consommation par Engin
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="consommationChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top consommateurs -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>
+                    Top 10 Consommateurs
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for engin in top_consommateurs %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>{{ engin.nom }}</strong>
+                        <br><small class="text-muted">{{ engin.type_engin.nom }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-primary">{{ engin.consommation_totale|floatformat:0 }} L</span>
+                        <br><small class="text-muted">{{ engin.pourcentage|floatformat:1 }}%</small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">Aucune consommation pour cette période</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Évolution temporelle -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Évolution de la Consommation
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="evolutionChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau détaillé -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>
+                    Détail par Engin
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-info btn-custom" onclick="toggleDetails()">
+                        <i class="fas fa-eye me-1"></i>Voir détails
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-custom" id="consommationTable">
+                        <thead>
+                            <tr>
+                                <th>Engin</th>
+                                <th>Type</th>
+                                <th>Consommation (L)</th>
+                                <th>Nb Utilisations</th>
+                                <th>Moyenne/Utilisation</th>
+                                <th>% du Total</th>
+                                <th>Coût Estimé</th>
+                                <th class="details-column" style="display: none;">Dernière Utilisation</th>
+                                <th class="details-column" style="display: none;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for engin in consommations_par_engin %}
+                            <tr>
+                                <td>
+                                    <strong>{{ engin.nom }}</strong>
+                                    {% if engin.numero_serie %}
+                                        <br><small class="text-muted">{{ engin.numero_serie }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ engin.type_engin.nom }}</span>
+                                </td>
+                                <td>
+                                    <strong class="text-primary">{{ engin.consommation_totale|floatformat:0 }} L</strong>
+                                </td>
+                                <td>{{ engin.nombre_utilisations }}</td>
+                                <td>{{ engin.moyenne_par_utilisation|floatformat:1 }} L</td>
+                                <td>
+                                    <div class="progress progress-custom" style="height: 20px;">
+                                        <div class="progress-bar progress-bar-custom bg-info" 
+                                             style="width: {{ engin.pourcentage }}%">
+                                            {{ engin.pourcentage|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ engin.cout_estime|floatformat:2 }} €</td>
+                                <td class="details-column" style="display: none;">
+                                    {% if engin.derniere_utilisation %}
+                                        {{ engin.derniere_utilisation|date:"d/m/Y" }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="details-column" style="display: none;">
+                                    <a href="/admin/fuel_management/consommation/?engin__id__exact={{ engin.id }}" 
+                                       class="btn btn-sm btn-outline-primary btn-custom" title="Voir historique">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-3"></i>
+                                    <br>Aucune consommation trouvée pour cette période
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique de consommation par engin (barres)
+const ctx1 = document.getElementById('consommationChart').getContext('2d');
+const consommationChart = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+        labels: {{ noms_engins|safe }},
+        datasets: [{
+            label: 'Consommation (Litres)',
+            data: {{ consommations_engins|safe }},
+            backgroundColor: [
+                '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6',
+                '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#f1c40f'
+            ],
+            borderColor: [
+                '#2980b9', '#c0392b', '#27ae60', '#e67e22', '#8e44ad',
+                '#16a085', '#2c3e50', '#d35400', '#7f8c8d', '#f39c12'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Litres'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Engins'
+                }
+            }
+        }
+    }
+});
+
+// Graphique d'évolution temporelle
+const ctx2 = document.getElementById('evolutionChart').getContext('2d');
+const evolutionChart = new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: {{ dates_evolution|safe }},
+        datasets: [{
+            label: 'Consommation quotidienne (L)',
+            data: {{ consommations_quotidiennes|safe }},
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Litres'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
+                }
+            }
+        }
+    }
+});
+
+function toggleDetails() {
+    const detailsColumns = document.querySelectorAll('.details-column');
+    const button = event.target.closest('button');
+    
+    detailsColumns.forEach(column => {
+        if (column.style.display === 'none') {
+            column.style.display = 'table-cell';
+            button.innerHTML = '<i class="fas fa-eye-slash me-1"></i>Masquer détails';
+        } else {
+            column.style.display = 'none';
+            button.innerHTML = '<i class="fas fa-eye me-1"></i>Voir détails';
+        }
+    });
+}
+
+function exportToExcel() {
+    // Créer une copie de la table pour l'export
+    const table = document.getElementById('consommationTable').cloneNode(true);
+    
+    // Supprimer les colonnes cachées si elles ne sont pas affichées
+    const detailsColumns = table.querySelectorAll('.details-column');
+    const firstDetailsColumn = document.querySelector('.details-column');
+    
+    if (firstDetailsColumn && firstDetailsColumn.style.display === 'none') {
+        detailsColumns.forEach(column => column.remove());
+    }
+    
+    // Convertir en CSV
+    let csv = 'Rapport de Consommation par Engin\n';
+    csv += 'Période: {{ date_debut }} au {{ date_fin }}\n';
+    csv += 'Total consommé: {{ total_consommation|floatformat:0 }} L\n\n';
+    
+    const tableRows = table.querySelectorAll('tr');
+    
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        const rowData = [];
+        
+        cells.forEach(cell => {
+            let text = cell.textContent.trim();
+            text = text.replace(/\s+/g, ' ');
+            rowData.push('"' + text.replace(/"/g, '""') + '"');
+        });
+        
+        csv += rowData.join(',') + '\n';
+    });
+    
+    // Télécharger le fichier
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'rapport_consommation_{{ date_debut }}_{{ date_fin }}.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Définir les dates par défaut
+document.addEventListener('DOMContentLoaded', function() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    
+    if (!dateDebut.value) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        dateDebut.value = firstDay.toISOString().split('T')[0];
+    }
+    
+    if (!dateFin.value) {
+        const today = new Date();
+        dateFin.value = today.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

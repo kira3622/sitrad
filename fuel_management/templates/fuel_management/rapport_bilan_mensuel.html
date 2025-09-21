@@ -1,0 +1,513 @@
+{% extends 'fuel_management/base.html' %}
+
+{% block title %}Bilan Mensuel - Gestion du Gasoil{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="fas fa-calendar-alt me-2"></i>
+                Bilan Mensuel
+            </h2>
+            <div>
+                <a href="{% url 'fuel_management:dashboard' %}" class="btn btn-secondary btn-custom">
+                    <i class="fas fa-arrow-left me-2"></i>Retour au dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sélection du mois -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>
+                    Sélection de la Période
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="mois" class="form-label">Mois</label>
+                        <select class="form-select" id="mois" name="mois" required>
+                            {% for value, label in mois_choices %}
+                            <option value="{{ value }}" {% if value == mois_selectionne %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="annee" class="form-label">Année</label>
+                        <select class="form-select" id="annee" name="annee" required>
+                            {% for annee in annees_disponibles %}
+                            <option value="{{ annee }}" {% if annee == annee_selectionnee %}selected{% endif %}>
+                                {{ annee }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary btn-custom me-2">
+                            <i class="fas fa-search me-1"></i>Générer
+                        </button>
+                        <button type="button" class="btn btn-success btn-custom" onclick="exportToPDF()">
+                            <i class="fas fa-file-pdf me-1"></i>PDF
+                        </button>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <h5 class="text-primary mb-0">{{ mois_nom }} {{ annee_selectionnee }}</h5>
+                        <small class="text-muted">Période sélectionnée</small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Résumé du mois -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_entrees|floatformat:0 }}</h3>
+                    <p class="mb-0">Litres entrés</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+            </div>
+            <small class="text-light">{{ nombre_approvisionnements }} livraison(s)</small>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ total_sorties|floatformat:0 }}</h3>
+                    <p class="mb-0">Litres sortis</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+            </div>
+            <small class="text-light">{{ nombre_consommations }} consommation(s)</small>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card {% if solde >= 0 %}warning{% else %}danger{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{% if solde >= 0 %}+{% endif %}{{ solde|floatformat:0 }}</h3>
+                    <p class="mb-0">Solde du mois</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+            </div>
+            <small class="text-light">Entrées - Sorties</small>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ cout_total|floatformat:0 }}</h3>
+                    <p class="mb-0">€ coût total</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-euro-sign"></i>
+                </div>
+            </div>
+            <small class="text-light">Prix moyen: {{ prix_moyen|floatformat:3 }} €/L</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Graphique d'évolution quotidienne -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Évolution Quotidienne du Stock
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="evolutionChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition des mouvements -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Répartition des Mouvements
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="repartitionChart" height="200"></canvas>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-success">Entrées:</span>
+                        <strong>{{ pourcentage_entrees|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-danger">Sorties:</span>
+                        <strong>{{ pourcentage_sorties|floatformat:1 }}%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comparaison avec les mois précédents -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Comparaison avec les 6 Derniers Mois
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="comparaisonChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Top consommateurs du mois -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>
+                    Top Consommateurs du Mois
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Engin</th>
+                                <th>Consommation</th>
+                                <th>% du Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for engin in top_consommateurs %}
+                            <tr>
+                                <td>
+                                    {% if forloop.counter == 1 %}
+                                        <i class="fas fa-trophy text-warning"></i>
+                                    {% elif forloop.counter == 2 %}
+                                        <i class="fas fa-medal text-secondary"></i>
+                                    {% elif forloop.counter == 3 %}
+                                        <i class="fas fa-award text-warning"></i>
+                                    {% else %}
+                                        {{ forloop.counter }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ engin.nom }}</strong>
+                                    <br><small class="text-muted">{{ engin.type_engin.nom }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ engin.consommation_totale|floatformat:0 }} L</span>
+                                </td>
+                                <td>
+                                    <div class="progress progress-custom" style="height: 15px;">
+                                        <div class="progress-bar progress-bar-custom bg-info" 
+                                             style="width: {{ engin.pourcentage }}%">
+                                            {{ engin.pourcentage|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    Aucune consommation ce mois
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fournisseurs du mois -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>
+                    Fournisseurs du Mois
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fournisseur</th>
+                                <th>Livraisons</th>
+                                <th>Quantité</th>
+                                <th>Coût</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fournisseur in fournisseurs_mois %}
+                            <tr>
+                                <td>
+                                    <strong>{{ fournisseur.nom }}</strong>
+                                </td>
+                                <td>{{ fournisseur.nombre_livraisons }}</td>
+                                <td>
+                                    <span class="badge bg-success">{{ fournisseur.quantite_totale|floatformat:0 }} L</span>
+                                </td>
+                                <td>{{ fournisseur.cout_total|floatformat:2 }} €</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    Aucun approvisionnement ce mois
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Résumé détaillé -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Résumé Détaillé
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success">
+                            <i class="fas fa-arrow-up me-2"></i>Approvisionnements
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Nombre de livraisons:</strong> {{ nombre_approvisionnements }}</li>
+                            <li><strong>Quantité totale:</strong> {{ total_entrees|floatformat:0 }} L</li>
+                            <li><strong>Coût total:</strong> {{ cout_total|floatformat:2 }} €</li>
+                            <li><strong>Prix moyen:</strong> {{ prix_moyen|floatformat:3 }} €/L</li>
+                            <li><strong>Plus grosse livraison:</strong> {{ plus_grosse_livraison|floatformat:0 }} L</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger">
+                            <i class="fas fa-arrow-down me-2"></i>Consommations
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Nombre de consommations:</strong> {{ nombre_consommations }}</li>
+                            <li><strong>Quantité totale:</strong> {{ total_sorties|floatformat:0 }} L</li>
+                            <li><strong>Consommation moyenne/jour:</strong> {{ consommation_moyenne_jour|floatformat:1 }} L</li>
+                            <li><strong>Plus grosse consommation:</strong> {{ plus_grosse_consommation|floatformat:0 }} L</li>
+                            <li><strong>Engins différents utilisés:</strong> {{ nombre_engins_utilises }}</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-info">
+                            <i class="fas fa-warehouse me-2"></i>Stock
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Stock début de mois:</strong> {{ stock_debut_mois|floatformat:0 }} L</li>
+                            <li><strong>Stock fin de mois:</strong> {{ stock_fin_mois|floatformat:0 }} L</li>
+                            <li><strong>Variation:</strong> 
+                                <span class="{% if variation_stock >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {% if variation_stock >= 0 %}+{% endif %}{{ variation_stock|floatformat:0 }} L
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Alertes
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Alertes générées:</strong> {{ nombre_alertes }}</li>
+                            <li><strong>Jours en rupture:</strong> {{ jours_rupture }}</li>
+                            <li><strong>Stock minimum atteint:</strong> 
+                                {% if stock_minimum_atteint %}
+                                    <span class="text-danger">Oui</span>
+                                {% else %}
+                                    <span class="text-success">Non</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique d'évolution quotidienne
+const ctx1 = document.getElementById('evolutionChart').getContext('2d');
+const evolutionChart = new Chart(ctx1, {
+    type: 'line',
+    data: {
+        labels: {{ jours_mois|safe }},
+        datasets: [{
+            label: 'Stock (L)',
+            data: {{ stock_quotidien|safe }},
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'Entrées (L)',
+            data: {{ entrees_quotidiennes|safe }},
+            borderColor: '#27ae60',
+            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+            borderWidth: 2,
+            fill: false
+        }, {
+            label: 'Sorties (L)',
+            data: {{ sorties_quotidiennes|safe }},
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            borderWidth: 2,
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Litres'
+                }
+            }
+        }
+    }
+});
+
+// Graphique de répartition
+const ctx2 = document.getElementById('repartitionChart').getContext('2d');
+const repartitionChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: ['Entrées', 'Sorties'],
+        datasets: [{
+            data: [{{ total_entrees }}, {{ total_sorties }}],
+            backgroundColor: ['#27ae60', '#e74c3c'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Graphique de comparaison
+const ctx3 = document.getElementById('comparaisonChart').getContext('2d');
+const comparaisonChart = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+        labels: {{ mois_comparaison|safe }},
+        datasets: [{
+            label: 'Entrées (L)',
+            data: {{ entrees_comparaison|safe }},
+            backgroundColor: 'rgba(39, 174, 96, 0.8)',
+            borderColor: '#27ae60',
+            borderWidth: 1
+        }, {
+            label: 'Sorties (L)',
+            data: {{ sorties_comparaison|safe }},
+            backgroundColor: 'rgba(231, 76, 60, 0.8)',
+            borderColor: '#e74c3c',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Litres'
+                }
+            }
+        }
+    }
+});
+
+function exportToPDF() {
+    // Simuler l'export PDF (à implémenter avec une vraie solution)
+    alert('Fonctionnalité d\'export PDF en cours de développement.\nVous pouvez utiliser la fonction d\'impression de votre navigateur (Ctrl+P) pour générer un PDF.');
+    
+    // Ouvrir la boîte de dialogue d'impression
+    window.print();
+}
+
+// Définir le mois et l'année par défaut
+document.addEventListener('DOMContentLoaded', function() {
+    const moisSelect = document.getElementById('mois');
+    const anneeSelect = document.getElementById('annee');
+    
+    if (!moisSelect.value) {
+        const today = new Date();
+        moisSelect.value = today.getMonth() + 1;
+    }
+    
+    if (!anneeSelect.value) {
+        const today = new Date();
+        anneeSelect.value = today.getFullYear();
+    }
+});
+</script>
+{% endblock %}

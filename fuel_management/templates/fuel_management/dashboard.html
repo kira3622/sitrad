@@ -1,0 +1,347 @@
+{% extends 'fuel_management/base.html' %}
+
+{% block title %}Dashboard - Gestion du Gasoil{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistiques principales -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ stock_actuel|floatformat:0 }}</h3>
+                    <p class="mb-0">Litres en stock</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-gas-pump"></i>
+                </div>
+            </div>
+            <div class="progress progress-custom mt-3">
+                <div class="progress-bar progress-bar-custom bg-light" 
+                     style="width: {{ pourcentage_stock }}%"></div>
+            </div>
+            <small class="text-light">{{ pourcentage_stock|floatformat:1 }}% du stock maximum</small>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card {% if alertes_actives %}danger{% else %}success{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ alertes_actives }}</h3>
+                    <p class="mb-0">Alertes actives</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ consommation_mensuelle|floatformat:0 }}</h3>
+                    <p class="mb-0">L consommés ce mois</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">{{ approvisionnement_mensuel|floatformat:0 }}</h3>
+                    <p class="mb-0">L approvisionnés ce mois</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-truck"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertes -->
+{% if alertes %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    Alertes de stock
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for alerte in alertes %}
+                <div class="alert alert-{% if alerte.niveau == 'critique' %}danger{% elif alerte.niveau == 'faible' %}warning{% else %}info{% endif %} alert-custom d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ alerte.get_niveau_display }}</strong> - {{ alerte.message }}
+                        <br><small class="text-muted">{{ alerte.date_creation|date:"d/m/Y H:i" }}</small>
+                    </div>
+                    {% if not alerte.lu %}
+                    <a href="{% url 'fuel_management:marquer_alerte_lue' alerte.id %}" 
+                       class="btn btn-sm btn-outline-secondary btn-custom">
+                        <i class="fas fa-check"></i> Marquer comme lu
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Graphique de consommation -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-area me-2"></i>
+                    Évolution du stock (7 derniers jours)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="stockChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top consommateurs -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy me-2"></i>
+                    Top consommateurs (ce mois)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for engin in top_consommateurs %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>{{ engin.nom }}</strong>
+                        <br><small class="text-muted">{{ engin.type_engin.nom }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-primary">{{ engin.consommation_totale|floatformat:0 }} L</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">Aucune consommation ce mois</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Derniers approvisionnements -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>
+                    Derniers approvisionnements
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Fournisseur</th>
+                                <th>Quantité</th>
+                                <th>Prix</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appro in derniers_approvisionnements %}
+                            <tr>
+                                <td>{{ appro.date|date:"d/m/Y" }}</td>
+                                <td>{{ appro.fournisseur.nom }}</td>
+                                <td>{{ appro.quantite|floatformat:0 }} L</td>
+                                <td>{{ appro.prix_total|floatformat:2 }} €</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    Aucun approvisionnement récent
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dernières consommations -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-gas-pump me-2"></i>
+                    Dernières consommations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Engin</th>
+                                <th>Quantité</th>
+                                <th>Responsable</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conso in dernieres_consommations %}
+                            <tr>
+                                <td>{{ conso.date|date:"d/m/Y" }}</td>
+                                <td>{{ conso.engin.nom }}</td>
+                                <td>{{ conso.quantite|floatformat:0 }} L</td>
+                                <td>{{ conso.responsable }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    Aucune consommation récente
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Actions rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="/admin/fuel_management/approvisionnement/add/" 
+                           class="btn btn-success btn-custom w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            Nouvel approvisionnement
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/admin/fuel_management/consommation/add/" 
+                           class="btn btn-primary btn-custom w-100">
+                            <i class="fas fa-gas-pump me-2"></i>
+                            Nouvelle consommation
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'fuel_management:stock_detail' %}" 
+                           class="btn btn-info btn-custom w-100">
+                            <i class="fas fa-warehouse me-2"></i>
+                            Voir le stock
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'fuel_management:rapport_bilan_mensuel' %}" 
+                           class="btn btn-warning btn-custom w-100">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Bilan mensuel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique d'évolution du stock
+const ctx = document.getElementById('stockChart').getContext('2d');
+const stockChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ dates_stock|safe }},
+        datasets: [{
+            label: 'Stock (Litres)',
+            data: {{ valeurs_stock|safe }},
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Litres'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
+                }
+            }
+        },
+        elements: {
+            point: {
+                radius: 6,
+                hoverRadius: 8
+            }
+        }
+    }
+});
+
+// Auto-refresh des données toutes les 5 minutes
+setInterval(function() {
+    fetch('{% url "fuel_management:api_stock_status" %}')
+        .then(response => response.json())
+        .then(data => {
+            // Mettre à jour les statistiques
+            document.querySelector('.stat-card.success h3').textContent = data.stock_actuel;
+            document.querySelector('.stat-card.success .progress-bar').style.width = data.pourcentage_stock + '%';
+            document.querySelector('.stat-card.success small').textContent = data.pourcentage_stock + '% du stock maximum';
+            
+            // Mettre à jour les alertes si nécessaire
+            if (data.alertes_actives > 0) {
+                location.reload(); // Recharger la page pour afficher les nouvelles alertes
+            }
+        })
+        .catch(error => console.error('Erreur lors de la mise à jour:', error));
+}, 300000); // 5 minutes
+</script>
+{% endblock %}
