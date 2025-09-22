@@ -224,6 +224,18 @@ class Stock(models.Model):
             return (self.quantite / self.seuil_minimum) * Decimal('100')
         return Decimal('0')
     
+    @property
+    def statut_stock(self):
+        """Retourne le statut du stock selon les seuils configurés"""
+        if self.quantite <= 0:
+            return 'rupture'
+        elif self.quantite <= self.seuil_minimum:
+            return 'faible'
+        elif self.quantite <= self.seuil_minimum * Decimal('1.5'):
+            return 'attention'
+        else:
+            return 'normal'
+    
     @classmethod
     def get_stock_actuel(cls):
         """Récupère ou crée l'instance unique de stock"""

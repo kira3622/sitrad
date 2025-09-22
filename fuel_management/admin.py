@@ -53,19 +53,20 @@ class ConsommationAdmin(admin.ModelAdmin):
 
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
-    list_display = ['quantite', 'seuil_minimum', 'statut_stock', 'date_derniere_maj']
+    list_display = ['quantite', 'seuil_minimum', 'statut_stock_display', 'date_derniere_maj']
     readonly_fields = ['quantite', 'date_derniere_maj']
     
-    def statut_stock(self, obj):
-        if obj.quantite <= 0:
+    def statut_stock_display(self, obj):
+        statut = obj.statut_stock
+        if statut == 'rupture':
             return format_html(
                 '<span style="color: red; font-weight: bold;">🚨 RUPTURE</span>'
             )
-        elif obj.quantite <= obj.seuil_minimum:
+        elif statut == 'faible':
             return format_html(
                 '<span style="color: red; font-weight: bold;">⚠️ STOCK FAIBLE</span>'
             )
-        elif obj.quantite <= obj.seuil_minimum * 1.5:
+        elif statut == 'attention':
             return format_html(
                 '<span style="color: orange; font-weight: bold;">⚠️ ATTENTION</span>'
             )
@@ -73,7 +74,7 @@ class StockAdmin(admin.ModelAdmin):
             return format_html(
                 '<span style="color: green; font-weight: bold;">✅ OK</span>'
             )
-    statut_stock.short_description = "Statut"
+    statut_stock_display.short_description = "Statut"
     
     def has_add_permission(self, request):
         # Empêcher la création manuelle de stocks multiples
