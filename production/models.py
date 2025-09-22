@@ -9,6 +9,7 @@ class OrdreProduction(models.Model):
     formule = models.ForeignKey(FormuleBeton, on_delete=models.CASCADE)
     quantite_produire = models.DecimalField(max_digits=10, decimal_places=2)
     date_production = models.DateField()
+    heure_production = models.TimeField(null=True, blank=True, help_text="Heure prévue de production")
     statut = models.CharField(max_length=20, choices=[('planifie', 'Planifié'), ('en_cours', 'En cours'), ('termine', 'Terminé'), ('annule', 'Annulé')], default='planifie')
     matieres_sorties_calculees = models.BooleanField(default=False)  # Pour éviter les doublons
 
