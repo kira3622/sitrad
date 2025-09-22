@@ -12,19 +12,15 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <!-- Inclusion du style moderne principal -->
+    <link rel="stylesheet" type="text/css" href="{% static 'css/sitrad_modern.css' %}">
+    
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --warning-color: #f39c12;
-            --danger-color: #e74c3c;
-            --light-bg: #f8f9fa;
-        }
-        
+        /* Styles spécifiques au module fuel_management */
         body {
-            background-color: var(--light-bg);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
         }
         
         .navbar-custom {

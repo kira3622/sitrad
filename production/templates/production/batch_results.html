@@ -1,19 +1,42 @@
-{% extends "admin/base_site.html" %}
+{% extends "base_modern.html" %}
 {% load i18n %}
 
-{% block title %}Résultats Calcul en Lot - Sorties Matières{% endblock %}
+{% block title %}Résultats Calcul en Lot - Production - Sitrad{% endblock %}
 
 {% block content %}
-<div class="module">
-    <h1>Résultats du calcul en lot des sorties de matières</h1>
-    
-    <div class="calculation-summary">
-        <h2>Résumé du traitement</h2>
-        <p><strong>Ordres traités:</strong> {{ results.total_processed }}</p>
-        <p><strong>Succès:</strong> {{ results.success_count }}</p>
-        <p><strong>Erreurs:</strong> {{ results.error_count }}</p>
-        <p><strong>Déjà calculés:</strong> {{ results.already_calculated_count }}</p>
+<div class="modern-card">
+    <div class="modern-card-header">
+        <i class="fas fa-calculator me-2"></i>Résultats du calcul en lot des sorties de matières
     </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                    <h4 class="text-primary">{{ results.total_processed }}</h4>
+                    <small class="text-muted">Ordres traités</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                    <h4 class="text-success">{{ results.success_count }}</h4>
+                    <small class="text-muted">Succès</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                    <h4 class="text-danger">{{ results.error_count }}</h4>
+                    <small class="text-muted">Erreurs</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-light rounded">
+                    <h4 class="text-warning">{{ results.already_calculated_count }}</h4>
+                    <small class="text-muted">Déjà calculés</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     {% if results.success_list %}
     <h3>✅ Ordres traités avec succès:</h3>

@@ -1,26 +1,39 @@
-{% extends 'fuel_management/base.html' %}
+{% extends 'base_modern.html' %}
 
-{% block title %}<i class="fas fa-tachometer-alt"></i> <i class="fas fa-chart-pie"></i> - Gestion du Gasoil{% endblock %}
+{% block title %}Dashboard - Gestion du Carburant - Sitrad{% endblock %}
 
 {% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="modern-card">
+            <div class="modern-card-header text-center">
+                <i class="fas fa-gas-pump me-3"></i>
+                <span>Dashboard - Gestion du Carburant</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- Statistiques principales -->
     <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stat-card success">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="mb-0">{{ stock_actuel|floatformat:0 }}</h3>
-                    <p class="mb-0">Litres en stock</p>
+        <div class="modern-card">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h3 class="mb-0 text-success">{{ stock_actuel|floatformat:0 }}</h3>
+                        <p class="mb-0 text-muted">Litres en stock</p>
+                    </div>
+                    <div class="fs-1 text-success">
+                        <i class="fas fa-gas-pump"></i>
+                    </div>
                 </div>
-                <div class="fs-1">
-                    <i class="fas fa-gas-pump"></i>
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" 
+                         style="width: {{ pourcentage_stock }}%"></div>
                 </div>
+                <small class="text-muted">{{ pourcentage_stock|floatformat:1 }}% du stock maximum</small>
             </div>
-            <div class="progress progress-custom mt-3">
-                <div class="progress-bar progress-bar-custom bg-light" 
-                     style="width: {{ pourcentage_stock }}%"></div>
-            </div>
-            <small class="text-light">{{ pourcentage_stock|floatformat:1 }}% du stock maximum</small>
         </div>
     </div>
 

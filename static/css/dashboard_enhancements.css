@@ -1,0 +1,296 @@
+/* Améliorations spécifiques pour le dashboard et les modules */
+
+/* Amélioration des modules sur la page d'accueil */
+.module {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    margin: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.module::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { background-position: 200% 0; }
+    50% { background-position: -200% 0; }
+}
+
+.module:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+}
+
+.module h2 {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    margin: 0;
+    padding: 25px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.module h2::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.module:hover h2::after {
+    left: 100%;
+}
+
+.module table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.module td {
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.module td:last-child {
+    border-bottom: none;
+}
+
+.module td:hover {
+    background: linear-gradient(90deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    padding-left: 35px;
+}
+
+.module a {
+    color: #2c3e50;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.module a:hover {
+    color: #3498db;
+    transform: translateX(10px);
+}
+
+/* Icônes spécifiques pour chaque module */
+.module a[href*="production"]::before {
+    content: "🏭";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="orders"]::before {
+    content: "📋";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="customers"]::before {
+    content: "👥";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="inventory"]::before {
+    content: "📦";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="logistics"]::before {
+    content: "🚛";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="billing"]::before {
+    content: "💰";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="reports"]::before {
+    content: "📊";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="fuel"]::before {
+    content: "⛽";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a[href*="activity"]::before {
+    content: "📈";
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: transform 0.3s ease;
+}
+
+.module a:hover::before {
+    transform: scale(1.2) rotate(5deg);
+}
+
+/* Amélioration de la navigation */
+#header {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border-bottom: none;
+    position: relative;
+    overflow: hidden;
+}
+
+#header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: headerShine 4s ease-in-out infinite;
+}
+
+@keyframes headerShine {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
+}
+
+#branding h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    letter-spacing: 1px;
+}
+
+/* Amélioration du contenu principal */
+#content {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    margin: 30px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+#content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+/* Responsive design amélioré */
+@media (max-width: 768px) {
+    .module {
+        margin: 15px 10px;
+    }
+    
+    .module h2 {
+        font-size: 1.2rem;
+        padding: 20px;
+    }
+    
+    .module td {
+        padding: 15px 20px;
+    }
+    
+    .module a {
+        font-size: 1rem;
+    }
+    
+    #content {
+        margin: 15px 10px;
+        padding: 25px;
+        border-radius: 15px;
+    }
+    
+    #branding h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation d'entrée pour les modules */
+.module {
+    animation: moduleSlideIn 0.6s ease-out forwards;
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+.module:nth-child(1) { animation-delay: 0.1s; }
+.module:nth-child(2) { animation-delay: 0.2s; }
+.module:nth-child(3) { animation-delay: 0.3s; }
+.module:nth-child(4) { animation-delay: 0.4s; }
+.module:nth-child(5) { animation-delay: 0.5s; }
+.module:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes moduleSlideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Amélioration des breadcrumbs */
+.breadcrumbs {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,249,250,0.9));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 15px;
+    padding: 20px 25px;
+    margin: 20px 30px 0 30px;
+    font-size: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.breadcrumbs a {
+    color: #2c3e50;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.breadcrumbs a:hover {
+    color: #3498db;
+}

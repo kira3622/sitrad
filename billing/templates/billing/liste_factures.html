@@ -1,41 +1,41 @@
-{% extends "admin/base_site.html" %}
+{% extends "base_modern.html" %}
 {% load static %}
 
-{% block title %}Liste des factures{% endblock %}
+{% block title %}Liste des Factures - Billing - Sitrad{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Liste des factures</h3>
-                    <div class="card-tools">
-                        <form method="get" class="form-inline">
-                            <select name="statut" class="form-control form-control-sm mr-2">
-                                <option value="">Tous les statuts</option>
-                                {% for value, label in statuts %}
-                                <option value="{{ value }}" {% if value == statut_filtre %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <button type="submit" class="btn btn-sm btn-primary">Filtrer</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="card-body table-responsive p-0">
-                    <table class="table table-hover text-nowrap">
-                        <thead>
-                            <tr>
-                                <th>N° Facture</th>
-                                <th>Client</th>
-                                <th>Date</th>
-                                <th>Montant TTC</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+<div class="modern-card">
+    <div class="modern-card-header">
+        <i class="fas fa-file-invoice me-2"></i>Liste des factures
+        <div class="ms-auto">
+            <form method="get" class="d-flex">
+                <select name="statut" class="form-select form-select-sm me-2">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in statuts %}
+                    <option value="{{ value }}" {% if value == statut_filtre %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="modern-btn modern-btn-sm">
+                    <i class="fas fa-filter me-1"></i>Filtrer
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover modern-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th><i class="fas fa-hashtag me-2"></i>N° Facture</th>
+                        <th><i class="fas fa-user me-2"></i>Client</th>
+                        <th><i class="fas fa-calendar me-2"></i>Date</th>
+                        <th><i class="fas fa-euro-sign me-2"></i>Montant TTC</th>
+                        <th><i class="fas fa-info-circle me-2"></i>Statut</th>
+                        <th><i class="fas fa-cogs me-2"></i>Actions</th>
+                    </tr>
+                </thead>
                         <tbody>
                             {% for facture in factures %}
                             <tr>
@@ -50,19 +50,21 @@
                                 <td>{{ facture.date_facturation|date:"d/m/Y" }}</td>
                                 <td>{{ facture.montant_total|floatformat:2 }} DH</td>
                                 <td>
-                                    <span class="badge badge-{% if facture.statut == 'payee' %}success{% elif facture.statut == 'envoyee' %}info{% elif facture.statut == 'annulee' %}danger{% else %}secondary{% endif %}">
+                                    <span class="badge bg-{% if facture.statut == 'payee' %}success{% elif facture.statut == 'envoyee' %}info{% elif facture.statut == 'annulee' %}danger{% else %}secondary{% endif %}">
                                         {{ facture.get_statut_display }}
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="{% url 'billing:facture_preview' facture.id %}" 
-                                       class="btn btn-sm btn-info" title="Aperçu">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{% url 'billing:facture_pdf' facture.id %}" 
-                                       class="btn btn-sm btn-primary" title="Télécharger PDF">
-                                        <i class="fas fa-download"></i>
-                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'billing:facture_preview' facture.id %}" 
+                                           class="modern-btn modern-btn-sm modern-btn-outline" title="Aperçu">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'billing:facture_pdf' facture.id %}" 
+                                           class="modern-btn modern-btn-sm" title="Télécharger PDF">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}

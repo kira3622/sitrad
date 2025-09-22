@@ -1,10 +1,9 @@
-{% extends 'admin/base_site.html' %}
+{% extends 'base_modern.html' %}
 {% load static %}
 
-{% block title %}{{ title }} - {{ site_title|default:"Django site admin" }}{% endblock %}
+{% block title %}{{ title }} - Reports - Sitrad{% endblock %}
 
-{% block extrastyle %}
-{{ block.super }}
+{% block extra_css %}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     

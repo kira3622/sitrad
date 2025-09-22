@@ -1,10 +1,9 @@
-{% extends 'admin/base_site.html' %}
+{% extends 'base_modern.html' %}
 {% load static %}
 
-{% block title %}{{ title }} - {{ site_title|default:"Django site admin" }}{% endblock %}
+{% block title %}Tableau de Bord - Rapports - Sitrad{% endblock %}
 
-{% block extrastyle %}
-{{ block.super }}
+{% block extra_css %}
 <style>
     .dashboard-container {
         padding: 20px;
@@ -180,9 +179,14 @@
 
 {% block content %}
 <div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1><i class="fas fa-chart-bar"></i> <i class="fas fa-tachometer-alt"></i> <i class="fas fa-chart-pie"></i></h1>
-        <p>Système de reporting complet pour la gestion de votre entreprise de béton</p>
+    <div class="modern-card">
+        <div class="modern-card-header text-center">
+            <i class="fas fa-chart-line me-3"></i>
+            <span>Tableau de Bord - Rapports</span>
+        </div>
+        <div class="card-body">
+            <p class="text-center text-muted mb-4">Vue d'ensemble des rapports et statistiques de votre entreprise</p>
+        </div>
     </div>
     
     <div class="quick-stats">
@@ -208,13 +212,20 @@
     </div>
     
     <div class="reports-grid">
-        <div class="report-card production">
-            <div class="icon">🏭</div>
-            <h3>Rapports de Production</h3>
-            <p>Analysez les quantités produites, l'efficacité des formules et les performances de production.</p>
-            <div class="report-actions">
-                <a href="{% url 'reports:production' %}" class="btn btn-primary">Voir le rapport</a>
-                <a href="{% url 'reports:export_pdf' 'production' %}" class="btn btn-secondary">Export PDF</a>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <i class="fas fa-industry me-2"></i>Rapports de Production
+            </div>
+            <div class="card-body">
+                <p>Analysez les quantités produites, l'efficacité des formules et les performances de production.</p>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'reports:production' %}" class="modern-btn modern-btn-primary">
+                        <i class="fas fa-eye me-1"></i>Voir le rapport
+                    </a>
+                    <a href="{% url 'reports:export_pdf' 'production' %}" class="modern-btn modern-btn-info">
+                        <i class="fas fa-file-pdf me-1"></i>Export PDF
+                    </a>
+                </div>
             </div>
         </div>
         

@@ -1,7 +1,80 @@
 {% extends "admin/index.html" %}
 {% load static %}
 
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'css/sitrad_modern.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/dashboard_enhancements.css' %}">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+    /* Styles spécifiques pour le dashboard */
+    .dashboard-welcome {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .dashboard-welcome h1 {
+        margin: 0 0 10px 0;
+        font-size: 2.5rem;
+        font-weight: 300;
+    }
+    
+    .dashboard-welcome p {
+        margin: 0;
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .activity-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .activity-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .activity-card .card-header {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+        color: white;
+        padding: 20px;
+        border: none;
+    }
+    
+    .activity-card .card-title {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 500;
+    }
+    
+    .activity-card .btn-tool {
+        color: white;
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+    }
+    
+    .activity-card .btn-tool:hover {
+        opacity: 1;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Message de bienvenue moderne -->
+<div class="dashboard-welcome">
+    <h1><i class="fas fa-tachometer-alt"></i> Tableau de Bord Sitrad</h1>
+    <p>Bienvenue dans votre interface de gestion moderne</p>
+</div>
+
 {{ block.super }}
 
 <div class="row">
@@ -10,7 +83,7 @@
     </div>
     <div class="col-md-4">
         <!-- Widget des activités récentes -->
-        <div class="card">
+        <div class="activity-card card">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="fas fa-history"></i>
