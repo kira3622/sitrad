@@ -260,7 +260,7 @@
                 <i class="material-icons action-icon">add_shopping_cart</i>
                 <span class="action-label">Nouvelle Commande</span>
             </a>
-            <a href="{% url 'admin:production_production_add' %}" class="action-item">
+            <a href="{% url 'admin:production_ordreproduction_add' %}" class="action-item">
                 <i class="material-icons action-icon">add_circle</i>
                 <span class="action-label">Nouvelle Production</span>
             </a>
@@ -268,11 +268,11 @@
                 <i class="material-icons action-icon">local_shipping</i>
                 <span class="action-label">Nouvelle Livraison</span>
             </a>
-            <a href="{% url 'admin:fuel_management_stock_changelist' %}" class="action-item">
+            <a href="{% url 'admin:fuel_management_approvisionnement_changelist' %}" class="action-item">
                 <i class="material-icons action-icon">local_gas_station</i>
                 <span class="action-label">Gestion Carburant</span>
             </a>
-            <a href="{% url 'admin:inventory_stock_changelist' %}" class="action-item">
+            <a href="{% url 'admin:inventory_matierepremiere_changelist' %}" class="action-item">
                 <i class="material-icons action-icon">inventory</i>
                 <span class="action-label">Inventaire</span>
             </a>
@@ -357,7 +357,7 @@ function showQuickAddMenu() {
     const actions = [
         { label: 'Nouveau Client', url: '{% url "admin:customers_client_add" %}', icon: 'person_add' },
         { label: 'Nouvelle Commande', url: '{% url "admin:orders_commande_add" %}', icon: 'add_shopping_cart' },
-        { label: 'Nouvelle Production', url: '{% url "admin:production_production_add" %}', icon: 'add_circle' },
+        { label: 'Nouvelle Production', url: '{% url "admin:production_ordreproduction_add" %}', icon: 'add_circle' },
         { label: 'Nouvelle Livraison', url: '{% url "admin:logistics_livraison_add" %}', icon: 'local_shipping' }
     ];
     
