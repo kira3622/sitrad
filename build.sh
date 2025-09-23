@@ -19,6 +19,16 @@ python -c "import django; print('Django version:', django.get_version())"
 
 # Collecte des fichiers statiques
 echo "🔄 Collecte des fichiers statiques..."
-python manage.py collectstatic --noinput --clear
+echo "📁 Contenu du dossier static avant collectstatic:"
+ls -la static/ || echo "Dossier static non trouvé"
+
+python manage.py collectstatic --noinput --clear --verbosity=2
+
+echo "📁 Contenu du dossier staticfiles après collectstatic:"
+ls -la staticfiles/ || echo "Dossier staticfiles non trouvé"
+echo "📁 Contenu de staticfiles/css:"
+ls -la staticfiles/css/ || echo "Dossier staticfiles/css non trouvé"
+echo "📁 Contenu de staticfiles/js:"
+ls -la staticfiles/js/ || echo "Dossier staticfiles/js non trouvé"
 
 echo "🎉 Build Render terminé avec succès!"
