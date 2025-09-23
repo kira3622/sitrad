@@ -1,0 +1,508 @@
+/* Material Dashboard Django - Modern Material Design Admin Interface */
+
+/* Material Design Variables */
+:root {
+    /* Primary Material Colors */
+    --md-primary: #1976d2;
+    --md-primary-dark: #1565c0;
+    --md-primary-light: #42a5f5;
+    --md-secondary: #dc004e;
+    --md-secondary-dark: #c51162;
+    --md-secondary-light: #f06292;
+    
+    /* Material Surface Colors */
+    --md-surface: #ffffff;
+    --md-surface-variant: #f5f5f5;
+    --md-background: #fafafa;
+    --md-error: #b00020;
+    --md-success: #4caf50;
+    --md-warning: #ff9800;
+    --md-info: #2196f3;
+    
+    /* Material Text Colors */
+    --md-on-surface: #212121;
+    --md-on-surface-variant: #757575;
+    --md-on-primary: #ffffff;
+    --md-on-secondary: #ffffff;
+    
+    /* Material Elevation Shadows */
+    --md-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --md-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --md-elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    --md-elevation-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    --md-elevation-5: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+    
+    /* Material Border Radius */
+    --md-radius-small: 4px;
+    --md-radius-medium: 8px;
+    --md-radius-large: 16px;
+    --md-radius-extra-large: 24px;
+    
+    /* Material Transitions */
+    --md-transition-fast: 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --md-transition-standard: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --md-transition-slow: 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Base Material Styles */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--md-background);
+    color: var(--md-on-surface);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Material Header */
+#header {
+    background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-dark) 100%);
+    box-shadow: var(--md-elevation-2);
+    border-bottom: none;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+#branding {
+    background: transparent;
+    color: var(--md-on-primary);
+    padding: 16px 24px;
+}
+
+#branding h1 {
+    color: var(--md-on-primary);
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+#branding h1 a {
+    color: var(--md-on-primary);
+    text-decoration: none;
+}
+
+#user-tools {
+    background: transparent;
+    color: var(--md-on-primary);
+    padding: 16px 24px;
+    text-align: right;
+}
+
+#user-tools a {
+    color: var(--md-on-primary);
+    text-decoration: none;
+    margin-left: 16px;
+    padding: 8px 16px;
+    border-radius: var(--md-radius-large);
+    transition: var(--md-transition-standard);
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
+
+#user-tools a:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+    box-shadow: var(--md-elevation-1);
+}
+
+/* Material Cards */
+.material-card {
+    background: var(--md-surface);
+    border-radius: var(--md-radius-large);
+    box-shadow: var(--md-elevation-1);
+    margin: 16px;
+    overflow: hidden;
+    transition: var(--md-transition-standard);
+}
+
+.material-card:hover {
+    box-shadow: var(--md-elevation-3);
+    transform: translateY(-2px);
+}
+
+.material-card-header {
+    background: linear-gradient(135deg, var(--md-primary), var(--md-primary-dark));
+    color: var(--md-on-primary);
+    padding: 20px 24px;
+    border-radius: 0;
+}
+
+.material-card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: 0.15px;
+}
+
+.material-card-content {
+    padding: 24px;
+}
+
+/* Material Buttons */
+.material-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 24px;
+    border: none;
+    border-radius: var(--md-radius-large);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.25px;
+    cursor: pointer;
+    transition: var(--md-transition-standard);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.material-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s;
+    transform: translate(-50%, -50%);
+}
+
+.material-btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.material-btn-primary {
+    background: var(--md-primary);
+    color: var(--md-on-primary);
+    box-shadow: var(--md-elevation-2);
+}
+
+.material-btn-primary:hover {
+    background: var(--md-primary-dark);
+    box-shadow: var(--md-elevation-3);
+    transform: translateY(-1px);
+}
+
+.material-btn-secondary {
+    background: var(--md-secondary);
+    color: var(--md-on-secondary);
+    box-shadow: var(--md-elevation-2);
+}
+
+.material-btn-outlined {
+    background: transparent;
+    color: var(--md-primary);
+    border: 2px solid var(--md-primary);
+}
+
+.material-btn-text {
+    background: transparent;
+    color: var(--md-primary);
+    box-shadow: none;
+}
+
+/* Material Form Elements */
+.material-input {
+    position: relative;
+    margin: 16px 0;
+}
+
+.material-input input,
+.material-input select,
+.material-input textarea {
+    width: 100%;
+    padding: 16px 12px 8px 12px;
+    border: 2px solid var(--md-on-surface-variant);
+    border-radius: var(--md-radius-small);
+    background: transparent;
+    font-size: 1rem;
+    transition: var(--md-transition-standard);
+}
+
+.material-input input:focus,
+.material-input select:focus,
+.material-input textarea:focus {
+    outline: none;
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
+}
+
+.material-input label {
+    position: absolute;
+    top: 16px;
+    left: 12px;
+    color: var(--md-on-surface-variant);
+    font-size: 1rem;
+    transition: var(--md-transition-standard);
+    pointer-events: none;
+    background: var(--md-surface);
+    padding: 0 4px;
+}
+
+.material-input input:focus + label,
+.material-input input:not(:placeholder-shown) + label,
+.material-input select:focus + label,
+.material-input textarea:focus + label {
+    top: -8px;
+    font-size: 0.75rem;
+    color: var(--md-primary);
+}
+
+/* Material Tables */
+.material-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--md-surface);
+    border-radius: var(--md-radius-medium);
+    overflow: hidden;
+    box-shadow: var(--md-elevation-1);
+}
+
+.material-table th {
+    background: var(--md-surface-variant);
+    color: var(--md-on-surface);
+    padding: 16px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.material-table td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.12);
+    transition: var(--md-transition-fast);
+}
+
+.material-table tr:hover td {
+    background: rgba(25, 118, 210, 0.04);
+}
+
+.material-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Material Chips */
+.material-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: var(--md-radius-large);
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: var(--md-surface-variant);
+    color: var(--md-on-surface);
+    margin: 2px;
+}
+
+.material-chip-success {
+    background: rgba(76, 175, 80, 0.12);
+    color: var(--md-success);
+}
+
+.material-chip-warning {
+    background: rgba(255, 152, 0, 0.12);
+    color: var(--md-warning);
+}
+
+.material-chip-error {
+    background: rgba(176, 0, 32, 0.12);
+    color: var(--md-error);
+}
+
+.material-chip-info {
+    background: rgba(33, 150, 243, 0.12);
+    color: var(--md-info);
+}
+
+/* Material Navigation Drawer */
+.material-drawer {
+    width: 280px;
+    background: var(--md-surface);
+    box-shadow: var(--md-elevation-2);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: var(--md-transition-standard);
+}
+
+.material-drawer.open {
+    transform: translateX(0);
+}
+
+.material-drawer-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    color: var(--md-on-surface);
+    text-decoration: none;
+    transition: var(--md-transition-fast);
+    border-radius: 0 24px 24px 0;
+    margin: 4px 12px 4px 0;
+}
+
+.material-drawer-item:hover {
+    background: rgba(25, 118, 210, 0.08);
+    color: var(--md-primary);
+}
+
+.material-drawer-item.active {
+    background: rgba(25, 118, 210, 0.12);
+    color: var(--md-primary);
+}
+
+.material-drawer-icon {
+    margin-right: 32px;
+    font-size: 1.5rem;
+}
+
+/* Material FAB (Floating Action Button) */
+.material-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--md-secondary);
+    color: var(--md-on-secondary);
+    border: none;
+    box-shadow: var(--md-elevation-3);
+    cursor: pointer;
+    transition: var(--md-transition-standard);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 1000;
+}
+
+.material-fab:hover {
+    box-shadow: var(--md-elevation-4);
+    transform: scale(1.1);
+}
+
+/* Material Snackbar */
+.material-snackbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #323232;
+    color: white;
+    padding: 14px 24px;
+    border-radius: var(--md-radius-small);
+    box-shadow: var(--md-elevation-3);
+    transition: var(--md-transition-standard);
+    z-index: 1001;
+}
+
+.material-snackbar.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Material Progress */
+.material-progress {
+    height: 4px;
+    background: rgba(25, 118, 210, 0.12);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.material-progress-bar {
+    height: 100%;
+    background: var(--md-primary);
+    border-radius: 2px;
+    transition: width var(--md-transition-standard);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .material-card {
+        margin: 8px;
+        border-radius: var(--md-radius-medium);
+    }
+    
+    .material-card-header,
+    .material-card-content {
+        padding: 16px;
+    }
+    
+    .material-fab {
+        bottom: 16px;
+        right: 16px;
+    }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --md-surface: #121212;
+        --md-surface-variant: #1e1e1e;
+        --md-background: #000000;
+        --md-on-surface: #ffffff;
+        --md-on-surface-variant: #b3b3b3;
+    }
+}
+
+/* Animation Classes */
+@keyframes materialFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.material-fade-in {
+    animation: materialFadeIn var(--md-transition-standard) ease-out;
+}
+
+@keyframes materialSlideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.material-slide-in {
+    animation: materialSlideIn var(--md-transition-standard) ease-out;
+}
+
+/* Material Icons Integration */
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}

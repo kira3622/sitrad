@@ -1,106 +1,342 @@
-{% extends "admin/index.html" %}
+{% extends "admin/base_material.html" %}
 {% load static %}
+{% load i18n %}
 
-{% block extrastyle %}
-{{ block.super }}
-<link rel="stylesheet" type="text/css" href="{% static 'css/sitrad_modern.css' %}">
-<link rel="stylesheet" type="text/css" href="{% static 'css/dashboard_enhancements.css' %}">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+{% block extrahead %}
+    <link rel="stylesheet" href="{% static 'css/material_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sitrad_modern.css' %}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block extrajs %}
+    <script src="{% static 'js/material_dashboard.js' %}"></script>
+{% endblock %}
+
+{% block page_title %}Tableau de Bord{% endblock %}
+{% block page_subtitle %}Vue d'ensemble de votre système Sitrad{% endblock %}
+
+{% block extra_css %}
 <style>
-    /* Styles spécifiques pour le dashboard */
-    .dashboard-welcome {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    /* Material Dashboard Specific Styles */
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
     }
     
-    .dashboard-welcome h1 {
-        margin: 0 0 10px 0;
-        font-size: 2.5rem;
-        font-weight: 300;
-    }
-    
-    .dashboard-welcome p {
-        margin: 0;
-        font-size: 1.2rem;
-        opacity: 0.9;
-    }
-    
-    .activity-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    .stat-card {
+        background: var(--md-surface);
+        border-radius: var(--md-radius-large);
+        box-shadow: var(--md-elevation-1);
+        padding: 24px;
+        transition: var(--md-transition-standard);
+        position: relative;
         overflow: hidden;
-        transition: transform 0.3s ease;
     }
     
-    .activity-card:hover {
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--md-primary), var(--md-secondary));
+    }
+    
+    .stat-card:hover {
+        box-shadow: var(--md-elevation-3);
         transform: translateY(-2px);
     }
     
-    .activity-card .card-header {
-        background: linear-gradient(135deg, #2c3e50, #3498db);
-        color: white;
-        padding: 20px;
-        border: none;
+    .stat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
     }
     
-    .activity-card .card-title {
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .stat-icon.primary { background: var(--md-primary); }
+    .stat-icon.success { background: var(--md-success); }
+    .stat-icon.warning { background: var(--md-warning); }
+    .stat-icon.info { background: var(--md-info); }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 500;
+        color: var(--md-on-surface);
         margin: 0;
-        font-size: 1.3rem;
+    }
+    
+    .stat-label {
+        color: var(--md-on-surface-variant);
+        font-size: 0.875rem;
+        margin: 4px 0 0 0;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .quick-actions {
+        background: var(--md-surface);
+        border-radius: var(--md-radius-large);
+        box-shadow: var(--md-elevation-1);
+        padding: 24px;
+    }
+    
+    .quick-actions h3 {
+        margin: 0 0 20px 0;
+        color: var(--md-on-surface);
+        font-size: 1.25rem;
         font-weight: 500;
     }
     
-    .activity-card .btn-tool {
-        color: white;
-        opacity: 0.8;
-        transition: opacity 0.3s ease;
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 16px;
     }
     
-    .activity-card .btn-tool:hover {
+    .action-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 16px;
+        border-radius: var(--md-radius-medium);
+        text-decoration: none;
+        color: var(--md-on-surface);
+        transition: var(--md-transition-standard);
+        border: 2px solid transparent;
+    }
+    
+    .action-item:hover {
+        background: rgba(25, 118, 210, 0.04);
+        border-color: var(--md-primary);
+        color: var(--md-primary);
+        transform: translateY(-2px);
+    }
+    
+    .action-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        color: var(--md-primary);
+    }
+    
+    .action-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-align: center;
+    }
+    
+    .activity-widget {
+        background: var(--md-surface);
+        border-radius: var(--md-radius-large);
+        box-shadow: var(--md-elevation-1);
+        overflow: hidden;
+    }
+    
+    .widget-header {
+        background: linear-gradient(135deg, var(--md-primary), var(--md-primary-dark));
+        color: var(--md-on-primary);
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .widget-title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+    }
+    
+    .widget-title i {
+        margin-right: 12px;
+    }
+    
+    .widget-action {
+        color: var(--md-on-primary);
+        text-decoration: none;
+        opacity: 0.8;
+        transition: var(--md-transition-fast);
+    }
+    
+    .widget-action:hover {
         opacity: 1;
-        color: white;
+        color: var(--md-on-primary);
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Message de bienvenue moderne -->
-<div class="dashboard-welcome">
-    <h1><i class="fas fa-tachometer-alt"></i> Tableau de Bord Sitrad</h1>
-    <p>Bienvenue dans votre interface de gestion moderne</p>
+<!-- Dashboard Statistics -->
+<div class="dashboard-stats">
+    <div class="stat-card material-fade-in">
+        <div class="stat-header">
+            <div class="stat-icon primary">
+                <i class="material-icons">people</i>
+            </div>
+        </div>
+        <h2 class="stat-value">{{ total_clients|default:"0" }}</h2>
+        <p class="stat-label">Clients actifs</p>
+    </div>
+    
+    <div class="stat-card material-fade-in">
+        <div class="stat-header">
+            <div class="stat-icon success">
+                <i class="material-icons">assignment</i>
+            </div>
+        </div>
+        <h2 class="stat-value">{{ total_commandes|default:"0" }}</h2>
+        <p class="stat-label">Commandes ce mois</p>
+    </div>
+    
+    <div class="stat-card material-fade-in">
+        <div class="stat-header">
+            <div class="stat-icon warning">
+                <i class="material-icons">precision_manufacturing</i>
+            </div>
+        </div>
+        <h2 class="stat-value">{{ productions_en_cours|default:"0" }}</h2>
+        <p class="stat-label">Productions en cours</p>
+    </div>
+    
+    <div class="stat-card material-fade-in">
+        <div class="stat-header">
+            <div class="stat-icon info">
+                <i class="material-icons">local_shipping</i>
+            </div>
+        </div>
+        <h2 class="stat-value">{{ livraisons_prevues|default:"0" }}</h2>
+        <p class="stat-label">Livraisons prévues</p>
+    </div>
 </div>
 
-{{ block.super }}
-
-<div class="row">
-    <div class="col-md-8">
-        <!-- Contenu original du dashboard -->
+<!-- Dashboard Grid -->
+<div class="dashboard-grid">
+    <!-- Quick Actions -->
+    <div class="quick-actions material-fade-in">
+        <h3>Actions rapides</h3>
+        <div class="action-grid">
+            <a href="{% url 'admin:customers_client_add' %}" class="action-item">
+                <i class="material-icons action-icon">person_add</i>
+                <span class="action-label">Nouveau Client</span>
+            </a>
+            <a href="{% url 'admin:orders_commande_add' %}" class="action-item">
+                <i class="material-icons action-icon">add_shopping_cart</i>
+                <span class="action-label">Nouvelle Commande</span>
+            </a>
+            <a href="{% url 'admin:production_production_add' %}" class="action-item">
+                <i class="material-icons action-icon">add_circle</i>
+                <span class="action-label">Nouvelle Production</span>
+            </a>
+            <a href="{% url 'admin:logistics_livraison_add' %}" class="action-item">
+                <i class="material-icons action-icon">local_shipping</i>
+                <span class="action-label">Nouvelle Livraison</span>
+            </a>
+            <a href="{% url 'admin:fuel_management_stock_changelist' %}" class="action-item">
+                <i class="material-icons action-icon">local_gas_station</i>
+                <span class="action-label">Gestion Carburant</span>
+            </a>
+            <a href="{% url 'admin:inventory_stock_changelist' %}" class="action-item">
+                <i class="material-icons action-icon">inventory</i>
+                <span class="action-label">Inventaire</span>
+            </a>
+        </div>
     </div>
-    <div class="col-md-4">
-        <!-- Widget des activités récentes -->
-        <div class="activity-card card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-history"></i>
-                    Activités Récentes Partagées
-                </h3>
-                <div class="card-tools">
-                    <a href="{% url 'activity:recent_activities' %}" class="btn btn-tool" title="Voir toutes">
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                {% include 'activity/widget.html' with activities=recent_activities %}
-            </div>
+    
+    <!-- Recent Activities Widget -->
+    <div class="activity-widget material-fade-in">
+        <div class="widget-header">
+            <h3 class="widget-title">
+                <i class="material-icons">timeline</i>
+                Activités Récentes
+            </h3>
+            <a href="{% url 'activity:recent_activities' %}" class="widget-action" title="Voir toutes">
+                <i class="material-icons">open_in_new</i>
+            </a>
+        </div>
+        <div class="widget-content">
+            {% include 'activity/widget.html' with activities=recent_activities %}
         </div>
     </div>
 </div>
+
+<!-- Additional Dashboard Modules -->
+<div class="dashboard-stats">
+    {% for app in available_apps %}
+    <div class="material-card material-fade-in">
+        <div class="material-card-header">
+            <h3 class="material-card-title">
+                <i class="material-icons" style="margin-right: 12px;">
+                    {% if app.app_label == 'customers' %}people
+                    {% elif app.app_label == 'orders' %}assignment
+                    {% elif app.app_label == 'production' %}precision_manufacturing
+                    {% elif app.app_label == 'inventory' %}inventory
+                    {% elif app.app_label == 'logistics' %}local_shipping
+                    {% elif app.app_label == 'fuel_management' %}local_gas_station
+                    {% elif app.app_label == 'reports' %}analytics
+                    {% elif app.app_label == 'activity' %}timeline
+                    {% else %}apps
+                    {% endif %}
+                </i>
+                {{ app.name }}
+            </h3>
+        </div>
+        <div class="material-card-content">
+            {% for model in app.models %}
+            <a href="{{ model.admin_url }}" class="nav-item" style="margin: 4px 0; padding: 8px 0;">
+                <span class="nav-text">{{ model.name }}</span>
+                {% if model.add_url %}
+                <a href="{{ model.add_url }}" class="material-btn material-btn-text" style="margin-left: auto; padding: 4px 8px;">
+                    <i class="material-icons" style="font-size: 1rem;">add</i>
+                </a>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Floating Action Button -->
+<button class="material-fab" onclick="showQuickAddMenu()" data-tooltip="Actions rapides">
+    <i class="material-icons">add</i>
+</button>
 
 <script>
 // Auto-refresh du widget toutes les 60 secondes
@@ -108,12 +344,74 @@ setInterval(function() {
     fetch('{% url "activity:activity_widget" %}')
         .then(response => response.text())
         .then(html => {
-            const widget = document.querySelector('.activity-widget');
+            const widget = document.querySelector('.widget-content');
             if (widget) {
                 widget.innerHTML = html;
             }
         })
         .catch(error => console.log('Erreur lors du refresh:', error));
 }, 60000);
+
+// Quick Add Menu
+function showQuickAddMenu() {
+    const actions = [
+        { label: 'Nouveau Client', url: '{% url "admin:customers_client_add" %}', icon: 'person_add' },
+        { label: 'Nouvelle Commande', url: '{% url "admin:orders_commande_add" %}', icon: 'add_shopping_cart' },
+        { label: 'Nouvelle Production', url: '{% url "admin:production_production_add" %}', icon: 'add_circle' },
+        { label: 'Nouvelle Livraison', url: '{% url "admin:logistics_livraison_add" %}', icon: 'local_shipping' }
+    ];
+    
+    // Create quick menu (simplified implementation)
+    const menu = document.createElement('div');
+    menu.style.cssText = `
+        position: fixed;
+        bottom: 90px;
+        right: 24px;
+        background: var(--md-surface);
+        border-radius: var(--md-radius-large);
+        box-shadow: var(--md-elevation-3);
+        padding: 16px;
+        z-index: 1001;
+        min-width: 200px;
+    `;
+    
+    actions.forEach(action => {
+        const item = document.createElement('a');
+        item.href = action.url;
+        item.style.cssText = `
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            text-decoration: none;
+            color: var(--md-on-surface);
+            border-radius: var(--md-radius-medium);
+            transition: var(--md-transition-fast);
+            margin-bottom: 4px;
+        `;
+        item.innerHTML = `
+            <i class="material-icons" style="margin-right: 12px;">${action.icon}</i>
+            ${action.label}
+        `;
+        item.addEventListener('mouseenter', () => {
+            item.style.background = 'rgba(25, 118, 210, 0.08)';
+        });
+        item.addEventListener('mouseleave', () => {
+            item.style.background = 'transparent';
+        });
+        menu.appendChild(item);
+    });
+    
+    document.body.appendChild(menu);
+    
+    // Remove menu when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function removeMenu(e) {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', removeMenu);
+            }
+        });
+    }, 100);
+}
 </script>
 {% endblock %}
