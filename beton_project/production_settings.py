@@ -1,4 +1,5 @@
 # Configuration de sécurité pour la production sur Render
+# Mise à jour pour forcer le redéploiement des fichiers statiques Material Dashboard
 import os
 
 # Configuration HTTPS pour la production uniquement (pas en développement local)
