@@ -90,7 +90,6 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'activity.context_processors.recent_activities',
-                'core.context_processors.admin_dashboard_stats',
             ],
         },
     },
@@ -153,16 +152,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise configuration for production
 if os.environ.get('DEBUG') == 'False':
-    STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
-    # Additional WhiteNoise settings
-    WHITENOISE_USE_FINDERS = True
-    WHITENOISE_AUTOREFRESH = True
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 # Default primary key field type
