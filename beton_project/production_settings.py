@@ -2,6 +2,10 @@
 # Mise à jour pour forcer le redéploiement des fichiers statiques Material Dashboard
 import os
 
+# Configuration WhiteNoise pour les fichiers statiques
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
+
 # Configuration HTTPS pour la production uniquement (pas en développement local)
 if os.environ.get('RENDER_EXTERNAL_HOSTNAME') and not os.environ.get('DEBUG', 'False') == 'True':
     # HTTPS/SSL Configuration
