@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_nav_graph"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.betonapp.ui.dashboard.DashboardFragment"
+        android:label="@string/nav_dashboard"
+        tools:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/ordersFragment"
+        android:name="com.betonapp.ui.orders.OrdersFragment"
+        android:label="@string/nav_orders"
+        tools:layout="@layout/fragment_orders">
+        
+        <action
+            android:id="@+id/action_orders_to_order_detail"
+            app:destination="@id/orderDetailFragment" />
+        
+        <action
+            android:id="@+id/action_orders_to_create_order"
+            app:destination="@id/createOrderFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/productionFragment"
+        android:name="com.betonapp.ui.production.ProductionFragment"
+        android:label="@string/nav_production"
+        tools:layout="@layout/fragment_production">
+        
+        <action
+            android:id="@+id/action_production_to_production_detail"
+            app:destination="@id/productionDetailFragment" />
+        
+        <action
+            android:id="@+id/action_production_to_create_production"
+            app:destination="@id/createProductionFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/inventoryFragment"
+        android:name="com.betonapp.ui.inventory.InventoryFragment"
+        android:label="@string/nav_inventory"
+        tools:layout="@layout/fragment_inventory" >
+        <action
+            android:id="@+id/action_inventoryFragment_to_inventoryDetailFragment"
+            app:destination="@id/inventoryDetailFragment" />
+        
+        <action
+            android:id="@+id/action_inventory_to_add_inventory"
+            app:destination="@id/addInventoryFragment" />
+    </fragment>
+
+    <!-- Fragments de détail -->
+    <fragment
+        android:id="@+id/orderDetailFragment"
+        android:name="com.betonapp.ui.orders.OrderDetailFragment"
+        android:label="@string/order_detail"
+        tools:layout="@layout/fragment_order_detail">
+        
+        <argument
+            android:name="orderId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/productionDetailFragment"
+        android:name="com.betonapp.ui.production.ProductionDetailFragment"
+        android:label="@string/production_detail"
+        tools:layout="@layout/fragment_production_detail">
+        
+        <argument
+            android:name="productionId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/inventoryDetailFragment"
+        android:name="com.betonapp.ui.inventory.InventoryDetailFragment"
+        android:label="Détail de l'inventaire"
+        tools:layout="@layout/fragment_inventory_detail">
+
+        <argument
+            android:name="inventoryItemId"
+            app:argType="long" />
+    </fragment>
+
+    <!-- Fragments de création -->
+    <fragment
+        android:id="@+id/createOrderFragment"
+        android:name="com.betonapp.ui.orders.CreateOrderFragment"
+        android:label="Créer une commande"
+        tools:layout="@layout/fragment_create_order" />
+
+    <fragment
+        android:id="@+id/createProductionFragment"
+        android:name="com.betonapp.ui.production.CreateProductionFragment"
+        android:label="Créer un ordre de production"
+        tools:layout="@layout/fragment_create_production" />
+
+    <fragment
+        android:id="@+id/addInventoryFragment"
+        android:name="com.betonapp.ui.inventory.AddInventoryFragment"
+        android:label="Ajouter une matière première"
+        tools:layout="@layout/fragment_add_inventory" />
+
+</navigation>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Béton App</string>
+    
+    <!-- Navigation -->
+    <string name="nav_dashboard">Tableau de bord</string>
+    <string name="nav_orders">Commandes</string>
+    <string name="nav_production">Production</string>
+    <string name="nav_inventory">Inventaire</string>
+    <string name="nav_stock">Stock</string>
+    <string name="nav_clients">Clients</string>
+    <string name="nav_reports">Rapports</string>
+    
+    <!-- Authentication -->
+    <string name="login_title">Connexion</string>
+    <string name="username">Nom d\'utilisateur</string>
+    <string name="password">Mot de passe</string>
+    <string name="login">Se connecter</string>
+    <string name="login_subtitle">Connectez-vous pour accéder à l\'application</string>
+    <string name="version_info">Version 1.0.0</string>
+    <string name="logout">Déconnexion</string>
+    <string name="login_error">Erreur de connexion</string>
+    <string name="login_success">Connexion réussie</string>
+    
+    <!-- Dashboard -->
+    <string name="dashboard_title">Tableau de bord</string>
+    <string name="total_orders">Commandes totales</string>
+    <string name="orders_in_progress">Commandes en cours</string>
+    <string name="monthly_production">Production mensuelle</string>
+    <string name="monthly_revenue">CA Mensuel</string>
+    <string name="daily_production">Production Quotidienne</string>
+    <string name="critical_stock">Stock Critique</string>
+    <string name="fuel_consumption">Consommation Carburant</string>
+    <string name="production_chart_title">Production par Type</string>
+
+
+    <!-- Orders -->
+    <string name="orders_title">Commandes</string>
+    <string name="new_order">Nouvelle commande</string>
+    <string name="order_number">N° Commande</string>
+    <string name="client_name">Client</string>
+    <string name="concrete_type">Type de béton</string>
+    <string name="quantity">Quantité</string>
+    <string name="delivery_date">Date de livraison</string>
+    <string name="order_status">Statut</string>
+    <string name="total_price">Prix total</string>
+    
+    <!-- Order Status -->
+    <string name="status_pending">En attente</string>
+    <string name="status_in_production">En production</string>
+    <string name="status_completed">Terminée</string>
+    <string name="status_cancelled">Annulée</string>
+    
+    <!-- Production -->
+    <string name="production_title">Production</string>
+    <string name="production_orders">Ordres de production</string>
+    <string name="production_date">Date de production</string>
+    <string name="operator">Opérateur</string>
+    <string name="produced_quantity">Quantité produite</string>
+    <string name="production_notes">Notes</string>
+    <string name="no_production_data">Aucune donnée de production</string>
+    <string name="add_production">Ajouter une production</string>
+    
+    <!-- Stock -->
+    <string name="stock_title">Stock</string>
+    <string name="raw_materials">Matières premières</string>
+    <string name="material_name">Nom du matériau</string>
+    <string name="current_stock">Stock actuel</string>
+    <string name="minimum_stock">Stock minimum</string>
+    <string name="unit_price">Prix unitaire</string>
+    <string name="stock_status">Statut du stock</string>
+    <string name="stock_normal">Normal</string>
+    <string name="stock_low">Faible</string>
+    <string name="stock_critical">Critique</string>
+    
+    <!-- Inventory -->
+    <string name="no_inventory_items">Aucun élément d\'inventaire</string>
+    <string name="add_inventory_item">Ajouter un élément d\'inventaire</string>
+    
+    <!-- Clients -->
+    <string name="clients_title">Clients</string>
+    <string name="new_client">Nouveau client</string>
+    <string name="client_address">Adresse</string>
+    <string name="client_phone">Téléphone</string>
+    <string name="client_email">Email</string>
+    
+    <!-- Common -->
+    <string name="save">Enregistrer</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+    <string name="edit">Modifier</string>
+    <string name="add">Ajouter</string>
+    <string name="add_new">Ajouter nouveau</string>
+    <string name="search">Rechercher</string>
+    <string name="filter">Filtrer</string>
+    <string name="refresh">Actualiser</string>
+    <string name="loading">Chargement...</string>
+    <string name="error">Erreur</string>
+    <string name="success">Succès</string>
+    <string name="no_data">Aucune donnée</string>
+    <string name="retry">Réessayer</string>
+    
+    <!-- Error Messages -->
+    <string name="network_error">Erreur de réseau</string>
+    <string name="server_error">Erreur serveur</string>
+    <string name="unknown_error">Erreur inconnue</string>
+    <string name="field_required">Ce champ est requis</string>
+    <string name="invalid_email">Email invalide</string>
+    <string name="invalid_phone">Numéro de téléphone invalide</string>
+    
+    <!-- Units -->
+    <string name="unit_m3">m³</string>
+    <string name="unit_tonne">tonne</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_liter">litre</string>
+    <string name="currency_euro">€</string>
+    
+    <!-- Date/Time -->
+    <string name="today">Aujourd\'hui</string>
+    <string name="yesterday">Hier</string>
+    <string name="this_week">Cette semaine</string>
+    <string name="this_month">Ce mois</string>
+    <string name="last_updated">Dernière mise à jour</string>
+    
+    <!-- Additional Navigation -->
+    <string name="notifications">Notifications</string>
+    <string name="settings">Paramètres</string>
+    <string name="order_detail">Détail commande</string>
+    <string name="production_detail">Détail production</string>
+    
+    <!-- Detail Fragments -->
+    <string name="client_information">Informations client</string>
+    <string name="order_information">Informations commande</string>
+    <string name="order_details">Détails de la commande</string>
+    <string name="production_details">Détails de la production</string>
+    <string name="pricing">Tarification</string>
+    <string name="notes">Notes</string>
+    <string name="no_chantier">Aucun chantier</string>
+    <string name="order_date">Date de commande</string>
+    <string name="quantity_produced">Quantité produite</string>
+    <string name="status_in_progress">En cours</string>
+    
+    <!-- Format Strings -->
+    <string name="quantity_format">%.1f m³</string>
+    <string name="unit_price_format">%s/m³</string>
+    
+    <!-- Version Info -->
+    <string name="version">Version</string>
+    <string name="app_subtitle">Gestion de production béton</string>
+</resources>

@@ -28,7 +28,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p@d@^s-=+^db)j4*#*v0@
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Configuration ALLOWED_HOSTS pour production et développement
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
+# Autoriser l'hôte de l'émulateur Android (10.0.2.2)
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver', '10.0.2.2']
 
 # Ajout automatique du hostname Render
 RENDER_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -51,6 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
     'activity',
     'billing',
     'customers',
@@ -62,6 +65,7 @@ INSTALLED_APPS = [
     'production',
     'reports',
     'stock',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -152,30 +156,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Configuration WhiteNoise pour la production
 if os.environ.get('DEBUG') == 'False':
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    
-# Configuration des types MIME pour WhiteNoise
-WHITENOISE_MIMETYPES = {
-    '.css': 'text/css',
-    '.js': 'application/javascript',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon',
-    '.woff': 'font/woff',
-    '.woff2': 'font/woff2',
-    '.ttf': 'font/ttf',
-    '.eot': 'application/vnd.ms-fontobject',
-}
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 # Default primary key field type
@@ -254,6 +240,32 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'INFO',
     },
+}
+
+# Configuration Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+}
+
+# Configuration JWT
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 # Import des paramètres de production si nécessaire

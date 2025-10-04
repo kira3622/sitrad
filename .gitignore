@@ -114,3 +114,6 @@ temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Android
+android_app/.gradle_user_home/

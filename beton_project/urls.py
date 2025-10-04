@@ -21,9 +21,17 @@ from django.views.generic.base import RedirectView
 urlpatterns = [
     path('', RedirectView.as_view(url='/admin/', permanent=True)),
     path('admin/', admin.site.urls),
+    
+    # Applications web
     path('activity/', include('activity.urls')),
     path('reports/', include('reports.urls')),
     path('billing/', include('billing.urls')),
     path('production/', include('production.urls')),
     path('fuel/', include('fuel_management.urls')),
+    
+    # API REST
+    path('api/v1/', include('api.urls')),
+    
+    # Interface de navigation de l'API (pour le développement)
+    path('api-auth/', include('rest_framework.urls')),
 ]

@@ -1,102 +1,120 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-Script de déploiement pour Render
-Résout les problèmes courants de base de données et de migrations
+Script de déploiement automatisé pour l'API Béton sur Render
 """
 import os
+import subprocess
 import sys
-import django
-from django.core.management import execute_from_command_line
+import json
+import time
 
-def setup_django():
-    """Configure Django pour le script"""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beton_project.settings')
-    django.setup()
-
-def run_migrations():
-    """Exécute les migrations de base de données"""
-    print("🔄 Exécution des migrations...")
+def run_command(command, description):
+    """Exécute une commande et affiche le résultat"""
+    print(f"\n🔄 {description}...")
     try:
-        execute_from_command_line(['manage.py', 'migrate', '--noinput'])
-        print("✅ Migrations terminées avec succès")
-        return True
-    except Exception as e:
-        print(f"❌ Erreur lors des migrations: {e}")
-        return False
-
-def collect_static():
-    """Collecte les fichiers statiques"""
-    print("🔄 Collecte des fichiers statiques...")
-    try:
-        execute_from_command_line(['manage.py', 'collectstatic', '--noinput'])
-        print("✅ Fichiers statiques collectés")
-        return True
-    except Exception as e:
-        print(f"❌ Erreur lors de la collecte: {e}")
-        return False
-
-def create_superuser():
-    """Crée un superutilisateur si nécessaire"""
-    print("🔄 Vérification du superutilisateur...")
-    try:
-        from django.contrib.auth.models import User
-        if not User.objects.filter(is_superuser=True).exists():
-            User.objects.create_superuser(
-                username=os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin'),
-                email=os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@example.com'),
-                password=os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123')
-            )
-            print("✅ Superutilisateur créé")
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"✅ {description} - Succès")
+            if result.stdout:
+                print(f"📝 Output: {result.stdout.strip()}")
+            return True
         else:
-            print("✅ Superutilisateur existe déjà")
-        return True
+            print(f"❌ {description} - Erreur")
+            print(f"📝 Error: {result.stderr.strip()}")
+            return False
     except Exception as e:
-        print(f"❌ Erreur lors de la création du superutilisateur: {e}")
+        print(f"❌ {description} - Exception: {str(e)}")
         return False
 
-def check_database():
-    """Vérifie la connexion à la base de données"""
-    print("🔄 Vérification de la base de données...")
-    try:
-        from django.db import connection
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-        print("✅ Connexion à la base de données OK")
-        return True
-    except Exception as e:
-        print(f"❌ Erreur de connexion à la base de données: {e}")
-        return False
+def check_git_status():
+    """Vérifie le statut Git"""
+    print("\n📋 Vérification du statut Git...")
+    run_command("git status", "Statut Git")
+    
+def commit_and_push():
+    """Commit et push les changements"""
+    print("\n📤 Préparation du déploiement...")
+    
+    # Ajouter tous les fichiers
+    if run_command("git add .", "Ajout des fichiers"):
+        # Commit avec message automatique
+        commit_msg = f"Deploy API with full features - {time.strftime('%Y-%m-%d %H:%M:%S')}"
+        if run_command(f'git commit -m "{commit_msg}"', "Commit des changements"):
+            # Push vers le repository
+            if run_command("git push origin main", "Push vers GitHub"):
+                print("✅ Code déployé avec succès sur GitHub!")
+                return True
+    return False
+
+def display_deployment_info():
+    """Affiche les informations de déploiement"""
+    print("\n" + "="*60)
+    print("🚀 DÉPLOIEMENT DE L'API BÉTON")
+    print("="*60)
+    print("\n📋 Informations de déploiement:")
+    print("• Service: Render.com")
+    print("• Type: Web Service (Free Plan)")
+    print("• Base de données: PostgreSQL (Free Plan)")
+    print("• URL de production: https://beton-project.onrender.com")
+    print("• API Endpoint: https://beton-project.onrender.com/api/v1/")
+    print("\n🔧 Configuration:")
+    print("• Python 3.11")
+    print("• Django + Django REST Framework")
+    print("• Authentification JWT")
+    print("• Base de données PostgreSQL")
+    print("• Fichiers statiques avec WhiteNoise")
 
 def main():
-    """Fonction principale de déploiement"""
-    print("🚀 Début du déploiement...")
+    """Fonction principale"""
+    display_deployment_info()
     
-    setup_django()
+    print("\n🔍 Vérifications pré-déploiement...")
     
-    success = True
+    # Vérifier que nous sommes dans le bon répertoire
+    if not os.path.exists("manage.py"):
+        print("❌ Erreur: manage.py non trouvé. Assurez-vous d'être dans le répertoire du projet.")
+        sys.exit(1)
     
-    # Vérification de la base de données
-    if not check_database():
-        success = False
+    # Vérifier la configuration
+    if not os.path.exists("render.yaml"):
+        print("❌ Erreur: render.yaml non trouvé.")
+        sys.exit(1)
     
-    # Exécution des migrations
-    if success and not run_migrations():
-        success = False
+    if not os.path.exists("requirements.txt"):
+        print("❌ Erreur: requirements.txt non trouvé.")
+        sys.exit(1)
     
-    # Collecte des fichiers statiques
-    if success and not collect_static():
-        success = False
+    print("✅ Tous les fichiers de configuration sont présents")
     
-    # Création du superutilisateur
-    if success and not create_superuser():
-        success = False
+    # Vérifier le statut Git
+    check_git_status()
     
-    if success:
-        print("🎉 Déploiement terminé avec succès!")
-        return 0
+    # Demander confirmation
+    response = input("\n❓ Voulez-vous procéder au déploiement? (y/N): ")
+    if response.lower() not in ['y', 'yes', 'oui']:
+        print("🚫 Déploiement annulé.")
+        sys.exit(0)
+    
+    # Effectuer le déploiement
+    if commit_and_push():
+        print("\n" + "="*60)
+        print("🎉 DÉPLOIEMENT INITIÉ AVEC SUCCÈS!")
+        print("="*60)
+        print("\n📋 Prochaines étapes:")
+        print("1. Connectez-vous à https://render.com")
+        print("2. Créez un nouveau Web Service")
+        print("3. Connectez votre repository GitHub")
+        print("4. Render détectera automatiquement render.yaml")
+        print("5. Le déploiement commencera automatiquement")
+        print("\n⏱️  Temps de déploiement estimé: 5-10 minutes")
+        print("\n🔗 Une fois déployé, votre API sera accessible à:")
+        print("   https://beton-project.onrender.com/api/v1/")
+        print("\n📚 Documentation de l'API:")
+        print("   https://beton-project.onrender.com/api/v1/")
+        print("   (Interface de navigation Django REST Framework)")
     else:
-        print("💥 Échec du déploiement")
-        return 1
+        print("\n❌ Échec du déploiement. Vérifiez les erreurs ci-dessus.")
+        sys.exit(1)
 
-if __name__ == '__main__':
-    sys.exit(main())
+if __name__ == "__main__":
+    main()

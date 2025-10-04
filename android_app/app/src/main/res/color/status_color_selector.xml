@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- En attente - Orange -->
+    <item android:color="@color/status_pending" android:state_selected="true" />
+    <!-- En cours - Bleu -->
+    <item android:color="@color/status_in_progress" android:state_activated="true" />
+    <!-- Terminé - Vert -->
+    <item android:color="@color/status_completed" android:state_checked="true" />
+    <!-- Annulé - Rouge -->
+    <item android:color="@color/status_cancelled" android:state_pressed="true" />
+    <!-- Par défaut -->
+    <item android:color="@color/text_secondary" />
+</selector>
