@@ -6,11 +6,13 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.betonapp.BuildConfig
 import com.betonapp.data.api.ApiService
+import com.betonapp.data.api.AuthAuthenticator
 import com.betonapp.data.api.AuthInterceptor
 import com.betonapp.data.api.Utf8Interceptor
 import com.betonapp.data.local.TokenManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,13 +22,9 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
-/**
- * Module Hilt pour l'injection de dÃ©pendances rÃ©seau
- */
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -43,6 +41,15 @@ object NetworkModule {
     @Singleton
     fun provideTokenManager(dataStore: DataStore<Preferences>): TokenManager {
         return TokenManager(dataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthAuthenticator(
+        tokenManager: TokenManager,
+        apiService: Lazy<ApiService>
+    ): AuthAuthenticator {
+        return AuthAuthenticator(tokenManager, apiService)
     }
 
     @Provides
@@ -81,13 +88,15 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
+        authAuthenticator: AuthAuthenticator,
         authInterceptor: AuthInterceptor,
         utf8Interceptor: Utf8Interceptor,
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(utf8Interceptor) // Ajouter en premier pour configurer l'encodage
+            .addInterceptor(utf8Interceptor)
             .addInterceptor(authInterceptor)
+            .authenticator(authAuthenticator)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

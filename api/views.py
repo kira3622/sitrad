@@ -14,12 +14,14 @@ from inventory.models import MatierePremiere
 from logistics.models import Livraison
 from billing.models import Facture
 from fuel_management.models import Fournisseur, Engin, Approvisionnement, Stock
+from formulas.models import FormuleBeton
 
 from .serializers import (
     UserSerializer, ClientSerializer, CommandeSerializer,
     OrdreProductionSerializer, MatierePremiereSerializer,
     LivraisonSerializer, FactureSerializer, FournisseurSerializer,
     EnginSerializer, ApprovisionnementSerializer, StockCarburantSerializer,
+    FormuleBetonSerializer,
     DashboardStatsSerializer
 )
 
@@ -94,6 +96,12 @@ class ApprovisionnementViewSet(viewsets.ModelViewSet):
 class StockCarburantViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockCarburantSerializer
+    permission_classes = [IsAuthenticated]
+
+
+class FormuleBetonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = FormuleBeton.objects.all()
+    serializer_class = FormuleBetonSerializer
     permission_classes = [IsAuthenticated]
 
 

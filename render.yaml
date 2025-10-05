@@ -1,10 +1,10 @@
-# Configuration Render pour beton-project - Force deployment
+# Configuration Render pour beton-project - Diagnostic et correction formules
 services:
   - type: web
     name: beton-project
     env: python
     plan: free
-    buildCommand: "./build.sh"
+    buildCommand: "python render_build.py"
     startCommand: "python manage.py migrate --noinput && python create_superuser.py && gunicorn beton_project.wsgi:application"
     envVars:
       - key: PYTHON_VERSION

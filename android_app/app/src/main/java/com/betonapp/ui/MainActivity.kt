@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
 
         setupToolbar()
         setupNavigation()
+        checkAuthenticationState()
         // Éviter la redirection immédiate avant que l'état d'auth soit émis
         observeViewModel()
     }

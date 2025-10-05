@@ -14,7 +14,11 @@ class ProductionRepository @Inject constructor(
     
     suspend fun getProductionOrders(): List<OrdreProduction> {
         val response = apiService.getOrdresProduction()
-        return response.body()?.results ?: emptyList()
+        if (response.isSuccessful) {
+            return response.body()?.results ?: emptyList()
+        } else {
+            throw Exception("Erreur ${response.code()}: ${response.message()}")
+        }
     }
     
     suspend fun getProductionOrderById(id: Int): OrdreProduction {
@@ -44,9 +48,9 @@ class ProductionRepository @Inject constructor(
             val productions = response.body()?.results ?: emptyList()
             val normalizedQuery = EncodingUtils.normalizeFrenchForSearch(query)
             productions.filter { production ->
-                EncodingUtils.normalizeFrenchForSearch(production.numeroOrdre).contains(normalizedQuery, ignoreCase = true) ||
-                EncodingUtils.normalizeFrenchForSearch(production.commande.numeroCommande).contains(normalizedQuery, ignoreCase = true) ||
-                EncodingUtils.normalizeFrenchForSearch(production.operateur).contains(normalizedQuery, ignoreCase = true)
+                EncodingUtils.normalizeFrenchForSearch(production.numeroBon ?: "").contains(normalizedQuery, ignoreCase = true) ||
+                production.commandeId.toString().contains(normalizedQuery, ignoreCase = true) ||
+                EncodingUtils.normalizeFrenchForSearch(production.statut).contains(normalizedQuery, ignoreCase = true)
             }
         } catch (e: Exception) {
             throw Exception("Erreur lors de la recherche de productions: ${e.message}")

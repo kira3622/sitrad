@@ -21,7 +21,8 @@ data class RefreshTokenRequest(
 )
 
 data class RefreshTokenResponse(
-    val access: String
+    val access: String,
+    val refresh: String?
 )
 
 data class User(

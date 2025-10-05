@@ -44,31 +44,32 @@ class ProductionAdapter(
 
         fun bind(production: OrdreProduction) {
             binding.apply {
-                textProductionNumber.text = production.numeroOrdre
+                textProductionNumber.text = production.numeroBon ?: "—"
                 textProductionStatus.text = production.statut
-                textOrderReference.text = "Commande: ${production.commande.numeroCommande}"
-                textConcreteType.text = production.operateur
-                textQuantity.text = "${production.quantiteProduite} m³"
-                
-                // Format date
-                val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                textOrderReference.text = "Commande: #${production.commandeId}"
+                textConcreteType.text = "" // Champ non disponible côté backend
+                textQuantity.text = "${production.quantiteProduire} m³"
+
+                // Format date: parse input (yyyy-MM-dd) then format (dd/MM/yyyy)
+                val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 textProductionDate.text = try {
-                    dateFormat.parse(production.dateProduction)?.let { 
-                        dateFormat.format(it) 
+                    inputFormat.parse(production.dateProduction)?.let {
+                        outputFormat.format(it)
                     } ?: production.dateProduction
                 } catch (e: Exception) {
                     production.dateProduction
                 }
 
                 // Set status color
-                // Remplacer la référence à status_default par une couleur standard
-                val statusColor = when (production.statut.lowercase()) {
-                    "en_attente" -> android.R.color.holo_orange_light
+                val statusColorRes = when (production.statut.lowercase()) {
+                    "planifie" -> android.R.color.darker_gray
                     "en_cours" -> android.R.color.holo_blue_light
                     "termine" -> android.R.color.holo_green_light
                     "annule" -> android.R.color.holo_red_light
                     else -> android.R.color.darker_gray
                 }
+                val statusColor = ContextCompat.getColor(root.context, statusColorRes)
                 textProductionStatus.setTextColor(statusColor)
             }
         }

@@ -67,21 +67,16 @@ class ProductionDetailFragment : Fragment() {
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
         binding.apply {
-            textProductionNumber.text = production.numeroOrdre
-            textOrderNumber.text = production.commande.numeroCommande
-            textClientName.text = production.commande.client.nom
+            textProductionNumber.text = production.numeroBon ?: "—"
+            textOrderNumber.text = "#${production.commandeId}"
+            textClientName.text = "—"
             textProductionDate.text = dateFormat.format(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(production.dateProduction) ?: Date())
-            textQuantityProduced.text = getString(R.string.quantity_format, production.quantiteProduite)
-            textOperator.text = production.operateur
-            
-            // Handle notes
-            if (production.notes.isNullOrBlank()) {
-                cardNotes.visibility = View.GONE
-            } else {
-                cardNotes.visibility = View.VISIBLE
-                textNotes.text = production.notes
-            }
-            
+            textQuantityProduced.text = getString(R.string.quantity_format, production.quantiteProduire)
+            textOperator.text = "—"
+
+            // Notes non disponibles dans le modèle actuel
+            cardNotes.visibility = View.GONE
+
             // Set status chip
             chipStatus.text = getStatusText(production.statut)
             chipStatus.setChipBackgroundColorResource(getStatusColor(production.statut))

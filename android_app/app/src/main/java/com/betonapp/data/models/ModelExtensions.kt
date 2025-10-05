@@ -34,10 +34,7 @@ fun Chantier.withUtf8Encoding(): Chantier {
  */
 fun Commande.withUtf8Encoding(): Commande {
     return this.copy(
-        numeroCommande = EncodingUtils.encodeForApi(numeroCommande) ?: numeroCommande,
-        client = client.withUtf8Encoding(),
-        chantier = chantier?.withUtf8Encoding(),
-        typeBeton = EncodingUtils.encodeForApi(typeBeton) ?: typeBeton
+        statut = EncodingUtils.encodeForApi(statut) ?: statut
     )
 }
 
@@ -46,10 +43,7 @@ fun Commande.withUtf8Encoding(): Commande {
  */
 fun OrdreProduction.withUtf8Encoding(): OrdreProduction {
     return this.copy(
-        numeroOrdre = EncodingUtils.encodeForApi(numeroOrdre) ?: numeroOrdre,
-        commande = commande.withUtf8Encoding(),
-        operateur = EncodingUtils.encodeForApi(operateur) ?: operateur,
-        notes = EncodingUtils.encodeForApi(notes)
+        numeroBon = EncodingUtils.encodeForApi(numeroBon) ?: numeroBon
     )
 }
 

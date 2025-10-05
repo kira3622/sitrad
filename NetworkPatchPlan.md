@@ -1,0 +1,1 @@
+This file records a planned change to the OkHttp client to force HTTP/1.1 protocols and enable connection retry to mitigate unexpected end-of-stream errors observed on emulator with Render-hosted API.

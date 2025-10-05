@@ -7,6 +7,7 @@ import com.betonapp.data.repository.DashboardRepository
 import com.betonapp.data.repository.InventoryRepository
 import com.betonapp.data.repository.OrdersRepository
 import com.betonapp.data.repository.ProductionRepository
+import com.betonapp.data.repository.FormulasRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -56,5 +57,13 @@ object RepositoryModule {
         apiService: ApiService
     ): InventoryRepository {
         return InventoryRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFormulasRepository(
+        apiService: ApiService
+    ): FormulasRepository {
+        return FormulasRepository(apiService)
     }
 }

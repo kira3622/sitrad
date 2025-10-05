@@ -48,7 +48,12 @@ class AuthRepository @Inject constructor(
                 val response = apiService.refreshToken(RefreshTokenRequest(refreshToken))
                 if (response.isSuccessful) {
                     response.body()?.let { refreshResponse ->
+                        // Mettre à jour l'access token
                         tokenManager.updateAccessToken(refreshResponse.access)
+                        // Si le serveur renvoie un nouveau refresh token (rotation), le sauvegarder
+                        refreshResponse.refresh?.let { newRefresh ->
+                            tokenManager.saveTokens(refreshResponse.access, newRefresh)
+                        }
                         emit(Result.success(refreshResponse.access))
                     } ?: emit(Result.failure(Exception("Impossible de rafraîchir le token")))
                 } else {

@@ -54,18 +54,31 @@ class CreateOrderFragment : Fragment() {
     }
 
     private fun setupViews() {
-        // Configuration du dropdown pour le type de béton
-        val typeBetonOptions = arrayOf(
-            "C20/25", "C25/30", "C30/37", "C35/45", "C40/50",
-            "Béton armé", "Béton précontraint", "Béton léger",
-            "Béton haute performance", "Béton autoplaçant"
-        )
-        val typeBetonAdapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_dropdown_item_1line,
-            typeBetonOptions
-        )
-        binding.actvTypeBeton.setAdapter(typeBetonAdapter)
+        // Configuration du dropdown pour le type de béton depuis les formules existantes
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.formulas.collect { formulas ->
+                val names = formulas.map { it.nom }
+                val adapter = ArrayAdapter(
+                    requireContext(),
+                    android.R.layout.simple_dropdown_item_1line,
+                    names
+                )
+                binding.actvTypeBeton.setAdapter(adapter)
+
+                // Effacer l’erreur si on a des formules
+                val typeBetonLayout = binding.actvTypeBeton.parent.parent as? com.google.android.material.textfield.TextInputLayout
+                if (names.isNotEmpty()) {
+                    typeBetonLayout?.error = null
+                } else {
+                    // Afficher un message explicite quand aucune formule n’est disponible
+                    typeBetonLayout?.error = "Aucune formule disponible"
+                    // Proposer un réessai rapide
+                    Snackbar.make(binding.root, "Aucune formule disponible", Snackbar.LENGTH_LONG)
+                        .setAction("Réessayer") { viewModel.loadFormulas() }
+                        .show()
+                }
+            }
+        }
 
         // Configuration de la validation pour les caractères spéciaux français
         setupValidation()
@@ -233,10 +246,16 @@ class CreateOrderFragment : Fragment() {
             chantierLayout?.clearError()
         }
 
-        // Validation du type de béton
-        if (binding.actvTypeBeton.text.isNullOrEmpty()) {
+        // Validation du type de béton (doit correspondre à une formule existante)
+        val selectedType = binding.actvTypeBeton.text?.toString()?.trim()
+        val formulaNames = viewModel.formulas.value.map { it.nom }
+        if (selectedType.isNullOrEmpty() || !formulaNames.contains(selectedType)) {
             val typeBetonLayout = binding.actvTypeBeton.parent.parent as? com.google.android.material.textfield.TextInputLayout
-            typeBetonLayout?.error = "Type de béton requis"
+            typeBetonLayout?.error = if (formulaNames.isEmpty()) {
+                "Aucune formule disponible"
+            } else {
+                "Sélectionnez une formule existante"
+            }
             isValid = false
         }
 

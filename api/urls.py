@@ -20,6 +20,7 @@ router.register(r'fournisseurs', views.FournisseurViewSet)
 router.register(r'engins', views.EnginViewSet)
 router.register(r'approvisionnements', views.ApprovisionnementViewSet)
 router.register(r'stock-carburant', views.StockCarburantViewSet)
+router.register(r'formules', views.FormuleBetonViewSet)
 
 app_name = 'api'
 

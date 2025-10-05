@@ -115,12 +115,7 @@ class CreateProductionFragment : Fragment() {
         if (quantiteText.isNotEmpty()) {
             try {
                 val quantite = quantiteText.toDouble()
-                val selectedCommande = viewModel.getSelectedCommande()
-                
-                if (selectedCommande != null && quantite > selectedCommande.quantite) {
-                    binding.etQuantiteProduite.error = 
-                        "La quantité ne peut pas dépasser ${selectedCommande.quantite} m³"
-                } else if (quantite <= 0) {
+                if (quantite <= 0) {
                     binding.etQuantiteProduite.error = "La quantité doit être positive"
                 } else {
                     binding.etQuantiteProduite.error = null
@@ -213,10 +208,10 @@ class CreateProductionFragment : Fragment() {
         binding.btnCreer.isEnabled = !uiState.isLoading
         binding.btnAnnuler.isEnabled = !uiState.isLoading
 
-        // Mise à jour de la liste des commandes
+        // Mise à jour de la liste des commandes (nouveau modèle)
         if (uiState.commandes.isNotEmpty()) {
             val commandeNames = uiState.commandes.map { 
-                "${it.numeroCommande} - ${it.client.nom} (${it.quantite} m³)" 
+                "#${it.id} - ${it.clientNom ?: "Client #${it.clientId}"}" 
             }
             val adapter = ArrayAdapter(
                 requireContext(),
@@ -229,11 +224,10 @@ class CreateProductionFragment : Fragment() {
         // Mise à jour des informations de la commande sélectionnée
         uiState.selectedCommande?.let { commande ->
             val details = buildString {
-                append("Client: ${commande.client.nom}\n")
-                commande.chantier?.let { append("Chantier: ${it.nom}\n") }
-                append("Type béton: ${commande.typeBeton}\n")
-                append("Quantité: ${commande.quantite} m³\n")
-                append("Date livraison: ${commande.dateLivraisonPrevue}")
+                append("Client: ${commande.clientNom ?: "#${commande.clientId}"}\n")
+                commande.chantierId?.let { append("Chantier: #$it\n") }
+                append("Date livraison: ${commande.dateLivraisonSouhaitee}\n")
+                append("Statut: ${commande.statut}")
             }
             binding.tvCommandeDetails.text = details
             binding.cardCommandeInfo.visibility = View.VISIBLE

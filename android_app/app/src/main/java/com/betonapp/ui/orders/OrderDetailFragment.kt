@@ -67,19 +67,18 @@ class OrderDetailFragment : Fragment() {
 
     private fun bindOrderData(order: Commande) {
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        val currencyFormat = NumberFormat.getCurrencyInstance(Locale.FRANCE)
 
         binding.apply {
-            textOrderNumber.text = order.numeroCommande
-            textClientName.text = order.client.nom
-            textChantierName.text = order.chantier?.nom ?: getString(R.string.no_chantier)
-            textConcreteType.text = order.typeBeton
-            textQuantity.text = getString(R.string.quantity_format, order.quantite)
+            textOrderNumber.text = "Commande #${order.id}"
+            textClientName.text = order.clientNom ?: "Client #${order.clientId}"
+            textChantierName.text = order.chantierId?.let { "Chantier #$it" } ?: getString(R.string.no_chantier)
+            textConcreteType.text = ""
+            textQuantity.text = ""
             textOrderDate.text = dateFormat.format(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(order.dateCommande) ?: Date())
-            textDeliveryDate.text = dateFormat.format(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(order.dateLivraisonPrevue) ?: Date())
-            textUnitPrice.text = getString(R.string.unit_price_format, currencyFormat.format(order.prixUnitaire))
-            textTotalPrice.text = currencyFormat.format(order.prixTotal)
-            
+            textDeliveryDate.text = dateFormat.format(SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(order.dateLivraisonSouhaitee) ?: Date())
+            textUnitPrice.text = ""
+            textTotalPrice.text = ""
+
             // Set status chip
             chipStatus.text = getStatusText(order.statut)
             chipStatus.setChipBackgroundColorResource(getStatusColor(order.statut))

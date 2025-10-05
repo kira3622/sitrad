@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Log
 
 data class ProductionUiState(
     val productions: List<OrdreProduction> = emptyList(),
@@ -36,8 +37,10 @@ class ProductionViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 val productions = productionRepository.getAllProductions()
+                Log.d("ProductionViewModel", "Productions loaded: ${productions.size}")
                 _uiState.value = _uiState.value.copy(productions = productions, isLoading = false)
             } catch (e: Exception) {
+                Log.e("ProductionViewModel", "Error loading productions", e)
                 _uiState.value = _uiState.value.copy(errorMessage = e.message, isLoading = false)
             }
         }
@@ -48,8 +51,10 @@ class ProductionViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isRefreshing = true)
             try {
                 val productions = productionRepository.getAllProductions()
+                Log.d("ProductionViewModel", "Productions refreshed: ${productions.size}")
                 _uiState.value = _uiState.value.copy(productions = productions, isRefreshing = false)
             } catch (e: Exception) {
+                Log.e("ProductionViewModel", "Error refreshing productions", e)
                 _uiState.value = _uiState.value.copy(errorMessage = e.message, isRefreshing = false)
             }
         }

@@ -26,7 +26,8 @@ android {
 
         // Configuration de l'API
         buildConfigField("String", "BASE_URL", "\"https://sitrad-web.onrender.com/api/v1/\"")
-        buildConfigField("String", "BASE_URL_DEBUG", "\"https://sitrad-web.onrender.com/\"")
+        // En debug, pointer vers le site en ligne
+        buildConfigField("String", "BASE_URL_DEBUG", "\"https://sitrad-web.onrender.com/api/v1/\"")
     }
 
     buildTypes {

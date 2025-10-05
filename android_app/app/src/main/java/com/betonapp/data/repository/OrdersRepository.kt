@@ -68,7 +68,7 @@ class OrdersRepository @Inject constructor(
     }
 
     suspend fun getOrdersByStatus(status: String): List<Commande> {
-        val response = apiService.getCommandes(statut = status)
+        val response = apiService.getCommandes(status = status)
         return if (response.isSuccessful) {
             response.body()?.results ?: emptyList()
         } else {

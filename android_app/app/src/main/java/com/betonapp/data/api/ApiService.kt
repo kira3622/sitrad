@@ -72,7 +72,7 @@ interface ApiService {
         @Query("search") search: String? = null,
         @Query("client") clientId: Int? = null,
         @Query("chantier") chantierId: Int? = null,
-        @Query("statut") statut: String? = null,
+        @Query("status") status: String? = null,
         @Query("date_commande_after") dateAfter: String? = null,
         @Query("date_commande_before") dateBefore: String? = null,
         @Query("ordering") ordering: String? = null
@@ -89,6 +89,17 @@ interface ApiService {
     
     @DELETE("commandes/{id}/")
     suspend fun deleteCommande(@Path("id") id: Int): Response<Unit>
+
+    // ==================== FORMULES BÉTON ====================
+    @GET("formules/")
+    suspend fun getFormules(
+        @Query("page") page: Int? = null,
+        @Query("search") search: String? = null,
+        @Query("ordering") ordering: String? = null
+    ): Response<PaginatedResponse<FormuleBeton>>
+
+    @GET("formules/{id}/")
+    suspend fun getFormule(@Path("id") id: Int): Response<FormuleBeton>
 
     // ==================== PRODUCTION ====================
     

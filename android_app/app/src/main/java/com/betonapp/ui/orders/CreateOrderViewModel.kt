@@ -6,6 +6,8 @@ import com.betonapp.data.models.Chantier
 import com.betonapp.data.models.Client
 import com.betonapp.data.models.Commande
 import com.betonapp.data.repository.OrdersRepository
+import com.betonapp.data.models.FormuleBeton
+import com.betonapp.data.repository.FormulasRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +25,31 @@ data class CreateOrderUiState(
 
 @HiltViewModel
 class CreateOrderViewModel @Inject constructor(
-    private val ordersRepository: OrdersRepository
+    private val ordersRepository: OrdersRepository,
+    private val formulasRepository: FormulasRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateOrderUiState())
     val uiState: StateFlow<CreateOrderUiState> = _uiState.asStateFlow()
+
+    private val _formulas = MutableStateFlow<List<FormuleBeton>>(emptyList())
+    val formulas: StateFlow<List<FormuleBeton>> = _formulas.asStateFlow()
+
+    init {
+        loadFormulas()
+    }
+
+    fun loadFormulas() {
+        viewModelScope.launch {
+            try {
+                val list = formulasRepository.getFormulas()
+                _formulas.value = list
+            } catch (e: Exception) {
+                _formulas.value = emptyList()
+                _uiState.value = _uiState.value.copy(errorMessage = "Impossible de charger les formules")
+            }
+        }
+    }
 
     fun createOrder(
         numeroCommande: String,
@@ -42,43 +64,15 @@ class CreateOrderViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             try {
-                // Création d'un client temporaire (dans une vraie app, on sélectionnerait depuis une liste)
-                val clientObj = Client(
-                    id = 0, // L'API assignera un ID
-                    nom = client,
-                    email = "",
-                    telephone = "",
-                    adresse = "",
-                    dateCreation = getCurrentDate()
-                )
-
-                // Création d'un chantier temporaire si spécifié
-                val chantierObj = chantier?.let {
-                    Chantier(
-                        id = 0,
-                        nom = it,
-                        adresse = "",
-                        client = clientObj,
-                        dateDebut = getCurrentDate(),
-                        dateFinPrevue = dateLivraisonPrevue,
-                        statut = "actif"
-                    )
-                }
-
-                val prixTotal = quantite * prixUnitaire
-
+                // Nouveau modèle Commande: IDs et champs simplifiés
                 val nouvelleCommande = Commande(
                     id = 0, // L'API assignera un ID
-                    numeroCommande = numeroCommande,
-                    client = clientObj,
-                    chantier = chantierObj,
-                    typeBeton = typeBeton,
-                    quantite = quantite,
+                    clientId = 0, // À remplacer par une sélection réelle
+                    chantierId = null,
                     dateCommande = getCurrentDate(),
-                    dateLivraisonPrevue = dateLivraisonPrevue,
+                    dateLivraisonSouhaitee = dateLivraisonPrevue,
                     statut = "en_attente",
-                    prixUnitaire = prixUnitaire,
-                    prixTotal = prixTotal
+                    clientNom = client
                 )
 
                 ordersRepository.createOrder(nouvelleCommande)

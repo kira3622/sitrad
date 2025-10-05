@@ -16,6 +16,7 @@ import com.betonapp.R
 import com.google.android.material.snackbar.Snackbar
 import com.betonapp.databinding.FragmentProductionBinding
 import dagger.hilt.android.AndroidEntryPoint
+import android.util.Log
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -32,12 +33,14 @@ class ProductionFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Log.d("ProductionFragment", "onCreateView")
         _binding = FragmentProductionBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d("ProductionFragment", "onViewCreated")
         
         setupRecyclerView()
         setupSwipeRefresh()

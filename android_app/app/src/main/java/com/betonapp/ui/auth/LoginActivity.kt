@@ -66,7 +66,7 @@ class LoginActivity : AppCompatActivity() {
 
             // Affichage des erreurs
             state.error?.let { error ->
-                Toast.makeText(this@LoginActivity, error, Toast.LENGTH_LONG).show()
+                Toast.makeText(this@LoginActivity, "Erreur: ${error}", Toast.LENGTH_LONG).show()
             }
 
             // Redirection en cas de succès

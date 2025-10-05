@@ -91,16 +91,17 @@ class CreateProductionViewModel @Inject constructor(
                 val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                 val dateProductionStr = dateFormat.format(dateProduction)
 
-                // Créer l'ordre de production
+                // Créer l'ordre de production (nouveau schéma)
                 val ordreProduction = OrdreProduction(
                     id = generateId().toInt(),
-                    numeroOrdre = numeroOrdre,
-                    commande = selectedCommande,
+                    numeroBon = if (numeroOrdre.isBlank()) null else numeroOrdre,
+                    commandeId = selectedCommande.id,
+                    formuleId = 0, // À sélectionner dans l'UI si disponible
+                    quantiteProduire = quantiteAProduite,
                     dateProduction = dateProductionStr,
-                    quantiteProduite = quantiteAProduite,
+                    heureProduction = null,
                     statut = statut.value,
-                    operateur = operateur,
-                    notes = notes
+                    matieresSortiesCalculees = false
                 )
 
                 // Sauvegarder via le repository

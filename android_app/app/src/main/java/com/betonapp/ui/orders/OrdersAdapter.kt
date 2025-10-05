@@ -44,36 +44,34 @@ class OrdersAdapter(
         // Dans la méthode bind, utiliser binding pour accéder aux vues
         fun bind(order: Commande) {
             binding.apply {
-                textOrderNumber.text = "Commande #${order.numeroCommande}"
+                textOrderNumber.text = "Commande #${order.id}"
                 chipStatus.text = order.statut
-                textClientName.text = order.client?.nom ?: "Client inconnu"
-                textConcreteType.text = order.typeBeton
-                textQuantity.text = "${order.quantite} m³"
-                
-                // Format delivery date
-                val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                val formattedDate = if (order.dateCommande != null) {
-                    dateFormat.format(order.dateCommande)
-                } else {
+                textClientName.text = order.clientNom ?: "Client #${order.clientId}"
+                textConcreteType.text = "" // Champ non disponible côté backend
+                textQuantity.text = "" // Quantité par lignes de commande (non inclus ici)
+
+                // Format delivery date: yyyy-MM-dd -> dd/MM/yyyy
+                val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                textDeliveryDate.text = try {
+                    inputFormat.parse(order.dateLivraisonSouhaitee)?.let {
+                        outputFormat.format(it)
+                    } ?: "Date inconnue"
+                } catch (e: Exception) {
                     "Date inconnue"
                 }
-                textDeliveryDate.text = formattedDate
-                
-                // Format total price
-                val numberFormat = NumberFormat.getCurrencyInstance(Locale.FRANCE)
-                textTotalPrice.text = numberFormat.format(order.prixTotal)
-                
-                // Set status color based on order status
+
+                // Prix non disponibles sur Commande côté backend; masquer
+                textTotalPrice.text = ""
+
                 val statusColor = when (order.statut.lowercase()) {
                     "en_attente" -> android.R.color.holo_orange_light
-                    "en_cours" -> android.R.color.holo_blue_light
-                    "termine" -> android.R.color.holo_green_light
-                    "annule" -> android.R.color.holo_red_light
+                    "en_production" -> android.R.color.holo_blue_light
+                    "livree" -> android.R.color.holo_green_light
+                    "annulee" -> android.R.color.holo_red_light
                     else -> android.R.color.darker_gray
                 }
-                chipStatus.setTextColor(
-                    root.context.getColor(statusColor)
-                )
+                chipStatus.setTextColor(root.context.getColor(statusColor))
             }
         }
     }

@@ -35,37 +35,49 @@ data class Chantier(
 @Parcelize
 data class Commande(
     val id: Int,
-    @SerializedName("numero_commande")
-    val numeroCommande: String,
-    val client: Client,
-    val chantier: Chantier?,
-    @SerializedName("type_beton")
-    val typeBeton: String,
-    val quantite: Double,
+    @SerializedName("client")
+    val clientId: Int,
+    @SerializedName("chantier")
+    val chantierId: Int?,
     @SerializedName("date_commande")
     val dateCommande: String,
-    @SerializedName("date_livraison_prevue")
-    val dateLivraisonPrevue: String,
+    @SerializedName("date_livraison_souhaitee")
+    val dateLivraisonSouhaitee: String,
     val statut: String,
-    @SerializedName("prix_unitaire")
-    val prixUnitaire: Double,
-    @SerializedName("prix_total")
-    val prixTotal: Double
+    @SerializedName("client_nom")
+    val clientNom: String? = null
+) : Parcelable
+
+@Parcelize
+data class FormuleBeton(
+    val id: Int,
+    val nom: String,
+    @SerializedName("description")
+    val description: String? = null,
+    @SerializedName("resistance_requise")
+    val resistanceRequise: String? = null,
+    @SerializedName("quantite_produite_reference")
+    val quantiteProduiteReference: String? = null
 ) : Parcelable
 
 @Parcelize
 data class OrdreProduction(
     val id: Int,
-    @SerializedName("numero_ordre")
-    val numeroOrdre: String,
-    val commande: Commande,
+    @SerializedName("numero_bon")
+    val numeroBon: String?,
+    @SerializedName("commande")
+    val commandeId: Int,
+    @SerializedName("formule")
+    val formuleId: Int,
+    @SerializedName("quantite_produire")
+    val quantiteProduire: Double,
     @SerializedName("date_production")
     val dateProduction: String,
-    @SerializedName("quantite_produite")
-    val quantiteProduite: Double,
+    @SerializedName("heure_production")
+    val heureProduction: String?,
     val statut: String,
-    val operateur: String,
-    val notes: String?
+    @SerializedName("matieres_sorties_calculees")
+    val matieresSortiesCalculees: Boolean = false
 ) : Parcelable
 
 @Parcelize

@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -52,6 +53,16 @@ class TokenManager @Inject constructor(
     fun getAccessTokenFlow(): Flow<String?> {
         return dataStore.data.map { preferences ->
             preferences[ACCESS_TOKEN_KEY]
+        }
+    }
+
+    /**
+     * Récupère le token d'accès de manière synchrone.
+     * À n'utiliser que dans des contextes où la coroutine n'est pas disponible (ex: Interceptor).
+     */
+    fun getAccessTokenBlocking(): String? {
+        return runBlocking {
+            dataStore.data.first()[ACCESS_TOKEN_KEY]
         }
     }
 

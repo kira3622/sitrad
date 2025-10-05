@@ -7,6 +7,7 @@ from inventory.models import MatierePremiere
 from logistics.models import Livraison
 from billing.models import Facture
 from fuel_management.models import Fournisseur, Engin, Approvisionnement, Stock
+from formulas.models import FormuleBeton, CompositionFormule
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -89,6 +90,23 @@ class StockCarburantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stock
         fields = '__all__'
+
+
+# ==================== FORMULES BÉTON ====================
+class CompositionFormuleSerializer(serializers.ModelSerializer):
+    matiere_nom = serializers.CharField(source='matiere_premiere.nom', read_only=True)
+
+    class Meta:
+        model = CompositionFormule
+        fields = ['id', 'matiere_premiere', 'matiere_nom', 'quantite']
+
+
+class FormuleBetonSerializer(serializers.ModelSerializer):
+    composition = CompositionFormuleSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = FormuleBeton
+        fields = ['id', 'nom', 'description', 'resistance_requise', 'quantite_produite_reference', 'composition']
 
 
 # Serializer pour les statistiques du dashboard (aligné avec l'app Android)
