@@ -75,49 +75,48 @@ def diagnostic_chantiers():
     django.setup()
 
     try:
-        # Imports critiques (sécurisés)
+        # Test d'import crucial, maintenant à l'intérieur de la fonction
         from customers.models import Chantier
+        print("✅ Import du modèle Chantier réussi.")
+    except Exception as e:
+        print(f"❌ Échec critique de l'import du modèle Chantier: {e}")
+        return False
 
-        # Import sécurisé du module serializers pour éviter les ImportError directs
-        import importlib
-        serializers_mod = importlib.import_module('api.serializers')
-        print(f"📄 Module serializers chargé depuis: {getattr(serializers_mod, '__file__', 'inconnu')}")
+    try:
+        # Tentative d'import du Serializer
+        from api.serializers import ChantierSerializer
+        print("✅ Import de ChantierSerializer réussi.")
+    except ImportError as e:
+        print(f"❌ ERREUR D'IMPORT: {e}")
+        print("Tentative de lecture du fichier 'api/serializers.py' pour diagnostic...")
+        try:
+            # Le chemin est relatif au répertoire de travail du script
+            with open('api/serializers.py', 'r', encoding='utf-8') as f:
+                content = f.read()
+                print("--- CONTENU DE api/serializers.py ---")
+                print(content)
+                print("------------------------------------")
+        except FileNotFoundError:
+            print("❌ Le fichier 'api/serializers.py' est introuvable.")
+        except Exception as read_e:
+            print(f"❌ Erreur en lisant 'api/serializers.py': {read_e}")
+        return False # Arrêter le diagnostic ici car le serializer est manquant
 
-        if hasattr(serializers_mod, 'ChantierSerializer'):
-            ChantierSerializer = getattr(serializers_mod, 'ChantierSerializer')
-            print("✅ ChantierSerializer trouvé dans api.serializers")
-        else:
-            # Trace le contenu du module pour diagnostic
-            attrs = dir(serializers_mod)
-            print(f"❌ ChantierSerializer introuvable. Attributs disponibles: {attrs}")
-            # Afficher l'en-tête du fichier pour vérifier le contenu déployé
-            try:
-                with open(os.path.join(os.path.dirname(serializers_mod.__file__), 'serializers.py'), 'r', encoding='utf-8') as f:
-                    head = ''.join([next(f) for _ in range(40)])
-                print("📜 Début de api/serializers.py déployé:")
-                print(head)
-            except Exception as e_head:
-                print(f"⚠️ Impossible de lire serializers.py: {e_head}")
-            return False
+    try:
+        from api.views import ChantierViewSet
+        print("✅ Import de ChantierViewSet réussi.")
+    except Exception as e:
+        print(f"❌ Échec de l'import de ChantierViewSet: {e}")
+        return False
 
-        # Import du ViewSet de manière sécurisée (via module)
-        views_mod = importlib.import_module('api.views')
-        ChantierViewSet = getattr(views_mod, 'ChantierViewSet', None)
-        if ChantierViewSet is None:
-            print("❌ ChantierViewSet introuvable dans api.views")
-            return False
-        print("✅ Imports Chantier OK: modèle, serializer, viewset")
-
+    # Le reste de la fonction de diagnostic...
+    try:
         # Vérifier la base
         count = Chantier.objects.count()
         print(f"✅ Base accessible: {count} chantiers")
 
         # Vérifier le routeur
-        urls_mod = importlib.import_module('api.urls')
-        router = getattr(urls_mod, 'router', None)
-        if router is None:
-            print("❌ Router introuvable dans api.urls")
-            return False
+        from api.urls import router
         registry = [prefix for (prefix, _, _) in router.registry]
         if 'chantiers' in registry:
             print("✅ 'chantiers' enregistré dans le routeur")
@@ -126,27 +125,16 @@ def diagnostic_chantiers():
             print(f"Routes: {registry}")
 
         # Sanity check du ViewSet
-        try:
-            vs = ChantierViewSet()
-            qs = vs.get_queryset()
-            print(f"✅ ViewSet opérationnel: {qs.count()} objets")
-        except Exception as e:
-            print(f"❌ Erreur ViewSet: {e}")
-            return False
+        vs = ChantierViewSet()
+        qs = vs.get_queryset()
+        print(f"✅ ViewSet opérationnel: {qs.count()} objets")
 
         return True
 
     except Exception as e:
-        print(f"❌ Erreur diagnostic chantiers: {e}")
-        # Aide au diagnostic: tenter import module et lister attributs
-        try:
-            import importlib
-            mod = importlib.import_module('api.serializers')
-            attrs = dir(mod)
-            print(f"📄 Attributs api.serializers: {attrs}")
-        except Exception as e2:
-            print(f"❌ Impossible d’inspecter api.serializers: {e2}")
+        print(f"❌ Erreur dans la suite du diagnostic chantiers: {e}")
         return False
+
 
 def test_api_endpoints():
     """Test des endpoints API"""
