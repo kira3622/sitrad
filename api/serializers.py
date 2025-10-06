@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from customers.models import Client
+from customers.models import Client, Chantier
 from orders.models import Commande
 from production.models import OrdreProduction
 from inventory.models import MatierePremiere
@@ -22,12 +22,35 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ChantierSerializer(serializers.ModelSerializer):
+    # client_nom = serializers.CharField(source='client.nom', read_only=True)
+    
+    class Meta:
+        model = Chantier
+        fields = '__all__'
+
+
 class CommandeSerializer(serializers.ModelSerializer):
     client_nom = serializers.CharField(source='client.nom', read_only=True)
+    clientId = serializers.IntegerField(source='client', write_only=True, required=False)
+    chantierId = serializers.IntegerField(source='chantier', write_only=True, required=False, allow_null=True)
     
     class Meta:
         model = Commande
         fields = '__all__'
+        extra_kwargs = {
+            'client': {'write_only': True, 'required': False},
+            'chantier': {'write_only': True, 'required': False},
+        }
+    
+    def create(self, validated_data):
+        # Gérer les champs clientId et chantierId envoyés par Android
+        if 'clientId' in self.initial_data:
+            validated_data['client_id'] = self.initial_data['clientId']
+        if 'chantierId' in self.initial_data and self.initial_data['chantierId'] is not None:
+            validated_data['chantier_id'] = self.initial_data['chantierId']
+        
+        return super().create(validated_data)
 
 
 class OrdreProductionSerializer(serializers.ModelSerializer):
