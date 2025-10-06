@@ -28,3 +28,7 @@ if os.environ.get('RENDER_EXTERNAL_HOSTNAME') and not os.environ.get('DEBUG', 'F
     # Proxy headers pour Render
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     USE_TZ = True
+    
+    # Configuration WhiteNoise pour les fichiers statiques
+    WHITENOISE_USE_FINDERS = True
+    WHITENOISE_AUTOREFRESH = True
