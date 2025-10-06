@@ -66,6 +66,57 @@ def diagnostic_formules():
         print(f"❌ Erreur diagnostic: {e}")
         return False
 
+def diagnostic_chantiers():
+    """Diagnostic ciblé sur les chantiers (imports, routeur, base)"""
+    print("\n=== DIAGNOSTIC CHANTIERS ===")
+
+    # Configuration Django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beton_project.settings')
+    django.setup()
+
+    try:
+        # Imports critiques
+        from customers.models import Chantier
+        from api.serializers import ChantierSerializer
+        from api.views import ChantierViewSet
+        print("✅ Imports Chantier OK: modèle, serializer, viewset")
+
+        # Vérifier la base
+        count = Chantier.objects.count()
+        print(f"✅ Base accessible: {count} chantiers")
+
+        # Vérifier le routeur
+        from api.urls import router
+        registry = [prefix for (prefix, _, _) in router.registry]
+        if 'chantiers' in registry:
+            print("✅ 'chantiers' enregistré dans le routeur")
+        else:
+            print("❌ 'chantiers' absent du routeur")
+            print(f"Routes: {registry}")
+
+        # Sanity check du ViewSet
+        try:
+            vs = ChantierViewSet()
+            qs = vs.get_queryset()
+            print(f"✅ ViewSet opérationnel: {qs.count()} objets")
+        except Exception as e:
+            print(f"❌ Erreur ViewSet: {e}")
+            return False
+
+        return True
+
+    except Exception as e:
+        print(f"❌ Erreur diagnostic chantiers: {e}")
+        # Aide au diagnostic: tenter import module et lister attributs
+        try:
+            import importlib
+            mod = importlib.import_module('api.serializers')
+            attrs = dir(mod)
+            print(f"📄 Attributs api.serializers: {attrs}")
+        except Exception as e2:
+            print(f"❌ Impossible d’inspecter api.serializers: {e2}")
+        return False
+
 def test_api_endpoints():
     """Test des endpoints API"""
     print("\n=== TEST API ENDPOINTS ===")
@@ -113,9 +164,22 @@ def test_api_endpoints():
             data = response.json()
             count = len(data.get('results', data))
             print(f"✅ Endpoint formules accessible: {count} éléments")
-            return True
         else:
             print(f"❌ Endpoint formules inaccessible: {response.status_code}")
+        
+        # Test direct de l'endpoint chantiers
+        response = client.get('/api/v1/chantiers/')
+        print(f"Endpoint chantiers direct: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            count = len(data.get('results', data))
+            print(f"✅ Endpoint chantiers accessible: {count} éléments")
+            return True
+        else:
+            print(f"❌ Endpoint chantiers inaccessible: {response.status_code}")
+            if hasattr(response, 'content'):
+                print(f"Erreur: {response.content}")
             return False
             
     except Exception as e:
@@ -140,6 +204,7 @@ def main():
     # 4. Diagnostic pré-migration
     print("\n4. Diagnostic pré-migration...")
     diagnostic_formules()
+    diagnostic_chantiers()
     
     # 5. Migrations
     print("\n5. Gestion des migrations...")
@@ -154,6 +219,9 @@ def main():
     print("\n6. Diagnostic post-migration...")
     if not diagnostic_formules():
         print("❌ Diagnostic post-migration échoué")
+        sys.exit(1)
+    if not diagnostic_chantiers():
+        print("❌ Diagnostic chantiers post-migration échoué")
         sys.exit(1)
     
     # 7. Test des endpoints
