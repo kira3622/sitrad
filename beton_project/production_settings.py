@@ -14,6 +14,12 @@ if os.environ.get('RENDER_EXTERNAL_HOSTNAME') and not os.environ.get('DEBUG', 'F
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     
+    # Configuration CSRF pour les domaines de confiance
+    CSRF_TRUSTED_ORIGINS = [
+        'https://sitrad-web.onrender.com',
+        'https://*.onrender.com',
+    ]
+    
     # Headers de sécurité
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
