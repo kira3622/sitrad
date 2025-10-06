@@ -5,6 +5,7 @@ class Client(models.Model):
     adresse = models.CharField(max_length=255)
     telephone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.nom

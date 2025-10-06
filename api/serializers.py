@@ -25,10 +25,12 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class ChantierSerializer(serializers.ModelSerializer):
     client_nom = serializers.CharField(source='client.nom', read_only=True)
+    client = ClientSerializer(read_only=True)
+    client_id = serializers.IntegerField(write_only=True)
     
     class Meta:
         model = Chantier
-        fields = '__all__'
+        fields = ['id', 'nom', 'adresse', 'client', 'client_nom', 'client_id']
 
 
 class CommandeSerializer(serializers.ModelSerializer):
