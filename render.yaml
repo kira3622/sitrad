@@ -1,4 +1,4 @@
-# Configuration Render pour beton-project - Diagnostic et correction formules
+# Configuration Render pour beton-project - Force Deploy ChantierViewSet Fix: 2024-01-20-15h30
 services:
   - type: web
     name: beton-project
@@ -24,7 +24,7 @@ services:
       - key: DJANGO_SUPERUSER_EMAIL
         value: admin@example.com
       - key: DJANGO_SUPERUSER_PASSWORD
-        generateValue: true
+        value: admin123
       - key: DATABASE_URL
         fromDatabase:
           name: beton-db

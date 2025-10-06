@@ -11,6 +11,7 @@ from . import views
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'clients', views.ClientViewSet)
+router.register(r'chantiers', views.ChantierViewSet)
 router.register(r'commandes', views.CommandeViewSet)
 router.register(r'production', views.OrdreProductionViewSet)
 router.register(r'stock', views.MatierePremiereViewSet)

@@ -7,7 +7,7 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import datetime, timedelta
 
-from customers.models import Client
+from customers.models import Client, Chantier
 from orders.models import Commande
 from production.models import OrdreProduction
 from inventory.models import MatierePremiere
@@ -17,7 +17,7 @@ from fuel_management.models import Fournisseur, Engin, Approvisionnement, Stock
 from formulas.models import FormuleBeton
 
 from .serializers import (
-    UserSerializer, ClientSerializer, CommandeSerializer,
+    UserSerializer, ClientSerializer, ChantierSerializer, CommandeSerializer,
     OrdreProductionSerializer, MatierePremiereSerializer,
     LivraisonSerializer, FactureSerializer, FournisseurSerializer,
     EnginSerializer, ApprovisionnementSerializer, StockCarburantSerializer,
@@ -36,6 +36,21 @@ class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
+
+
+class ChantierViewSet(viewsets.ModelViewSet):
+    queryset = Chantier.objects.all().select_related('client')
+    serializer_class = ChantierSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Vérifier si request existe avant d'y accéder
+        if hasattr(self, 'request') and self.request:
+            client_id = self.request.query_params.get('client', None)
+            if client_id:
+                queryset = queryset.filter(client_id=client_id)
+        return queryset
 
 
 class CommandeViewSet(viewsets.ModelViewSet):
