@@ -23,7 +23,7 @@ class ClientSerializer(serializers.ModelSerializer):
 
 
 class ChantierSerializer(serializers.ModelSerializer):
-    # client_nom = serializers.CharField(source='client.nom', read_only=True)
+    client_nom = serializers.CharField(source='client.nom', read_only=True)
     
     class Meta:
         model = Chantier
