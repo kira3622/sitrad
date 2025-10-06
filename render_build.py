@@ -75,10 +75,37 @@ def diagnostic_chantiers():
     django.setup()
 
     try:
-        # Imports critiques
+        # Imports critiques (sécurisés)
         from customers.models import Chantier
-        from api.serializers import ChantierSerializer
-        from api.views import ChantierViewSet
+
+        # Import sécurisé du module serializers pour éviter les ImportError directs
+        import importlib
+        serializers_mod = importlib.import_module('api.serializers')
+        print(f"📄 Module serializers chargé depuis: {getattr(serializers_mod, '__file__', 'inconnu')}")
+
+        if hasattr(serializers_mod, 'ChantierSerializer'):
+            ChantierSerializer = getattr(serializers_mod, 'ChantierSerializer')
+            print("✅ ChantierSerializer trouvé dans api.serializers")
+        else:
+            # Trace le contenu du module pour diagnostic
+            attrs = dir(serializers_mod)
+            print(f"❌ ChantierSerializer introuvable. Attributs disponibles: {attrs}")
+            # Afficher l'en-tête du fichier pour vérifier le contenu déployé
+            try:
+                with open(os.path.join(os.path.dirname(serializers_mod.__file__), 'serializers.py'), 'r', encoding='utf-8') as f:
+                    head = ''.join([next(f) for _ in range(40)])
+                print("📜 Début de api/serializers.py déployé:")
+                print(head)
+            except Exception as e_head:
+                print(f"⚠️ Impossible de lire serializers.py: {e_head}")
+            return False
+
+        # Import du ViewSet de manière sécurisée (via module)
+        views_mod = importlib.import_module('api.views')
+        ChantierViewSet = getattr(views_mod, 'ChantierViewSet', None)
+        if ChantierViewSet is None:
+            print("❌ ChantierViewSet introuvable dans api.views")
+            return False
         print("✅ Imports Chantier OK: modèle, serializer, viewset")
 
         # Vérifier la base
@@ -86,7 +113,11 @@ def diagnostic_chantiers():
         print(f"✅ Base accessible: {count} chantiers")
 
         # Vérifier le routeur
-        from api.urls import router
+        urls_mod = importlib.import_module('api.urls')
+        router = getattr(urls_mod, 'router', None)
+        if router is None:
+            print("❌ Router introuvable dans api.urls")
+            return False
         registry = [prefix for (prefix, _, _) in router.registry]
         if 'chantiers' in registry:
             print("✅ 'chantiers' enregistré dans le routeur")
