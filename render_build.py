@@ -66,6 +66,46 @@ def diagnostic_formules():
         print(f"❌ Erreur diagnostic: {e}")
         return False
 
+def diagnostic_notifications():
+    """Diagnostic des notifications"""
+    print("\n=== DIAGNOSTIC NOTIFICATIONS ===")
+    
+    # Configuration Django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beton_project.settings')
+    django.setup()
+    
+    try:
+        # Test des imports
+        from notifications.models import Notification
+        from notifications.views import NotificationViewSet
+        from notifications.serializers import NotificationSerializer
+        print("✅ Tous les imports notifications réussis")
+        
+        # Test de la base de données
+        count = Notification.objects.count()
+        print(f"✅ Base de données accessible: {count} notifications")
+        
+        # Test du ViewSet
+        viewset = NotificationViewSet()
+        queryset = viewset.get_queryset()
+        print(f"✅ ViewSet fonctionnel: {queryset.count()} objets")
+        
+        # Test du routeur
+        from notifications.urls import router
+        registry_names = [item[0] for item in router.registry]
+        if 'notifications' in registry_names:
+            print("✅ Notifications enregistrées dans le routeur")
+        else:
+            print("❌ Notifications absentes du routeur")
+        
+        print(f"Routes enregistrées: {registry_names}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erreur diagnostic notifications: {e}")
+        return False
+
 def diagnostic_chantiers():
     """Diagnostic ciblé sur les chantiers (imports, routeur, base)"""
     print("\n=== DIAGNOSTIC CHANTIERS ===")
@@ -224,6 +264,7 @@ def main():
     print("\n4. Diagnostic pré-migration...")
     diagnostic_formules()
     diagnostic_chantiers()
+    diagnostic_notifications()
     
     # 5. Migrations
     print("\n5. Gestion des migrations...")
@@ -241,6 +282,9 @@ def main():
         sys.exit(1)
     if not diagnostic_chantiers():
         print("❌ Diagnostic chantiers post-migration échoué")
+        sys.exit(1)
+    if not diagnostic_notifications():
+        print("❌ Diagnostic notifications post-migration échoué")
         sys.exit(1)
     
     # 7. Test des endpoints
