@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import (
 )
 
 from . import views
+from notifications.views import NotificationViewSet
 
 # Configuration du router pour les ViewSets
 router = DefaultRouter()
@@ -22,6 +23,7 @@ router.register(r'engins', views.EnginViewSet)
 router.register(r'approvisionnements', views.ApprovisionnementViewSet)
 router.register(r'stock-carburant', views.StockCarburantViewSet)
 router.register(r'formules', views.FormuleBetonViewSet)
+router.register(r'notifications', NotificationViewSet, basename='notification')
 
 app_name = 'api'
 
@@ -36,6 +38,6 @@ urlpatterns = [
     path('commandes/recentes/', views.commandes_recentes, name='commandes_recentes'),
     path('production/en-cours/', views.production_en_cours, name='production_en_cours'),
     
-    # Routes automatiques des ViewSets
+    # Routes automatiques des ViewSets (incluant notifications)
     path('', include(router.urls)),
 ]
