@@ -2,9 +2,13 @@ package com.betonapp.di
 
 import com.betonapp.data.api.ApiService
 import com.betonapp.data.local.TokenManager
+import com.betonapp.data.local.dao.NotificationDao
 import com.betonapp.data.repository.AuthRepository
+import com.betonapp.data.repository.ChantiersRepository
+import com.betonapp.data.repository.ClientsRepository
 import com.betonapp.data.repository.DashboardRepository
 import com.betonapp.data.repository.InventoryRepository
+import com.betonapp.data.repository.NotificationsRepository
 import com.betonapp.data.repository.OrdersRepository
 import com.betonapp.data.repository.ProductionRepository
 import com.betonapp.data.repository.FormulasRepository
@@ -65,5 +69,30 @@ object RepositoryModule {
         apiService: ApiService
     ): FormulasRepository {
         return FormulasRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideClientsRepository(
+        apiService: ApiService
+    ): ClientsRepository {
+        return ClientsRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideChantiersRepository(
+        apiService: ApiService
+    ): ChantiersRepository {
+        return ChantiersRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationsRepository(
+        notificationDao: NotificationDao,
+        apiService: ApiService
+    ): NotificationsRepository {
+        return NotificationsRepository(notificationDao, apiService)
     }
 }

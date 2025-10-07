@@ -75,8 +75,11 @@ class OrdersFragment : Fragment() {
     private fun setupFab() {
         binding.fabNewOrder.setOnClickListener {
             try {
+                android.util.Log.d("OrdersFragment", "FAB clicked - attempting navigation")
                 findNavController().navigate(R.id.action_orders_to_create_order)
+                android.util.Log.d("OrdersFragment", "Navigation successful")
             } catch (e: Exception) {
+                android.util.Log.e("OrdersFragment", "Navigation failed", e)
                 Snackbar.make(binding.root, "Erreur de navigation: ${e.message}", Snackbar.LENGTH_LONG).show()
             }
         }

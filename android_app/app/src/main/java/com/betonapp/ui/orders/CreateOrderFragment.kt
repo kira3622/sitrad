@@ -34,7 +34,7 @@ class CreateOrderFragment : Fragment() {
     private val viewModel: CreateOrderViewModel by viewModels()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val displayDateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    private val numberFormat = NumberFormat.getCurrencyInstance(Locale.FRANCE)
+    private val numberFormat = NumberFormat.getNumberInstance(Locale.FRANCE)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,6 +54,60 @@ class CreateOrderFragment : Fragment() {
     }
 
     private fun setupViews() {
+        // Configuration du dropdown pour les clients
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.clients.collect { clients ->
+                val clientNames = clients.map { it.nom }
+                val clientAdapter = ArrayAdapter(
+                    requireContext(),
+                    android.R.layout.simple_dropdown_item_1line,
+                    clientNames
+                )
+                binding.actvClient.setAdapter(clientAdapter)
+
+                // Listener pour détecter la sélection d'un client
+                binding.actvClient.setOnItemClickListener { _, _, position, _ ->
+                    val selectedClient = clients[position]
+                    // Charger les chantiers du client sélectionné
+                    viewModel.loadChantiersByClient(selectedClient.id)
+                    // Réinitialiser la sélection du chantier
+                    binding.actvChantier.setText("")
+                }
+
+                // Effacer l'erreur si on a des clients
+                val clientLayout = binding.actvClient.parent.parent as? com.google.android.material.textfield.TextInputLayout
+                if (clientNames.isNotEmpty()) {
+                    clientLayout?.error = null
+                } else {
+                    // Afficher un message explicite quand aucun client n'est disponible
+                    clientLayout?.error = "Aucun client disponible"
+                    // Proposer un réessai rapide
+                    Snackbar.make(binding.root, "Aucun client disponible", Snackbar.LENGTH_LONG)
+                        .setAction("Réessayer") { viewModel.loadClients() }
+                        .show()
+                }
+            }
+        }
+
+        // Configuration du dropdown pour les chantiers
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.chantiers.collect { chantiers ->
+                val chantierNames = chantiers.map { "${it.nom} - ${it.adresse}" }
+                val chantierAdapter = ArrayAdapter(
+                    requireContext(),
+                    android.R.layout.simple_dropdown_item_1line,
+                    chantierNames
+                )
+                binding.actvChantier.setAdapter(chantierAdapter)
+
+                // Effacer l'erreur si on a des chantiers
+                val chantierLayout = binding.actvChantier.parent.parent as? com.google.android.material.textfield.TextInputLayout
+                if (chantierNames.isNotEmpty()) {
+                    chantierLayout?.error = null
+                }
+            }
+        }
+
         // Configuration du dropdown pour le type de béton depuis les formules existantes
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.formulas.collect { formulas ->
@@ -65,7 +119,13 @@ class CreateOrderFragment : Fragment() {
                 )
                 binding.actvTypeBeton.setAdapter(adapter)
 
-                // Effacer l’erreur si on a des formules
+                // Listener pour recalculer le total lors de la sélection d'une formule
+                binding.actvTypeBeton.setOnItemClickListener { _, _, position, _ ->
+                    // La formule est sélectionnée, on peut recalculer le total si prix et quantité sont renseignés
+                    calculateTotal()
+                }
+
+                // Effacer l'erreur si on a des formules
                 val typeBetonLayout = binding.actvTypeBeton.parent.parent as? com.google.android.material.textfield.TextInputLayout
                 if (names.isNotEmpty()) {
                     typeBetonLayout?.error = null
@@ -97,12 +157,12 @@ class CreateOrderFragment : Fragment() {
 
     private fun setupValidation() {
         // Configuration de la validation pour le nom du client (caractères français)
-        // Nous devons accéder au TextInputLayout parent de etClient
-        val clientLayout = binding.etClient.parent.parent as? com.google.android.material.textfield.TextInputLayout
+        // Nous devons accéder au TextInputLayout parent de actvClient
+        val clientLayout = binding.actvClient.parent.parent as? com.google.android.material.textfield.TextInputLayout
         clientLayout?.setupForFrenchNames()
         
-        // Configuration de la validation pour le chantier (adresse)
-        val chantierLayout = binding.etChantier.parent.parent as? com.google.android.material.textfield.TextInputLayout
+        // Configuration de la validation pour le chantier (dropdown)
+        val chantierLayout = binding.actvChantier.parent.parent as? com.google.android.material.textfield.TextInputLayout
         chantierLayout?.setupForAddresses()
         
         // Configuration de la validation pour le numéro de commande
@@ -184,8 +244,23 @@ class CreateOrderFragment : Fragment() {
         }
 
         val numeroCommande = binding.etNumeroCommande.text.toString()
-        val client = binding.etClient.text.toString()
-        val chantier = binding.etChantier.text.toString().ifEmpty { null }
+        val clientNom = binding.actvClient.text.toString()
+        
+        // Trouver l'ID du client sélectionné
+        val selectedClient = viewModel.clients.value.find { it.nom == clientNom }
+        if (selectedClient == null) {
+            Snackbar.make(binding.root, "Veuillez sélectionner un client valide", Snackbar.LENGTH_LONG).show()
+            return
+        }
+        
+        // Trouver l'ID du chantier sélectionné (optionnel)
+        val chantierText = binding.actvChantier.text.toString()
+        val selectedChantier = if (chantierText.isNotEmpty()) {
+            viewModel.chantiers.value.find { "${it.nom} - ${it.adresse}" == chantierText }
+        } else {
+            null
+        }
+        
         val typeBeton = binding.actvTypeBeton.text.toString()
         val quantite = binding.etQuantite.text.toString().toDouble()
         val dateLivraison = binding.etDateLivraison.tag as String
@@ -193,8 +268,9 @@ class CreateOrderFragment : Fragment() {
 
         viewModel.createOrder(
             numeroCommande = numeroCommande,
-            client = client,
-            chantier = chantier,
+            clientId = selectedClient.id,
+            clientNom = selectedClient.nom,
+            chantierId = selectedChantier?.id,
             typeBeton = typeBeton,
             quantite = quantite,
             dateLivraisonPrevue = dateLivraison,
@@ -218,7 +294,7 @@ class CreateOrderFragment : Fragment() {
         }
 
         // Validation du nom du client avec support des caractères français
-        val clientLayout = binding.etClient.parent.parent as? com.google.android.material.textfield.TextInputLayout
+        val clientLayout = binding.actvClient.parent.parent as? com.google.android.material.textfield.TextInputLayout
         if (!clientLayout?.validateWith(
             isRequired = true,
             minLength = 2,
@@ -229,21 +305,19 @@ class CreateOrderFragment : Fragment() {
             isValid = false
         }
 
-        // Validation du chantier (optionnel) avec support des adresses françaises
-        val chantierLayout = binding.etChantier.parent.parent as? com.google.android.material.textfield.TextInputLayout
-        val chantierText = binding.etChantier.text?.toString()
+        // Validation du chantier (optionnel) - vérifier que le chantier sélectionné existe
+        val chantierLayout = binding.actvChantier.parent.parent as? com.google.android.material.textfield.TextInputLayout
+        val chantierText = binding.actvChantier.text?.toString()
         if (!chantierText.isNullOrEmpty()) {
-            if (!chantierLayout?.validateWith(
-                isRequired = false,
-                minLength = 2,
-                maxLength = 200,
-                validator = ValidationUtils::isValidAddress,
-                customErrorMessage = "Adresse de chantier invalide"
-            )!!) {
+            val chantierNames = viewModel.chantiers.value.map { "${it.nom} - ${it.adresse}" }
+            if (!chantierNames.contains(chantierText)) {
+                chantierLayout?.error = "Sélectionnez un chantier existant"
                 isValid = false
+            } else {
+                chantierLayout?.error = null
             }
         } else {
-            chantierLayout?.clearError()
+            chantierLayout?.error = null
         }
 
         // Validation du type de béton (doit correspondre à une formule existante)

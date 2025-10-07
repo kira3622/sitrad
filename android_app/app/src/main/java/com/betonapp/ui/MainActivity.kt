@@ -1,11 +1,16 @@
 package com.betonapp.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
@@ -14,6 +19,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.betonapp.R
 import com.betonapp.databinding.ActivityMainBinding
 import com.betonapp.ui.auth.LoginActivity
+import com.betonapp.utils.BetonNotificationManager
+import com.betonapp.services.NotificationWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -25,6 +32,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                // Notification pour confirmer que les notifications sont activées
+                BetonNotificationManager(this).showGeneralNotification(
+                    title = getString(R.string.app_name),
+                    message = "Notifications activées"
+                )
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         setupToolbar()
         setupNavigation()
+        setupNotifications()
         checkAuthenticationState()
         // Éviter la redirection immédiate avant que l'état d'auth soit émis
         observeViewModel()
@@ -64,6 +82,27 @@ class MainActivity : AppCompatActivity() {
         // Dans la méthode onCreate ou autre méthode où fab est référencé
         // Supprimer ou commenter la ligne qui fait référence à fab
         // fab.setOnClickListener { ... }
+    }
+
+    private fun setupNotifications() {
+        // Initialiser le gestionnaire de notifications
+        val notificationManager = BetonNotificationManager(this)
+        
+        // Demander la permission de notifications sur Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
+        // Programmer les vérifications périodiques de notifications
+        NotificationWorker.schedulePeriodicWork(this)
+        // Déclenchement immédiat pour vérifier le bon fonctionnement
+        NotificationWorker.runOnceNow(this)
     }
 
     private fun checkAuthenticationState() {
@@ -99,7 +138,10 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             R.id.action_notifications -> {
-                // TODO: Afficher les notifications
+                val navHostFragment = supportFragmentManager
+                    .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                val navController = navHostFragment.navController
+                navController.navigate(R.id.notificationsFragment)
                 true
             }
             R.id.action_settings -> {

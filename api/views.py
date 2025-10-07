@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import datetime, timedelta
+from django.conf import settings
 
 from customers.models import Client, Chantier
 from orders.models import Commande
@@ -221,3 +222,14 @@ def production_en_cours(request):
     ).order_by('-date_production')[:10]
     serializer = OrdreProductionSerializer(production, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def test_notifications_endpoint(request):
+    """Endpoint de test pour vérifier le déploiement des notifications"""
+    return Response({
+        'status': 'success',
+        'message': 'Endpoint de test des notifications fonctionne',
+        'notifications_app_loaded': 'notifications' in settings.INSTALLED_APPS,
+        'timestamp': timezone.now().isoformat()
+    })

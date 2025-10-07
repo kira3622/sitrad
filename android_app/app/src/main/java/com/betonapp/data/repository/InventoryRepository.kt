@@ -103,4 +103,26 @@ class InventoryRepository @Inject constructor(
             throw Exception("Erreur de réseau: ${e.message}")
         }
     }
+
+    /**
+     * Récupère les matières premières avec stock faible pour les notifications
+     */
+    suspend fun getLowStockItems(): List<MatierePremiere> {
+        return try {
+            val response = apiService.getMatieresPremières()
+            if (response.isSuccessful) {
+                val materials = response.body()?.results ?: emptyList()
+                // Filtrer les matières avec stock inférieur au seuil minimum
+                materials.filter { material ->
+                    val currentStock = material.stockActuel ?: 0.0
+                    val minThreshold = material.stockMinimum ?: 0.0
+                    currentStock <= minThreshold && minThreshold > 0
+                }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }

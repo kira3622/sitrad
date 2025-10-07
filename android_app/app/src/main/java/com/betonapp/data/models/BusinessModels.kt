@@ -45,7 +45,11 @@ data class Commande(
     val dateLivraisonSouhaitee: String,
     val statut: String,
     @SerializedName("client_nom")
-    val clientNom: String? = null
+    val clientNom: String? = null,
+    val numero: String? = null,
+    @SerializedName("date_livraison_prevue")
+    val dateLivraisonPrevue: String? = null,
+    val deliveryNotified: Boolean = false
 ) : Parcelable
 
 @Parcelize
@@ -93,6 +97,41 @@ data class MatierePremiere(
     val statutStock: String,
     @SerializedName("prix_unitaire")
     val prixUnitaire: Double
+) : Parcelable
+
+/**
+ * Modèles pour les notifications depuis l'API
+ */
+@Parcelize
+data class ApiNotification(
+    val id: String,
+    val title: String,
+    val message: String,
+    val type: String,
+    val timestamp: Long,
+    @SerializedName("is_read")
+    val isRead: Boolean,
+    @SerializedName("related_object_id")
+    val relatedObjectId: Int? = null,
+    @SerializedName("related_object_type")
+    val relatedObjectType: String? = null,
+    val priority: String? = "normal"
+) : Parcelable
+
+@Parcelize
+data class NotificationSummary(
+    @SerializedName("total_count")
+    val totalCount: Int,
+    @SerializedName("unread_count")
+    val unreadCount: Int,
+    @SerializedName("new_orders_count")
+    val newOrdersCount: Int,
+    @SerializedName("production_updates_count")
+    val productionUpdatesCount: Int,
+    @SerializedName("low_inventory_count")
+    val lowInventoryCount: Int,
+    @SerializedName("delivery_count")
+    val deliveryCount: Int
 ) : Parcelable
 
 @Parcelize

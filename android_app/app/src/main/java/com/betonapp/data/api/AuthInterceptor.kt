@@ -16,11 +16,14 @@ class AuthInterceptor @Inject constructor(
         val original = chain.request()
         val urlPath = original.url.encodedPath
 
+        android.util.Log.d("AuthInterceptor", "Requête vers: $urlPath")
+
         // Ne pas ajouter de token pour les endpoints d'authentification
         val isAuthEndpoint = urlPath.contains("/auth/token/")
                 || urlPath.contains("/auth/token/refresh/")
 
         if (isAuthEndpoint) {
+            android.util.Log.d("AuthInterceptor", "Endpoint d'authentification, pas de token ajouté")
             return chain.proceed(original)
         }
 
@@ -28,7 +31,10 @@ class AuthInterceptor @Inject constructor(
         val requestBuilder = original.newBuilder()
 
         if (!accessToken.isNullOrBlank()) {
+            android.util.Log.d("AuthInterceptor", "Token ajouté à la requête: ${accessToken.take(20)}...")
             requestBuilder.header("Authorization", "Bearer $accessToken")
+        } else {
+            android.util.Log.w("AuthInterceptor", "Aucun token d'accès disponible pour la requête")
         }
 
         return chain.proceed(requestBuilder.build())

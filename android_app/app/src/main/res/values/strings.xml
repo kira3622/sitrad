@@ -8,6 +8,7 @@
     <string name="nav_orders">Commandes</string>
     <string name="nav_production">Production</string>
     <string name="nav_inventory">Inventaire</string>
+    <string name="nav_notifications">Notifications</string>
     <string name="nav_stock">Stock</string>
     <string name="nav_clients">Clients</string>
     <string name="nav_reports">Rapports</string>
@@ -114,7 +115,7 @@
     <string name="unit_tonne">tonne</string>
     <string name="unit_kg">kg</string>
     <string name="unit_liter">litre</string>
-    <string name="currency_euro">€</string>
+    <string name="currency_dirham">DH</string>
     
     <!-- Date/Time -->
     <string name="today">Aujourd\'hui</string>

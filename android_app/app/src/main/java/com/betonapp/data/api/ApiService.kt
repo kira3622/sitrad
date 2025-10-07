@@ -231,4 +231,26 @@ interface ApiService {
         @Query("date_debut") dateDebut: String? = null,
         @Query("date_fin") dateFin: String? = null
     ): Response<ProductionStats>
+
+    // ==================== NOTIFICATIONS ====================
+    
+    @GET("notifications/")
+    suspend fun getNotifications(
+        @Query("page") page: Int? = null,
+        @Query("type") type: String? = null,
+        @Query("is_read") isRead: Boolean? = null,
+        @Query("ordering") ordering: String? = "-timestamp"
+    ): Response<PaginatedResponse<ApiNotification>>
+    
+    @GET("notifications/summary/")
+    suspend fun getNotificationsSummary(): Response<NotificationSummary>
+    
+    @POST("notifications/{id}/mark-read/")
+    suspend fun markNotificationAsRead(@Path("id") id: String): Response<Unit>
+    
+    @POST("notifications/mark-all-read/")
+    suspend fun markAllNotificationsAsRead(): Response<Unit>
+    
+    @DELETE("notifications/{id}/")
+    suspend fun deleteNotification(@Path("id") id: String): Response<Unit>
 }

@@ -154,7 +154,7 @@
                             android:layout_height="wrap_content"
                             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
                             android:textColor="?attr/colorPrimary"
-                            tools:text="45,000 €" />
+                            tools:text="45,000 DH" />
 
                         <com.google.android.material.textview.MaterialTextView
                             android:layout_width="wrap_content"

@@ -254,7 +254,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceBody1"
-                            tools:text="120.00 €/m³" />
+                            tools:text="120.00 DH/m³" />
 
                     </LinearLayout>
 
@@ -278,7 +278,7 @@
                             android:layout_height="wrap_content"
                             android:textAppearance="?attr/textAppearanceHeadline6"
                             android:textColor="?attr/colorPrimary"
-                            tools:text="6,000.00 €" />
+                            tools:text="6,000.00 DH" />
 
                     </LinearLayout>
 

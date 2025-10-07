@@ -45,7 +45,7 @@ if ALLOWED_HOSTS_ENV:
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
+    # 'jazzmin',  # Temporairement désactivé pour test
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'production',
     'reports',
     'stock',
+    'notifications',
     'api',
 ]
 
@@ -90,11 +91,12 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'activity.context_processors.recent_activities',
-            ],
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                    'activity.context_processors.recent_activities',
+                    'core.context_processors.admin_dashboard_stats',
+                ],
         },
     },
 ]

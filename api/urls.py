@@ -37,6 +37,7 @@ urlpatterns = [
     path('dashboard/production-stats/', views.production_stats, name='production_stats'),
     path('commandes/recentes/', views.commandes_recentes, name='commandes_recentes'),
     path('production/en-cours/', views.production_en_cours, name='production_en_cours'),
+    path('test-notifications/', views.test_notifications_endpoint, name='test_notifications'),
     
     # Routes automatiques des ViewSets (incluant notifications)
     path('', include(router.urls)),

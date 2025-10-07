@@ -17,7 +17,7 @@ L'API utilise l'authentification JWT (JSON Web Tokens) pour sécuriser tous les 
 
 ### Obtenir un token JWT
 ```http
-POST /api/v1/auth/login/
+POST /api/auth/token/
 Content-Type: application/json
 
 {
@@ -132,23 +132,73 @@ Authorization: Bearer <token>
 **Réponse:**
 ```json
 {
-    "count": 15,
+    "count": 21,
     "next": null,
     "previous": null,
     "results": [
         {
-            "id": 1,
-            "nom": "Construction Immeuble A",
-            "adresse": "789 Boulevard Central",
-            "client": {
-                "id": 1,
-                "nom": "Entreprise ABC"
-            },
-            "date_debut": "2024-02-01",
-            "date_fin_prevue": "2024-08-01",
-            "statut": "en_cours"
+            "id": 16,
+            "client_nom": "Eiffage Construction",
+            "nom": "Écoquartier Clichy-Batignolles",
+            "adresse": "Rue Cardinet, 75017 Paris",
+            "client": 10
+        },
+        {
+            "id": 17,
+            "client_nom": "Eiffage Construction", 
+            "nom": "Stade Jean Bouin Rénovation",
+            "adresse": "26 Avenue du Général Sarrail, 75016 Paris",
+            "client": 10
         }
     ]
+}
+```
+
+### Filtrer les chantiers par client
+```http
+GET /api/v1/chantiers/?client=10
+Authorization: Bearer <token>
+```
+
+**Réponse:**
+```json
+{
+    "count": 2,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "id": 16,
+            "client_nom": "Eiffage Construction",
+            "nom": "Écoquartier Clichy-Batignolles", 
+            "adresse": "Rue Cardinet, 75017 Paris",
+            "client": 10
+        },
+        {
+            "id": 17,
+            "client_nom": "Eiffage Construction",
+            "nom": "Stade Jean Bouin Rénovation",
+            "adresse": "26 Avenue du Général Sarrail, 75016 Paris", 
+            "client": 10
+        }
+    ]
+}
+```
+
+### Récupérer un chantier spécifique
+```http
+GET /api/v1/chantiers/{id}/
+Authorization: Bearer <token>
+```
+
+**Réponse:**
+```json
+{
+    "id": 16,
+    "client_nom": "Eiffage Construction",
+    "nom": "Écoquartier Clichy-Batignolles",
+    "adresse": "Rue Cardinet, 75017 Paris",
+    "client": 10
 }
 ```
 
@@ -160,13 +210,56 @@ Content-Type: application/json
 
 {
     "nom": "Nouveau Chantier",
-    "adresse": "321 Rue du Projet",
-    "client": 1,
-    "date_debut": "2024-03-01",
-    "date_fin_prevue": "2024-09-01",
-    "statut": "planifie"
+    "adresse": "321 Rue du Projet, 75001 Paris",
+    "client": 1
 }
 ```
+
+**Réponse:**
+```json
+{
+    "id": 22,
+    "client_nom": "Nom du Client",
+    "nom": "Nouveau Chantier",
+    "adresse": "321 Rue du Projet, 75001 Paris",
+    "client": 1
+}
+```
+
+### Modifier un chantier
+```http
+PUT /api/v1/chantiers/{id}/
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+    "nom": "Chantier Modifié",
+    "adresse": "321 Rue du Projet Modifié, 75001 Paris",
+    "client": 1
+}
+```
+
+### Supprimer un chantier
+```http
+DELETE /api/v1/chantiers/{id}/
+Authorization: Bearer <token>
+```
+
+**Réponse:** `204 No Content`
+
+### Paramètres de filtrage disponibles
+
+- `client`: Filtrer par ID du client (ex: `?client=10`)
+
+### Structure des données
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `id` | Integer | Identifiant unique du chantier |
+| `nom` | String | Nom du chantier |
+| `adresse` | String | Adresse complète du chantier |
+| `client` | Integer | ID du client propriétaire |
+| `client_nom` | String | Nom du client (lecture seule) |
 
 ---
 

@@ -46,13 +46,14 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:hint="Client"
-            app:startIconDrawable="@drawable/ic_person">
+            app:startIconDrawable="@drawable/ic_person"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etClient"
+            <AutoCompleteTextView
+                android:id="@+id/actvClient"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
+                android:inputType="none" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -62,13 +63,14 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:hint="Chantier (optionnel)"
-            app:startIconDrawable="@drawable/ic_concrete_mixer">
+            app:startIconDrawable="@drawable/ic_concrete_mixer"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etChantier"
+            <AutoCompleteTextView
+                android:id="@+id/actvChantier"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text" />
+                android:inputType="none" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -127,8 +129,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="Prix unitaire (€/m³)"
-            app:suffixText="€/m³">
+            android:hint="Prix unitaire (DH/m³)"
+            app:suffixText="DH/m³">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPrixUnitaire"
@@ -144,7 +146,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             android:hint="Prix total"
-            app:suffixText="€">
+            app:suffixText="DH">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPrixTotal"

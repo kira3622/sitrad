@@ -8,6 +8,8 @@ import com.betonapp.data.models.Commande
 import com.betonapp.data.repository.OrdersRepository
 import com.betonapp.data.models.FormuleBeton
 import com.betonapp.data.repository.FormulasRepository
+import com.betonapp.data.repository.ClientsRepository
+import com.betonapp.data.repository.ChantiersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +28,9 @@ data class CreateOrderUiState(
 @HiltViewModel
 class CreateOrderViewModel @Inject constructor(
     private val ordersRepository: OrdersRepository,
-    private val formulasRepository: FormulasRepository
+    private val formulasRepository: FormulasRepository,
+    private val clientsRepository: ClientsRepository,
+    private val chantiersRepository: ChantiersRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateOrderUiState())
@@ -35,8 +39,15 @@ class CreateOrderViewModel @Inject constructor(
     private val _formulas = MutableStateFlow<List<FormuleBeton>>(emptyList())
     val formulas: StateFlow<List<FormuleBeton>> = _formulas.asStateFlow()
 
+    private val _clients = MutableStateFlow<List<Client>>(emptyList())
+    val clients: StateFlow<List<Client>> = _clients.asStateFlow()
+
+    private val _chantiers = MutableStateFlow<List<Chantier>>(emptyList())
+    val chantiers: StateFlow<List<Chantier>> = _chantiers.asStateFlow()
+
     init {
         loadFormulas()
+        loadClients()
     }
 
     fun loadFormulas() {
@@ -51,10 +62,41 @@ class CreateOrderViewModel @Inject constructor(
         }
     }
 
+    fun loadClients() {
+        viewModelScope.launch {
+            try {
+                val list = clientsRepository.getClients()
+                _clients.value = list
+            } catch (e: Exception) {
+                _clients.value = emptyList()
+                _uiState.value = _uiState.value.copy(errorMessage = "Impossible de charger les clients")
+            }
+        }
+    }
+
+    fun loadChantiersByClient(clientId: Int) {
+        viewModelScope.launch {
+            try {
+                android.util.Log.d("CreateOrderViewModel", "Chargement des chantiers pour le client: $clientId")
+                val list = chantiersRepository.getChantiersByClient(clientId)
+                android.util.Log.d("CreateOrderViewModel", "Chantiers récupérés: ${list.size} chantiers")
+                list.forEach { chantier ->
+                    android.util.Log.d("CreateOrderViewModel", "Chantier: ${chantier.nom} - ${chantier.adresse}")
+                }
+                _chantiers.value = list
+            } catch (e: Exception) {
+                android.util.Log.e("CreateOrderViewModel", "Erreur lors du chargement des chantiers: ${e.message}", e)
+                _chantiers.value = emptyList()
+                _uiState.value = _uiState.value.copy(errorMessage = "Impossible de charger les chantiers: ${e.message}")
+            }
+        }
+    }
+
     fun createOrder(
         numeroCommande: String,
-        client: String,
-        chantier: String?,
+        clientId: Int,
+        clientNom: String,
+        chantierId: Int?,
         typeBeton: String,
         quantite: Double,
         dateLivraisonPrevue: String,
@@ -67,12 +109,12 @@ class CreateOrderViewModel @Inject constructor(
                 // Nouveau modèle Commande: IDs et champs simplifiés
                 val nouvelleCommande = Commande(
                     id = 0, // L'API assignera un ID
-                    clientId = 0, // À remplacer par une sélection réelle
-                    chantierId = null,
+                    clientId = clientId,
+                    chantierId = chantierId,
                     dateCommande = getCurrentDate(),
                     dateLivraisonSouhaitee = dateLivraisonPrevue,
                     statut = "en_attente",
-                    clientNom = client
+                    clientNom = clientNom
                 )
 
                 ordersRepository.createOrder(nouvelleCommande)

@@ -4,6 +4,8 @@ import com.betonapp.data.api.ApiService
 import com.betonapp.data.models.OrdreProduction
 import com.betonapp.data.models.withUtf8Encoding
 import com.betonapp.utils.EncodingUtils
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -86,5 +88,29 @@ class ProductionRepository @Inject constructor(
     
     suspend fun getProductionById(id: Long): OrdreProduction {
         return getProductionOrderById(id.toInt())
+    }
+
+    /**
+     * Récupère les productions avec des mises à jour récentes pour les notifications
+     */
+    suspend fun getRecentProductionUpdates(): List<OrdreProduction> {
+        return try {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.HOUR_OF_DAY, -2) // Dernières 2 heures
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val recentTime = dateFormat.format(calendar.time)
+            
+            val response = apiService.getOrdresProduction()
+            val productions = response.body()?.results ?: emptyList()
+            
+            // Filtrer les productions modifiées récemment
+            // Note: Vous devrez peut-être ajuster cette logique selon votre API
+            productions.filter { production ->
+                // Supposons qu'il y a un champ dateModification ou similaire
+                production.dateProduction >= recentTime.substring(0, 10) // Date seulement
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 }

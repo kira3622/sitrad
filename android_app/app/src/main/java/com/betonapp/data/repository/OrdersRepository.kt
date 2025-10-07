@@ -4,6 +4,8 @@ import com.betonapp.data.api.ApiService
 import com.betonapp.data.models.Commande
 import com.betonapp.data.models.withUtf8Encoding
 import com.betonapp.utils.EncodingUtils
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -91,6 +93,35 @@ class OrdersRepository @Inject constructor(
             response.body()?.results ?: emptyList()
         } else {
             throw Exception("Erreur lors du filtrage par date")
+        }
+    }
+
+    /**
+     * Récupère les commandes récentes (dernières 24h) pour les notifications
+     */
+    suspend fun getRecentOrders(): List<Commande> {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -1) // Dernières 24h
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val yesterday = dateFormat.format(calendar.time)
+        
+        return getOrdersByDateRange(yesterday, dateFormat.format(Date()))
+    }
+
+    /**
+     * Récupère les livraisons prévues pour aujourd'hui
+     */
+    suspend fun getTodayDeliveries(): List<Commande> {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val today = dateFormat.format(Date())
+        
+        val response = apiService.getCommandes()
+        return if (response.isSuccessful) {
+            response.body()?.results?.filter { 
+                it.dateLivraisonPrevue?.startsWith(today) == true 
+            } ?: emptyList()
+        } else {
+            emptyList()
         }
     }
 }

@@ -92,7 +92,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:hint="Prix unitaire"
-            app:suffixText="€">
+            app:suffixText="DH">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPrixUnitaire"

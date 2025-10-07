@@ -55,6 +55,12 @@
             app:destination="@id/addInventoryFragment" />
     </fragment>
 
+    <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.betonapp.ui.notifications.NotificationsFragment"
+        android:label="@string/nav_notifications"
+        tools:layout="@layout/fragment_notifications" />
+
     <!-- Fragments de détail -->
     <fragment
         android:id="@+id/orderDetailFragment"
