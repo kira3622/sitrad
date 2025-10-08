@@ -2,6 +2,7 @@ from django.db import models
 from django.db import transaction
 from orders.models import Commande
 from formulas.models import FormuleBeton
+from logistics.models import Chauffeur, Vehicule
 
 class OrdreProduction(models.Model):
     numero_bon = models.CharField(max_length=20, unique=True, null=True, blank=True, help_text="Numéro de bon de production")
@@ -10,6 +11,8 @@ class OrdreProduction(models.Model):
     quantite_produire = models.DecimalField(max_digits=10, decimal_places=2)
     date_production = models.DateField()
     heure_production = models.TimeField(null=True, blank=True, help_text="Heure prévue de production")
+    chauffeur = models.ForeignKey(Chauffeur, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordres_production')
+    vehicule = models.ForeignKey(Vehicule, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordres_production')
     statut = models.CharField(max_length=20, choices=[('planifie', 'Planifié'), ('en_cours', 'En cours'), ('termine', 'Terminé'), ('annule', 'Annulé')], default='planifie')
     matieres_sorties_calculees = models.BooleanField(default=False)  # Pour éviter les doublons
 
