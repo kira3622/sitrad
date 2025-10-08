@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
+  <!-- Logo Sitrad en SVG -->
+  <!-- Forme principale rouge -->
+  <path d="M20 25 Q35 15, 50 25 Q65 35, 80 25 Q95 15, 110 25 Q125 35, 140 25 Q155 15, 170 25 L170 35 Q155 45, 140 35 Q125 25, 110 35 Q95 45, 80 35 Q65 25, 50 35 Q35 45, 20 35 Z" fill="#E31E24"/>
+  
+  <!-- Forme secondaire rouge -->
+  <ellipse cx="150" cy="30" rx="25" ry="15" fill="#E31E24"/>
+  
+  <!-- Texte Sitrad -->
+  <text x="20" y="65" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2C2C2C">
+    <tspan fill="#2C2C2C">S</tspan><tspan fill="#4CAF50">i</tspan><tspan fill="#2C2C2C">trad</tspan>
+  </text>
+</svg>

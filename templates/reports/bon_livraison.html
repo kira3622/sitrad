@@ -17,6 +17,8 @@
     .title { font-weight: 700; font-size: 16px; letter-spacing: 0.3px; color: #111827; }
     .dup { display: block; font-size: 10px; color: #6b7280; margin-top: 1px; }
     .plant-cell { width: 140px; text-align: right; font-size: 10px; color: #4b5563; }
+    .sitrad-logo { width: 80px; text-align: right; }
+    .sitrad-logo img { max-height: 35px; max-width: 75px; }
     .divider { height: 0; border-top: 1.5px solid #111827; margin: 4px 0 8px; }
 
     /* Sections visuelles */
@@ -46,6 +48,9 @@
         <span class="dup">DUPLICATA</span>
       </td>
       <td class="plant-cell">{{ plant.name }}</td>
+      <td class="sitrad-logo">
+        <img src="{% static 'images/sitrad_logo.svg' %}" alt="Sitrad" />
+      </td>
     </tr>
   </table>
   <div class="divider"></div>
