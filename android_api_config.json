@@ -1,0 +1,23 @@
+{
+  "api": {
+    "base_url": "http://10.0.2.2:8000/api/v1",
+    "timeout": 10,
+    "endpoints": {
+      "auth": "/auth/token/",
+      "auth_refresh": "/auth/token/refresh/",
+      "notifications": "/notifications/",
+      "unread_count": "/notifications/unread_count/",
+      "summary": "/notifications/summary/",
+      "mark_as_read": "/notifications/mark_as_read/",
+      "mark_all_as_read": "/notifications/mark_all_as_read/"
+    }
+  },
+  "test_credentials": {
+    "username": "testuser",
+    "password": "testpass123"
+  },
+  "validation": {
+    "timestamp": "2025-10-07T13:24:43",
+    "status": "configured_for_local_testing"
+  }
+}

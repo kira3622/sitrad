@@ -1,0 +1,19 @@
+{
+    "api": {
+        "base_url": "http://10.0.2.2:8000/api/v1",
+        "timeout": 10,
+        "endpoints": {
+            "auth": "/auth/token/",
+            "refresh": "/auth/token/refresh/",
+            "notifications": "/notifications/"
+        }
+    },
+    "test_user": {
+        "username": "testuser",
+        "password": "testpass123",
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU5ODQ0NjU2LCJpYXQiOjE3NTk4NDEwNTYsImp0aSI6IjU4OTM1NTVmZTg0ODQ5MWFhOTBlY2Y4YjcyNDhhNWQ0IiwidXNlcl9pZCI6N30.bKs5ZvH6On4VD9h-Pe8r2n9jpdKvcUoKlK1PHBVPnPE",
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2MDQ0NTg1NiwiaWF0IjoxNzU5ODQxMDU2LCJqdGkiOiJjZTY0ZTIzZWM0N2M0N2Q2YmI0MDQ0NzQwN2I3NDRiMCIsInVzZXJfaWQiOjd9.56rOPC5j5cmv4WkM23khRWC9t7pXj8JvlbviFxHYnok"
+    },
+    "notifications_count": 8,
+    "last_updated": "2025-10-07T12:45:00Z"
+}

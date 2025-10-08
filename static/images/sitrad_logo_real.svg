@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
+  <!-- Logo Sitrad officiel reproduit fidèlement -->
+  
+  <!-- Première forme courbe rouge (la plus grande à gauche) -->
+  <ellipse cx="35" cy="25" rx="25" ry="12" fill="#E31E24" transform="rotate(-10 35 25)"/>
+  
+  <!-- Deuxième forme courbe rouge (centre) -->
+  <ellipse cx="65" cy="22" rx="22" ry="11" fill="#E31E24" transform="rotate(5 65 22)"/>
+  
+  <!-- Troisième forme courbe rouge (centre-droite) -->
+  <ellipse cx="95" cy="25" rx="20" ry="10" fill="#E31E24" transform="rotate(-8 95 25)"/>
+  
+  <!-- Quatrième forme courbe rouge (droite) -->
+  <ellipse cx="125" cy="23" rx="18" ry="9" fill="#E31E24" transform="rotate(12 125 23)"/>
+  
+  <!-- Cinquième forme courbe rouge (la plus petite à droite) -->
+  <ellipse cx="150" cy="26" rx="15" ry="8" fill="#E31E24" transform="rotate(-5 150 26)"/>
+  
+  <!-- Texte Sitrad avec le "i" vert caractéristique -->
+  <text x="15" y="65" font-family="Arial, sans-serif" font-size="32" font-weight="bold">
+    <tspan fill="#2C2C2C">S</tspan><tspan fill="#4CAF50">i</tspan><tspan fill="#2C2C2C">trad</tspan>
+  </text>
+</svg>

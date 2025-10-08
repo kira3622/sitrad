@@ -33,6 +33,7 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # Endpoints personnalisés
+    path('health/', views.api_health_check, name='api_health_check'),
     path('dashboard/stats/', views.dashboard_stats, name='dashboard_stats'),
     path('dashboard/production-stats/', views.production_stats, name='production_stats'),
     path('commandes/recentes/', views.commandes_recentes, name='commandes_recentes'),

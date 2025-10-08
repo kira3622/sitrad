@@ -34,7 +34,8 @@ class NotificationsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            notificationsRepository.getAllNotifications()
+            // Utiliser le mode hybride: tente l'API puis bascule sur le local en cas d'échec
+            notificationsRepository.getNotificationsHybrid()
                 .catch { e ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

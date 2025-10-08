@@ -24,9 +24,10 @@ android {
             useSupportLibrary = true
         }
 
-        // Configuration de l'API - Utiliser l'API en ligne pour les tests
+        // Configuration de l'API - Utiliser l'API locale pour les tests
         buildConfigField("String", "BASE_URL", "\"https://sitrad-web.onrender.com/api/v1/\"")
         buildConfigField("String", "BASE_URL_RELEASE", "\"https://sitrad-web.onrender.com/api/v1/\"")
+        // URL pour le mode debug, pointe aussi vers la production maintenant
         buildConfigField("String", "BASE_URL_DEBUG", "\"https://sitrad-web.onrender.com/api/v1/\"")
     }
 

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
 from django.db.models import Sum, Count
 from django.utils import timezone
@@ -225,11 +225,23 @@ def production_en_cours(request):
 
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def test_notifications_endpoint(request):
     """Endpoint de test pour vérifier le déploiement des notifications"""
     return Response({
         'status': 'success',
         'message': 'Endpoint de test des notifications fonctionne',
         'notifications_app_loaded': 'notifications' in settings.INSTALLED_APPS,
+        'timestamp': timezone.now().isoformat()
+    })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def api_health_check(request):
+    """Endpoint simple pour vérifier la connectivité API"""
+    return Response({
+        'status': 'ok',
+        'message': 'API is running',
         'timestamp': timezone.now().isoformat()
     })

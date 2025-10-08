@@ -1,13 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
-  <!-- Logo Sitrad en SVG -->
-  <!-- Forme principale rouge -->
-  <path d="M20 25 Q35 15, 50 25 Q65 35, 80 25 Q95 15, 110 25 Q125 35, 140 25 Q155 15, 170 25 L170 35 Q155 45, 140 35 Q125 25, 110 35 Q95 45, 80 35 Q65 25, 50 35 Q35 45, 20 35 Z" fill="#E31E24"/>
+  <!-- Logo Sitrad reproduisant fidèlement le design -->
   
-  <!-- Forme secondaire rouge -->
-  <ellipse cx="150" cy="30" rx="25" ry="15" fill="#E31E24"/>
+  <!-- Première forme courbe rouge (gauche) -->
+  <path d="M15 20 Q30 10, 45 20 Q60 30, 75 20 Q90 10, 105 20 Q120 30, 135 20 Q150 10, 165 20 Q180 30, 195 20 L195 35 Q180 45, 165 35 Q150 25, 135 35 Q120 45, 105 35 Q90 25, 75 35 Q60 45, 45 35 Q30 25, 15 35 Z" fill="#E31E24"/>
   
-  <!-- Texte Sitrad -->
-  <text x="20" y="65" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2C2C2C">
+  <!-- Deuxième forme courbe rouge (centre-droite) -->
+  <ellipse cx="160" cy="27" rx="30" ry="18" fill="#E31E24" transform="rotate(-15 160 27)"/>
+  
+  <!-- Troisième forme courbe rouge (droite) -->
+  <ellipse cx="185" cy="25" rx="15" ry="12" fill="#E31E24" transform="rotate(20 185 25)"/>
+  
+  <!-- Texte Sitrad avec le style exact -->
+  <text x="15" y="65" font-family="Arial, sans-serif" font-size="28" font-weight="bold">
     <tspan fill="#2C2C2C">S</tspan><tspan fill="#4CAF50">i</tspan><tspan fill="#2C2C2C">trad</tspan>
   </text>
 </svg>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API BetonApp - Interface Web</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-section h3 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .notification-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .notification-title {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .notification-meta {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .config-display {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API BetonApp - Interface Web</h1>
+        <p style="text-align: center; color: #7f8c8d;">
+            Cette page simule les appels API que l'application Android effectue
+        </p>
+
+        <div class="test-section">
+            <h3>📋 Configuration API</h3>
+            <div class="config-display" id="config-display">
+                Chargement de la configuration...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Test de Connectivité</h3>
+            <button onclick="testHealth()">Tester l'endpoint de santé</button>
+            <div id="health-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔐 Test d'Authentification</h3>
+            <button onclick="testAuth()">Tester l'authentification</button>
+            <button onclick="testWithExistingToken()" id="token-btn" disabled>Utiliser le token existant</button>
+            <div id="auth-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Test des Notifications</h3>
+            <button onclick="testNotifications()" id="notif-btn" disabled>Récupérer les notifications</button>
+            <button onclick="testNotificationsEndpoint()" id="test-notif-btn" disabled>Test endpoint notifications</button>
+            <div id="notifications-result" class="result" style="display: none;"></div>
+            <div id="notifications-list"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Résumé des Tests</h3>
+            <div id="summary" class="info result">
+                Aucun test effectué pour le moment
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let config = null;
+        let accessToken = null;
+        let testResults = {
+            health: false,
+            auth: false,
+            notifications: false,
+            testEndpoint: false
+        };
+
+        // Configuration API
+        const API_CONFIG = {
+            baseUrl: 'http://localhost:8000/api/v1',
+            testUser: {
+                username: 'testuser',
+                password: 'testpass123'
+            }
+        };
+
+        // Charger la configuration au démarrage
+        window.onload = function() {
+            displayConfig();
+            loadExistingConfig();
+        };
+
+        function displayConfig() {
+            document.getElementById('config-display').textContent = 
+                `Base URL: ${API_CONFIG.baseUrl}\n` +
+                `Utilisateur de test: ${API_CONFIG.testUser.username}\n` +
+                `Endpoints disponibles:\n` +
+                `  - /health/ (sans auth)\n` +
+                `  - /auth/token/ (authentification)\n` +
+                `  - /notifications/ (avec auth)\n` +
+                `  - /test-notifications/ (avec auth)`;
+        }
+
+        async function loadExistingConfig() {
+            try {
+                // Essayer de charger la configuration depuis le fichier local
+                const response = await fetch('/android_app/local_test_config.json');
+                if (response.ok) {
+                    config = await response.json();
+                    accessToken = config.test_user.access_token;
+                    document.getElementById('token-btn').disabled = false;
+                    document.getElementById('notif-btn').disabled = false;
+                    document.getElementById('test-notif-btn').disabled = false;
+                    
+                    document.getElementById('config-display').textContent += 
+                        `\n\n✅ Configuration locale chargée\n` +
+                        `Token disponible: ${accessToken ? 'Oui' : 'Non'}`;
+                }
+            } catch (error) {
+                console.log('Configuration locale non disponible:', error);
+            }
+        }
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Test en cours...';
+            resultDiv.className = 'result info';
+
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}/health/`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Succès!\n${JSON.stringify(data, null, 2)}`;
+                    testResults.health = true;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Erreur ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erreur de connexion: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Authentification en cours...';
+            resultDiv.className = 'result info';
+
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}/auth/token/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(API_CONFIG.testUser)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    accessToken = data.access;
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Authentification réussie!\nAccess Token: ${data.access.substring(0, 50)}...\nRefresh Token: ${data.refresh.substring(0, 50)}...`;
+                    testResults.auth = true;
+                    
+                    // Activer les boutons qui nécessitent l'authentification
+                    document.getElementById('notif-btn').disabled = false;
+                    document.getElementById('test-notif-btn').disabled = false;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Authentification échouée ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erreur de connexion: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        async function testWithExistingToken() {
+            if (!accessToken) {
+                alert('Aucun token disponible');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result success';
+            resultDiv.textContent = `✅ Utilisation du token existant\nToken: ${accessToken.substring(0, 50)}...`;
+            testResults.auth = true;
+            updateSummary();
+        }
+
+        async function testNotifications() {
+            if (!accessToken) {
+                alert('Authentification requise');
+                return;
+            }
+
+            const resultDiv = document.getElementById('notifications-result');
+            const listDiv = document.getElementById('notifications-list');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Récupération des notifications...';
+            resultDiv.className = 'result info';
+
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}/notifications/`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ ${data.length} notifications récupérées`;
+                    testResults.notifications = true;
+                    
+                    // Afficher les notifications
+                    listDiv.innerHTML = '<h4>📱 Notifications:</h4>';
+                    data.slice(0, 5).forEach((notif, index) => {
+                        const notifDiv = document.createElement('div');
+                        notifDiv.className = 'notification-item';
+                        notifDiv.innerHTML = `
+                            <div class="notification-title">${notif.title || 'Sans titre'}</div>
+                            <div>${notif.message || 'Pas de message'}</div>
+                            <div class="notification-meta">
+                                Type: ${notif.type || 'Inconnu'} | 
+                                Priorité: ${notif.priority || 'Normal'} | 
+                                Lu: ${notif.is_read ? 'Oui' : 'Non'}
+                            </div>
+                        `;
+                        listDiv.appendChild(notifDiv);
+                    });
+                    
+                    if (data.length > 5) {
+                        const moreDiv = document.createElement('div');
+                        moreDiv.style.textAlign = 'center';
+                        moreDiv.style.color = '#7f8c8d';
+                        moreDiv.textContent = `... et ${data.length - 5} autres notifications`;
+                        listDiv.appendChild(moreDiv);
+                    }
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Erreur ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erreur de connexion: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        async function testNotificationsEndpoint() {
+            if (!accessToken) {
+                alert('Authentification requise');
+                return;
+            }
+
+            const resultDiv = document.getElementById('notifications-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Test de l\'endpoint de notifications...';
+            resultDiv.className = 'result info';
+
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}/test-notifications/`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Endpoint de test OK!\n${JSON.stringify(data, null, 2)}`;
+                    testResults.testEndpoint = true;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Erreur ${response.status}\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erreur de connexion: ${error.message}`;
+            }
+            
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(r => r).length;
+            
+            let summary = `Tests effectués: ${passed}/${total}\n\n`;
+            summary += `🔍 Connectivité: ${testResults.health ? '✅' : '❌'}\n`;
+            summary += `🔐 Authentification: ${testResults.auth ? '✅' : '❌'}\n`;
+            summary += `📱 Notifications: ${testResults.notifications ? '✅' : '❌'}\n`;
+            summary += `🧪 Test endpoint: ${testResults.testEndpoint ? '✅' : '❌'}\n`;
+            
+            if (passed === total) {
+                summary += `\n🎉 Tous les tests sont réussis! L'API est entièrement fonctionnelle.`;
+                summaryDiv.className = 'result success';
+            } else if (passed > 0) {
+                summary += `\n⚠️ Certains tests ont échoué. Vérifiez les détails ci-dessus.`;
+                summaryDiv.className = 'result info';
+            } else {
+                summary += `\n❌ Aucun test réussi. Vérifiez que l'API est démarrée.`;
+                summaryDiv.className = 'result error';
+            }
+            
+            summaryDiv.textContent = summary;
+        }
+    </script>
+</body>
+</html>

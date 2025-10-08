@@ -337,6 +337,377 @@ data class MarkAsReadRequest(
 4. **Permissions**: Seul l'utilisateur propriétaire peut accéder à ses notifications
 5. **Tri**: Les notifications sont triées par date de création (plus récentes en premier)
 
+## 📱 Guide d'Intégration Android Complet
+
+### 🚀 Statut : API Prête pour l'Intégration
+
+L'API des notifications est **entièrement fonctionnelle** et déployée en production sur Render.
+
+**URL de production :** `https://sitrad-web.onrender.com/api/v1/notifications/`
+
+### 🔐 Configuration de l'Authentification
+
+#### 1. Obtenir un Token JWT
+```kotlin
+// Service d'authentification
+class AuthService {
+    suspend fun login(username: String, password: String): AuthResponse {
+        val response = apiService.login(LoginRequest(username, password))
+        if (response.isSuccessful) {
+            val authResponse = response.body()!!
+            // Sauvegarder le token
+            tokenManager.saveTokens(authResponse.access, authResponse.refresh)
+            return authResponse
+        } else {
+            throw Exception("Erreur d'authentification")
+        }
+    }
+}
+```
+
+#### 2. Intercepteur pour l'Authentification
+```kotlin
+class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val originalRequest = chain.request()
+        val token = tokenManager.getAccessToken()
+        
+        val authenticatedRequest = originalRequest.newBuilder()
+            .header("Authorization", "Bearer $token")
+            .build()
+            
+        return chain.proceed(authenticatedRequest)
+    }
+}
+```
+
+### 🏗️ Architecture Recommandée
+
+#### 1. Repository Pattern
+```kotlin
+class NotificationRepository(
+    private val apiService: NotificationApiService,
+    private val notificationDao: NotificationDao
+) {
+    suspend fun getNotifications(refresh: Boolean = false): Flow<List<Notification>> {
+        return if (refresh) {
+            refreshNotifications()
+            notificationDao.getAllNotifications()
+        } else {
+            notificationDao.getAllNotifications()
+        }
+    }
+    
+    private suspend fun refreshNotifications() {
+        try {
+            val response = apiService.getNotifications()
+            if (response.isSuccessful) {
+                val notifications = response.body()?.results ?: emptyList()
+                notificationDao.insertAll(notifications.map { it.toEntity() })
+            }
+        } catch (e: Exception) {
+            // Gérer l'erreur
+        }
+    }
+    
+    suspend fun markAsRead(notificationId: Int) {
+        try {
+            val response = apiService.markNotificationAsRead(notificationId)
+            if (response.isSuccessful) {
+                notificationDao.markAsRead(notificationId)
+            }
+        } catch (e: Exception) {
+            // Gérer l'erreur
+        }
+    }
+}
+```
+
+#### 2. ViewModel avec StateFlow
+```kotlin
+class NotificationsViewModel(
+    private val repository: NotificationRepository
+) : ViewModel() {
+    
+    private val _uiState = MutableStateFlow(NotificationsUiState())
+    val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
+    
+    init {
+        loadNotifications()
+    }
+    
+    fun loadNotifications(refresh: Boolean = false) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            
+            repository.getNotifications(refresh).collect { notifications ->
+                _uiState.value = _uiState.value.copy(
+                    notifications = notifications,
+                    isLoading = false,
+                    unreadCount = notifications.count { !it.isRead }
+                )
+            }
+        }
+    }
+    
+    fun markAsRead(notificationId: Int) {
+        viewModelScope.launch {
+            repository.markAsRead(notificationId)
+        }
+    }
+}
+
+data class NotificationsUiState(
+    val notifications: List<Notification> = emptyList(),
+    val isLoading: Boolean = false,
+    val unreadCount: Int = 0,
+    val error: String? = null
+)
+```
+
+### 🎨 Interface Utilisateur
+
+#### 1. Composable Jetpack Compose
+```kotlin
+@Composable
+fun NotificationsScreen(
+    viewModel: NotificationsViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    
+    LazyColumn {
+        items(uiState.notifications) { notification ->
+            NotificationItem(
+                notification = notification,
+                onMarkAsRead = { viewModel.markAsRead(notification.id) }
+            )
+        }
+    }
+}
+
+@Composable
+fun NotificationItem(
+    notification: Notification,
+    onMarkAsRead: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable { if (!notification.isRead) onMarkAsRead() },
+        backgroundColor = if (notification.isRead) 
+            MaterialTheme.colors.surface 
+        else 
+            MaterialTheme.colors.primary.copy(alpha = 0.1f)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = notification.title,
+                    style = MaterialTheme.typography.h6,
+                    fontWeight = if (notification.isRead) 
+                        FontWeight.Normal 
+                    else 
+                        FontWeight.Bold
+                )
+                
+                NotificationTypeIcon(type = notification.type)
+            }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = notification.message,
+                style = MaterialTheme.typography.body2
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = formatTimestamp(notification.timestamp),
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+            )
+        }
+    }
+}
+```
+
+#### 2. Icônes par Type
+```kotlin
+@Composable
+fun NotificationTypeIcon(type: String) {
+    val (icon, color) = when (type) {
+        "info" -> Icons.Default.Info to Color.Blue
+        "warning" -> Icons.Default.Warning to Color.Orange
+        "error" -> Icons.Default.Error to Color.Red
+        "success" -> Icons.Default.CheckCircle to Color.Green
+        else -> Icons.Default.Notifications to Color.Gray
+    }
+    
+    Icon(
+        imageVector = icon,
+        contentDescription = type,
+        tint = color
+    )
+}
+```
+
+### 🔄 Synchronisation en Temps Réel
+
+#### 1. WorkManager pour la Synchronisation Périodique
+```kotlin
+class NotificationSyncWorker(
+    context: Context,
+    params: WorkerParameters,
+    private val repository: NotificationRepository
+) : CoroutineWorker(context, params) {
+    
+    override suspend fun doWork(): Result {
+        return try {
+            repository.syncNotifications()
+            Result.success()
+        } catch (e: Exception) {
+            Result.retry()
+        }
+    }
+}
+
+// Planifier la synchronisation
+fun scheduleNotificationSync(context: Context) {
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+    
+    val syncRequest = PeriodicWorkRequestBuilder<NotificationSyncWorker>(
+        15, TimeUnit.MINUTES
+    )
+        .setConstraints(constraints)
+        .build()
+    
+    WorkManager.getInstance(context)
+        .enqueueUniquePeriodicWork(
+            "notification_sync",
+            ExistingPeriodicWorkPolicy.KEEP,
+            syncRequest
+        )
+}
+```
+
+### 🔔 Notifications Push (Optionnel)
+
+#### 1. Configuration Firebase
+```kotlin
+class MyFirebaseMessagingService : FirebaseMessagingService() {
+    
+    override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        super.onMessageReceived(remoteMessage)
+        
+        // Traiter la notification push
+        val title = remoteMessage.notification?.title ?: ""
+        val body = remoteMessage.notification?.body ?: ""
+        
+        showNotification(title, body)
+        
+        // Synchroniser les notifications depuis l'API
+        syncNotifications()
+    }
+    
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
+        // Envoyer le token au backend
+        sendTokenToServer(token)
+    }
+}
+```
+
+### 🧪 Tests
+
+#### 1. Tests Unitaires
+```kotlin
+@Test
+fun `test notification repository returns cached data when offline`() = runTest {
+    // Arrange
+    val cachedNotifications = listOf(
+        createTestNotification(id = 1, title = "Test 1"),
+        createTestNotification(id = 2, title = "Test 2")
+    )
+    notificationDao.insertAll(cachedNotifications)
+    
+    // Act
+    val result = repository.getNotifications(refresh = false).first()
+    
+    // Assert
+    assertEquals(2, result.size)
+    assertEquals("Test 1", result[0].title)
+}
+```
+
+#### 2. Tests d'Intégration
+```kotlin
+@Test
+fun `test mark notification as read updates local and remote`() = runTest {
+    // Test de l'intégration complète
+}
+```
+
+### 📊 Métriques et Analytics
+
+```kotlin
+class NotificationAnalytics {
+    fun trackNotificationReceived(type: String) {
+        // Firebase Analytics ou autre
+    }
+    
+    fun trackNotificationRead(notificationId: Int) {
+        // Tracker les lectures
+    }
+    
+    fun trackNotificationAction(action: String) {
+        // Tracker les actions utilisateur
+    }
+}
+```
+
+### ⚡ Optimisations de Performance
+
+1. **Pagination** : Charger les notifications par pages
+2. **Cache** : Utiliser Room pour le cache local
+3. **Images** : Lazy loading pour les avatars/icônes
+4. **Debouncing** : Pour les actions utilisateur répétées
+
+### 🔧 Configuration Gradle
+
+```kotlin
+// app/build.gradle
+dependencies {
+    implementation "androidx.work:work-runtime-ktx:2.8.1"
+    implementation "androidx.room:room-runtime:2.4.3"
+    implementation "androidx.room:room-ktx:2.4.3"
+    implementation "com.squareup.retrofit2:retrofit:2.9.0"
+    implementation "com.squareup.retrofit2:converter-gson:2.9.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2"
+    implementation "androidx.compose.runtime:runtime-livedata:1.5.4"
+}
+```
+
+## 🎯 Prêt pour l'Intégration
+
+L'API est **entièrement fonctionnelle** et testée en production. Vous pouvez maintenant :
+
+1. ✅ Utiliser tous les endpoints documentés
+2. ✅ Implémenter l'authentification JWT
+3. ✅ Créer l'interface utilisateur
+4. ✅ Configurer la synchronisation
+5. ✅ Ajouter les notifications push (optionnel)
+
+**URL de production :** `https://sitrad-web.onrender.com/api/v1/notifications/`
+
 ## Support
 
 Pour toute question ou problème avec l'API, contactez l'équipe backend.
