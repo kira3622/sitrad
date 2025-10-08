@@ -1,23 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
-  <!-- Logo Sitrad officiel reproduit fidèlement -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80">
+  <!-- Logo Sitrad officiel - reproduction fidèle de l'image fournie -->
   
-  <!-- Première forme courbe rouge (la plus grande à gauche) -->
-  <ellipse cx="35" cy="25" rx="25" ry="12" fill="#E31E24" transform="rotate(-10 35 25)"/>
+  <!-- Première forme courbe rouge (gauche) - plus grande et allongée -->
+  <path d="M 15 35 Q 45 15 75 35 Q 45 55 15 35 Z" fill="#E31E24"/>
   
-  <!-- Deuxième forme courbe rouge (centre) -->
-  <ellipse cx="65" cy="22" rx="22" ry="11" fill="#E31E24" transform="rotate(5 65 22)"/>
+  <!-- Deuxième forme courbe rouge (centre-gauche) -->
+  <path d="M 55 32 Q 80 18 105 32 Q 80 46 55 32 Z" fill="#E31E24"/>
   
-  <!-- Troisième forme courbe rouge (centre-droite) -->
-  <ellipse cx="95" cy="25" rx="20" ry="10" fill="#E31E24" transform="rotate(-8 95 25)"/>
+  <!-- Troisième forme courbe rouge (centre) -->
+  <path d="M 85 30 Q 105 20 125 30 Q 105 40 85 30 Z" fill="#E31E24"/>
   
-  <!-- Quatrième forme courbe rouge (droite) -->
-  <ellipse cx="125" cy="23" rx="18" ry="9" fill="#E31E24" transform="rotate(12 125 23)"/>
+  <!-- Quatrième forme courbe rouge (centre-droite) -->
+  <path d="M 110 28 Q 125 22 140 28 Q 125 34 110 28 Z" fill="#E31E24"/>
   
-  <!-- Cinquième forme courbe rouge (la plus petite à droite) -->
-  <ellipse cx="150" cy="26" rx="15" ry="8" fill="#E31E24" transform="rotate(-5 150 26)"/>
+  <!-- Cinquième forme courbe rouge (droite) - la plus petite -->
+  <path d="M 130 26 Q 140 24 150 26 Q 140 28 130 26 Z" fill="#E31E24"/>
   
   <!-- Texte Sitrad avec le "i" vert caractéristique -->
-  <text x="15" y="65" font-family="Arial, sans-serif" font-size="32" font-weight="bold">
+  <text x="20" y="65" font-family="Arial, sans-serif" font-size="28" font-weight="bold">
     <tspan fill="#2C2C2C">S</tspan><tspan fill="#4CAF50">i</tspan><tspan fill="#2C2C2C">trad</tspan>
   </text>
 </svg>
