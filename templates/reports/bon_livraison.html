@@ -1,22 +1,22 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 {% load static %}
 <head>
   <meta charset="UTF-8">
   <title>Bon de Livraison — Duplicata</title>
   <style>
-    /* Styles compatibles xhtml2pdf: éviter flex, utiliser grid simple et tables-like */
     @page { size: A4; margin: 16mm; }
     body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
     .title { text-align: center; font-weight: bold; }
     .dup { display: block; font-size: 11px; margin-top: 2px; }
-    .row { display: grid; grid-gap: 6px; margin: 8px 0; }
-    .grid-2 { grid-template-columns: 1fr 1fr; }
-    .grid-5 { grid-template-columns: repeat(5, 1fr); }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
-    .cell { border: 1px solid #666; padding: 6px; min-height: 42px; }
+    .header { display: grid; grid-template-columns: 140px 1fr 140px; align-items: center; margin-bottom: 8px; }
+    .logo { text-align: left; }
+    .logo img { max-height: 60px; max-width: 130px; }
+    .header-right { text-align: right; font-size: 11px; color: #333; }
+
+    table.bl { width: 100%; border-collapse: collapse; }
+    table.bl td { border: 1px solid #000; padding: 6px; vertical-align: top; }
     .label { font-size: 11px; color: #000; display: block; margin-bottom: 4px; font-weight: bold; }
-    .designation { font-weight: bold; }
     .footer { margin-top: 12px; font-size: 10px; color: #555; }
   </style>
 </head>
@@ -29,187 +29,165 @@
       BON DE LIVRAISON
       <span class="dup">DUPLICATA</span>
     </div>
-    <div class="header-right">
-      <!-- Informations société ou centrale si souhaité -->
-      {{ plant.name }}
-    </div>
+    <div class="header-right">{{ plant.name }}</div>
   </div>
 
-  <!-- En-tête gauche/droite -->
-  <div class="row grid-2">
-    <div class="cell">
-      <span class="label">DATE</span>
-      {{ bl.date|date:"d/m/Y" }}
-      <br>
-      <span class="label">CLIENT</span>
-      {{ client.name }}
-      <br>
-      <span class="label">CHANTIER</span>
-      {{ bl.site }}
-    </div>
-    <div class="cell">
-      <span class="label">BON N°</span>
-      {{ bl.number }}
-      <br>
-      <span class="label">CENTRALE</span>
-      {{ plant.name }}
-      <br>
-      <span class="label">CODE CLIENT</span>
-      {{ client.code }}
-    </div>
-  </div>
-
-  <!-- Quantités et commande -->
-  <div class="row grid-5">
-    <div class="cell">
-      <span class="label">QUANTITÉ LIVRÉE</span>
-      {{ concrete.volume_m3 }} m³
-    </div>
-    <div class="cell">
-      <span class="label">N° DE COMMANDE</span>
-      {{ bl.command_number }}
-    </div>
-    <div class="cell">
-      <span class="label">QTÉ COMMANDÉE</span>
-      {{ bl.ordered_quantity_m3 }} m³
-    </div>
-    <div class="cell">
-      <span class="label">QTÉ CUMULÉE</span>
-      {{ bl.cumulative_quantity_m3 }} m³
-    </div>
-    <div class="cell">
-      <span class="label">CODE BÉTON</span>
-      {{ concrete.code }}
-    </div>
-  </div>
-
-  <!-- Désignation -->
-  <div class="row">
-    <div class="cell designation">
-      <span class="label">DESIGNATION :</span>
-      {{ concrete.designation|default:"MICRO-BETON" }}
-    </div>
-  </div>
-
-  <!-- Caractéristiques du béton : classes -->
-  <div class="row grid-5">
-    <div class="cell">
-      <span class="label">CLASSE DE RÉSISTANCE</span>
-      {{ concrete.resistance_class }}
-    </div>
-    <div class="cell">
-      <span class="label">CLASSE D’EXPOSITION</span>
-      {{ concrete.exposure_class }}
-    </div>
-    <div class="cell">
-      <span class="label">CLASSE DE CONSISTANCE</span>
-      {{ concrete.consistency }}
-    </div>
-    <div class="cell">
-      <span class="label">CLASSE DE TENEUR EN CHLORURE</span>
-      {{ concrete.chloride_class }}
-    </div>
-    <div class="cell">
-      <span class="label">D max</span>
-      {{ concrete.dmax_mm }} mm
-    </div>
-  </div>
-
-  <!-- Caractéristiques : composition -->
-  <div class="row grid-5">
-    <div class="cell">
-      <span class="label">TYPE ET CLASSE DE CIMENT</span>
-      {{ concrete.cement_type }}
-    </div>
-    <div class="cell">
-      <span class="label">TYPE D’ADJUVANT</span>
-      {{ concrete.additive_type }}
-    </div>
-    <div class="cell">
-      <span class="label">RAPPORT E/C</span>
-      {{ concrete.ec_ratio }}
-    </div>
-    <div class="cell">
-      <span class="label">TENEUR EN AIR</span>
-      {{ concrete.air_content_percent }} %
-    </div>
-    <div class="cell">
-      <span class="label">TEMPÉRATURE DU BÉTON</span>
-      {{ quality.temperature_c }} °C
-    </div>
-  </div>
-
-  <!-- Caractéristiques : teneurs et masse volumique -->
-  <div class="row grid-2">
-    <div class="cell">
-      <span class="label">TENEUR EN CIMENT</span>
-      {{ concrete.cement_content_kg_per_m3 }} kg/m³
-    </div>
-    <div class="cell">
-      <span class="label">MASSE VOLUMIQUE</span>
-      {{ concrete.density_kg_per_m3 }} kg/m³
-    </div>
-  </div>
-
-  <!-- Transport -->
-  <div class="row grid-5">
-    <div class="cell">
-      <span class="label">TRANSPORTEUR</span>
-      {{ transport.carrier }}
-    </div>
-    <div class="cell">
-      <span class="label">MATRICULE DU CAMION</span>
-      {{ transport.mixer_number }}
-    </div>
-    <div class="cell">
-      <span class="label">NOM DU CHAUFFEUR</span>
-      {{ transport.driver }}
-    </div>
-    <div class="cell">
-      <span class="label">SERVICES</span>
-      {{ transport.services }}
-    </div>
-    <div class="cell">
-      <span class="label">RÉFÉRENCE</span>
-      {{ transport.reference }}
-    </div>
-  </div>
-
-  <!-- Horaires -->
-  <div class="row grid-5">
-    <div class="cell">
-      <span class="label">H. 1ERE</span>
-      {{ transport.first_time }}
-    </div>
-    <div class="cell">
-      <span class="label">H. ARRIVÉE</span>
-      {{ transport.arrival_time }}
-    </div>
-    <div class="cell">
-      <span class="label">H. DÉBUT</span>
-      {{ transport.start_time }}
-    </div>
-    <div class="cell">
-      <span class="label">H. FIN</span>
-      {{ transport.end_time }}
-    </div>
-    <div class="cell">
-      <span class="label">RETOUR CENTRALE</span>
-      {{ transport.return_time }}
-    </div>
-  </div>
-
-  <!-- Notes et Réception -->
-  <div class="row grid-2">
-    <div class="cell" style="min-height:100px;">
-      <span class="label">NOTES</span>
-      {{ bl.notes }}
-    </div>
-    <div class="cell" style="min-height:100px;">
-      <span class="label">RÉCEPTION</span>
-      VISA & CACHET:
-    </div>
-  </div>
+  <table class="bl">
+    <tr>
+      <td colspan="3">
+        <span class="label">DATE</span>
+        {{ bl.date|date:"d/m/Y" }}<br>
+        <span class="label">CLIENT</span>
+        {{ client.name }}<br>
+        <span class="label">CHANTIER</span>
+        {{ bl.site }}
+      </td>
+      <td colspan="2">
+        <span class="label">BON N°</span>
+        {{ bl.number }}<br>
+        <span class="label">CENTRALE</span>
+        {{ plant.name }}<br>
+        <span class="label">CODE CLIENT</span>
+        {{ client.code }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">QUANTITÉ LIVRÉE</span>
+        {{ concrete.volume_m3 }} m³
+      </td>
+      <td>
+        <span class="label">N° DE COMMANDE</span>
+        {{ bl.command_number }}
+      </td>
+      <td>
+        <span class="label">QTÉ COMMANDÉE</span>
+        {{ bl.ordered_quantity_m3 }} m³
+      </td>
+      <td>
+        <span class="label">QTÉ CUMULÉE</span>
+        {{ bl.cumulative_quantity_m3 }} m³
+      </td>
+      <td>
+        <span class="label">CODE BÉTON</span>
+        {{ concrete.code }}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="5">
+        <span class="label">DESIGNATION :</span>
+        {{ concrete.designation|default:"MICRO-BETON" }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">CLASSE DE RÉSISTANCE</span>
+        {{ concrete.resistance_class }}
+      </td>
+      <td>
+        <span class="label">CLASSE D’EXPOSITION</span>
+        {{ concrete.exposure_class }}
+      </td>
+      <td>
+        <span class="label">CLASSE DE CONSISTANCE</span>
+        {{ concrete.consistency }}
+      </td>
+      <td>
+        <span class="label">CLASSE DE TENEUR EN CHLORURE</span>
+        {{ concrete.chloride_class }}
+      </td>
+      <td>
+        <span class="label">D max</span>
+        {{ concrete.dmax_mm }} mm
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">TYPE ET CLASSE DE CIMENT</span>
+        {{ concrete.cement_type }}
+      </td>
+      <td>
+        <span class="label">TYPE D’ADJUVANT</span>
+        {{ concrete.additive_type }}
+      </td>
+      <td>
+        <span class="label">RAPPORT E/C</span>
+        {{ concrete.ec_ratio }}
+      </td>
+      <td>
+        <span class="label">TENEUR EN AIR</span>
+        {{ concrete.air_content_percent }} %
+      </td>
+      <td>
+        <span class="label">TEMPÉRATURE DU BÉTON</span>
+        {{ quality.temperature_c }} °C
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        <span class="label">TENEUR EN CIMENT</span>
+        {{ concrete.cement_content_kg_per_m3 }} kg/m³
+      </td>
+      <td colspan="2">
+        <span class="label">MASSE VOLUMIQUE</span>
+        {{ concrete.density_kg_per_m3 }} kg/m³
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">TRANSPORTEUR</span>
+        {{ transport.carrier }}
+      </td>
+      <td>
+        <span class="label">MATRICULE DU CAMION</span>
+        {{ transport.mixer_number }}
+      </td>
+      <td>
+        <span class="label">NOM DU CHAUFFEUR</span>
+        {{ transport.driver }}
+      </td>
+      <td>
+        <span class="label">SERVICES</span>
+        {{ transport.services }}
+      </td>
+      <td>
+        <span class="label">RÉFÉRENCE</span>
+        {{ transport.reference }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">H. 1ERE</span>
+        {{ transport.first_time }}
+      </td>
+      <td>
+        <span class="label">H. ARRIVÉE</span>
+        {{ transport.arrival_time }}
+      </td>
+      <td>
+        <span class="label">H. DÉBUT</span>
+        {{ transport.start_time }}
+      </td>
+      <td>
+        <span class="label">H. FIN</span>
+        {{ transport.end_time }}
+      </td>
+      <td>
+        <span class="label">RETOUR CENTRALE</span>
+        {{ transport.return_time }}
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" style="height:110px;">
+        <span class="label">NOTES</span>
+        {{ bl.notes }}
+      </td>
+      <td colspan="2" style="height:110px;">
+        <span class="label">RÉCEPTION</span>
+        VISA & CACHET:
+      </td>
+    </tr>
+  </table>
 
   <div class="footer">
     * Béton à propriété spécifique (BPS) ou à composition prescrite (BCP) conformes à la norme NM10.1.008<br>
@@ -218,7 +196,3 @@
   </div>
 </body>
 </html>
-    .header { display: grid; grid-template-columns: 140px 1fr 140px; align-items: center; margin-bottom: 8px; }
-    .logo { text-align: left; }
-    .logo img { max-height: 60px; max-width: 130px; }
-    .header-right { text-align: right; font-size: 11px; color: #333; }
