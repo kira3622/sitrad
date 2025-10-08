@@ -28,6 +28,8 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'masse_volumique', 'transporteur', 'pompe',
         'statut', 'actions_sorties', 'delivery_note_link'
     )
+    # Important: pour qu'un champ non-modèle apparaisse dans "fields", il doit être listé dans readonly_fields
+    readonly_fields = ('delivery_note_link',)
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
     
