@@ -17,10 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic.base import RedirectView
+from production.views import delivery_note_pdf
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/admin/', permanent=True)),
     path('admin/', admin.site.urls),
+    # Route explicite pour le PDF Bon de Livraison (assure la disponibilité en production)
+    path('production/orders/<int:pk>/delivery-note.pdf', delivery_note_pdf, name='delivery_note_pdf'),
     
     # Applications web
     path('activity/', include('activity.urls')),
