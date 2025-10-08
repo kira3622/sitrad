@@ -19,10 +19,15 @@
     .plant-cell { width: 160px; text-align: right; font-size: 11px; color: #4b5563; }
     .divider { height: 0; border-top: 2px solid #111827; margin: 6px 0 12px; }
 
+    /* Sections visuelles */
+    .section-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 1px solid #cbd5e1; padding: 6px 12px; font-weight: 700; font-size: 11px; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px; }
+    
     /* Tableau principal */
-    table.bl { width: 100%; border-collapse: collapse; }
-    table.bl td { border: 1px solid #d0d7de; padding: 8px 10px; vertical-align: top; }
-    .label { font-size: 10.5px; color: #374151; display: block; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.2px; }
+    table.bl { width: 100%; border-collapse: collapse; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    table.bl td { border: 1px solid #d0d7de; padding: 10px 12px; vertical-align: top; background: #ffffff; }
+    table.bl td:nth-child(odd) { background: #fafbfc; }
+    .label { font-size: 10px; color: #374151; display: block; margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+    .value { font-size: 12px; color: #111827; font-weight: 500; }
     .sig-label { font-size: 10.5px; color: #4b5563; }
     .sig-line { height: 0; border-top: 1px solid #d0d7de; margin-top: 26px; }
 
@@ -47,156 +52,165 @@
 
   <table class="bl">
     <tr>
+      <td colspan="5" class="section-header">INFORMATIONS COMMANDE</td>
+    </tr>
+    <tr>
       <td colspan="3">
-        <span class="label">DATE</span>
-        {{ bl.date|date:"d/m/Y" }}<br>
-        <span class="label">CLIENT</span>
-        {{ client.name }}<br>
-        <span class="label">CHANTIER</span>
-        {{ bl.site }}
+        <span class="label">Date</span>
+        <span class="value">{{ bl.date|date:"d/m/Y" }}</span><br><br>
+        <span class="label">Client</span>
+        <span class="value">{{ client.name }}</span><br><br>
+        <span class="label">Chantier</span>
+        <span class="value">{{ bl.site }}</span>
       </td>
       <td colspan="2">
-        <span class="label">BON N°</span>
-        {{ bl.number }}<br>
-        <span class="label">CENTRALE</span>
-        {{ plant.name }}<br>
-        <span class="label">CODE CLIENT</span>
-        {{ client.code }}
+        <span class="label">Bon N°</span>
+        <span class="value">{{ bl.number }}</span><br><br>
+        <span class="label">Centrale</span>
+        <span class="value">{{ plant.name }}</span><br><br>
+        <span class="label">Code Client</span>
+        <span class="value">{{ client.code }}</span>
       </td>
     </tr>
     <tr>
       <td>
-        <span class="label">QUANTITÉ LIVRÉE</span>
-        {{ concrete.volume_m3 }} m³
+        <span class="label">Quantité Livrée</span>
+        <span class="value">{{ concrete.volume_m3 }} m³</span>
       </td>
       <td>
-        <span class="label">N° DE COMMANDE</span>
-        {{ bl.command_number }}
+        <span class="label">N° de Commande</span>
+        <span class="value">{{ bl.command_number }}</span>
       </td>
       <td>
-        <span class="label">QTÉ COMMANDÉE</span>
-        {{ bl.ordered_quantity_m3 }} m³
+        <span class="label">Qté Commandée</span>
+        <span class="value">{{ bl.ordered_quantity_m3 }} m³</span>
       </td>
       <td>
-        <span class="label">QTÉ CUMULÉE</span>
-        {{ bl.cumulative_quantity_m3 }} m³
+        <span class="label">Qté Cumulée</span>
+        <span class="value">{{ bl.cumulative_quantity_m3 }} m³</span>
       </td>
       <td>
-        <span class="label">CODE BÉTON</span>
-        {{ concrete.code }}
+        <span class="label">Code Béton</span>
+        <span class="value">{{ concrete.code }}</span>
       </td>
+    </tr>
+    <tr>
+      <td colspan="5" class="section-header">CARACTÉRISTIQUES BÉTON</td>
     </tr>
     <tr>
       <td colspan="5">
-        <span class="label">DESIGNATION :</span>
-        {{ concrete.designation|default:"MICRO-BETON" }}
+        <span class="label">Désignation</span>
+        <span class="value">{{ concrete.designation|default:"MICRO-BETON" }}</span>
       </td>
     </tr>
     <tr>
       <td>
-        <span class="label">CLASSE DE RÉSISTANCE</span>
-        {{ concrete.resistance_class }}
+        <span class="label">Classe Résistance</span>
+        <span class="value">{{ concrete.resistance_class }}</span>
       </td>
       <td>
-        <span class="label">CLASSE D’EXPOSITION</span>
-        {{ concrete.exposure_class }}
+        <span class="label">Classe Exposition</span>
+        <span class="value">{{ concrete.exposure_class }}</span>
       </td>
       <td>
-        <span class="label">CLASSE DE CONSISTANCE</span>
-        {{ concrete.consistency }}
+        <span class="label">Classe Consistance</span>
+        <span class="value">{{ concrete.consistency }}</span>
       </td>
       <td>
-        <span class="label">CLASSE DE TENEUR EN CHLORURE</span>
-        {{ concrete.chloride_class }}
+        <span class="label">Classe Chlorure</span>
+        <span class="value">{{ concrete.chloride_class }}</span>
       </td>
       <td>
         <span class="label">D max</span>
-        {{ concrete.dmax_mm }} mm
+        <span class="value">{{ concrete.dmax_mm }} mm</span>
       </td>
     </tr>
     <tr>
       <td>
-        <span class="label">TYPE ET CLASSE DE CIMENT</span>
-        {{ concrete.cement_type }}
+        <span class="label">Type Ciment</span>
+        <span class="value">{{ concrete.cement_type }}</span>
       </td>
       <td>
-        <span class="label">TYPE D’ADJUVANT</span>
-        {{ concrete.additive_type }}
+        <span class="label">Type Adjuvant</span>
+        <span class="value">{{ concrete.additive_type }}</span>
       </td>
       <td>
-        <span class="label">RAPPORT E/C</span>
-        {{ concrete.ec_ratio }}
+        <span class="label">Rapport E/C</span>
+        <span class="value">{{ concrete.ec_ratio }}</span>
       </td>
       <td>
-        <span class="label">TENEUR EN AIR</span>
-        {{ concrete.air_content_percent }} %
+        <span class="label">Teneur Air</span>
+        <span class="value">{{ concrete.air_content_percent }} %</span>
       </td>
       <td>
-        <span class="label">TEMPÉRATURE DU BÉTON</span>
-        {{ quality.temperature_c }} °C
+        <span class="label">Température</span>
+        <span class="value">{{ quality.temperature_c }} °C</span>
       </td>
     </tr>
     <tr>
       <td colspan="3">
-        <span class="label">TENEUR EN CIMENT</span>
-        {{ concrete.cement_content_kg_per_m3 }} kg/m³
+        <span class="label">Teneur Ciment</span>
+        <span class="value">{{ concrete.cement_content_kg_per_m3 }} kg/m³</span>
       </td>
       <td colspan="2">
-        <span class="label">MASSE VOLUMIQUE</span>
-        {{ concrete.density_kg_per_m3 }} kg/m³
+        <span class="label">Masse Volumique</span>
+        <span class="value">{{ concrete.density_kg_per_m3 }} kg/m³</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="5" class="section-header">INFORMATIONS TRANSPORT</td>
+    </tr>
+    <tr>
+      <td>
+        <span class="label">Transporteur</span>
+        <span class="value">{{ transport.carrier }}</span>
+      </td>
+      <td>
+        <span class="label">Matricule Camion</span>
+        <span class="value">{{ transport.mixer_number }}</span>
+      </td>
+      <td>
+        <span class="label">Nom Chauffeur</span>
+        <span class="value">{{ transport.driver }}</span>
+      </td>
+      <td>
+        <span class="label">Services</span>
+        <span class="value">{{ transport.services }}</span>
+      </td>
+      <td>
+        <span class="label">Référence</span>
+        <span class="value">{{ transport.reference }}</span>
       </td>
     </tr>
     <tr>
       <td>
-        <span class="label">TRANSPORTEUR</span>
-        {{ transport.carrier }}
+        <span class="label">H. Première</span>
+        <span class="value">{{ transport.first_time }}</span>
       </td>
       <td>
-        <span class="label">MATRICULE DU CAMION</span>
-        {{ transport.mixer_number }}
+        <span class="label">H. Arrivée</span>
+        <span class="value">{{ transport.arrival_time }}</span>
       </td>
       <td>
-        <span class="label">NOM DU CHAUFFEUR</span>
-        {{ transport.driver }}
+        <span class="label">H. Début</span>
+        <span class="value">{{ transport.start_time }}</span>
       </td>
       <td>
-        <span class="label">SERVICES</span>
-        {{ transport.services }}
+        <span class="label">H. Fin</span>
+        <span class="value">{{ transport.end_time }}</span>
       </td>
       <td>
-        <span class="label">RÉFÉRENCE</span>
-        {{ transport.reference }}
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <span class="label">H. 1ERE</span>
-        {{ transport.first_time }}
-      </td>
-      <td>
-        <span class="label">H. ARRIVÉE</span>
-        {{ transport.arrival_time }}
-      </td>
-      <td>
-        <span class="label">H. DÉBUT</span>
-        {{ transport.start_time }}
-      </td>
-      <td>
-        <span class="label">H. FIN</span>
-        {{ transport.end_time }}
-      </td>
-      <td>
-        <span class="label">RETOUR CENTRALE</span>
-        {{ transport.return_time }}
+        <span class="label">Retour Centrale</span>
+        <span class="value">{{ transport.return_time }}</span>
       </td>
     </tr>
     <tr>
       <td colspan="3" style="height:110px;">
-        <span class="label">NOTES</span>
-        {{ bl.notes }}
+        <span class="label">Notes</span>
+        <span class="value">{{ bl.notes }}</span>
       </td>
       <td colspan="2" style="height:110px;">
-        <span class="label">RÉCEPTION</span>
+        <span class="label">Réception</span>
         <div class="sig-label">Visa & cachet du client</div>
         <div class="sig-line"></div>
       </td>
