@@ -8,10 +8,26 @@ class LotProductionInline(admin.TabularInline):
     extra = 0
 
 class OrdreProductionAdmin(admin.ModelAdmin):
-    list_display = ('numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production', 'chauffeur', 'vehicule', 'statut', 'matieres_sorties_calculees', 'actions_sorties')
-    list_filter = ('statut', 'date_production', 'matieres_sorties_calculees', 'chauffeur', 'vehicule')
+    list_display = (
+        'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
+        'chauffeur', 'vehicule', 'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
+        'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
+        'masse_volumique', 'transporteur', 'pompe', 'statut', 'matieres_sorties_calculees', 'actions_sorties'
+    )
+    list_filter = (
+        'statut', 'date_production', 'matieres_sorties_calculees', 'chauffeur', 'vehicule',
+        'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
+        'ciment_type_classe', 'adjuvant_type', 'transporteur', 'pompe'
+    )
     search_fields = ('numero_bon', 'commande__client__nom', 'formule__nom', 'chauffeur__nom', 'vehicule__immatriculation')
-    fields = ('numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production', 'chauffeur', 'vehicule', 'statut')
+    fields = (
+        'numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
+        'chauffeur', 'vehicule',
+        'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
+        'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
+        'masse_volumique', 'transporteur', 'pompe',
+        'statut'
+    )
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
     
@@ -55,7 +71,13 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         }
     readonly_fields = ('delivery_note_link', 'actions_sorties')
     fields = (
-        'numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production', 'chauffeur', 'vehicule', 'statut', 'matieres_sorties_calculees', 'actions_sorties')
+        'numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
+        'chauffeur', 'vehicule',
+        'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
+        'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
+        'masse_volumique', 'transporteur', 'pompe',
+        'statut', 'matieres_sorties_calculees', 'actions_sorties'
+    )
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
     

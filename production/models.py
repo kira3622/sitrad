@@ -4,6 +4,71 @@ from orders.models import Commande
 from formulas.models import FormuleBeton
 from logistics.models import Chauffeur, Vehicule
 
+# Choix pour caractéristiques du béton (listes déroulantes)
+EXPOSITION_CHOICES = [
+    ('XC1', 'XC1'), ('XC2', 'XC2'), ('XC3', 'XC3'), ('XC4', 'XC4'),
+    ('XD1', 'XD1'), ('XD2', 'XD2'), ('XD3', 'XD3'),
+    ('XS1', 'XS1'), ('XS2', 'XS2'), ('XS3', 'XS3'),
+    ('XF1', 'XF1'), ('XF2', 'XF2'), ('XF3', 'XF3'), ('XF4', 'XF4'),
+    ('XA1', 'XA1'), ('XA2', 'XA2'), ('XA3', 'XA3'),
+    ('XM1', 'XM1'), ('XM2', 'XM2'), ('XM3', 'XM3'),
+]
+
+CONSISTANCE_CHOICES = [
+    ('S1', 'S1'), ('S2', 'S2'), ('S3', 'S3'), ('S4', 'S4'), ('S5', 'S5'),
+]
+
+CHLORURE_CHOICES = [
+    ('CL 0.10', 'CL 0.10'), ('CL 0.20', 'CL 0.20'), ('CL 0.40', 'CL 0.40'),
+]
+
+D_MAX_CHOICES = [
+    ('8', '8 mm'), ('12', '12 mm'), ('16', '16 mm'), ('20', '20 mm'), ('22.4', '22.4 mm'), ('31.5', '31.5 mm'), ('40', '40 mm'),
+]
+
+CIMENT_CHOICES = [
+    ('CEM I 42.5R', 'CEM I 42.5R'),
+    ('CEM II/A-M 42.5N', 'CEM II/A-M 42.5N'),
+    ('CEM II/B-M 32.5N', 'CEM II/B-M 32.5N'),
+    ('CEM III/A 42.5N', 'CEM III/A 42.5N'),
+]
+
+ADJUVANT_CHOICES = [
+    ('Plastifiant', 'Plastifiant'),
+    ('Superplastifiant', 'Superplastifiant'),
+    ('Retardateur', 'Retardateur'),
+    ('Accélérateur', 'Accélérateur'),
+    ("Entraîneur d'air", "Entraîneur d'air"),
+]
+
+RAPPORTEC_CHOICES = [
+    ('0.35', '0.35'), ('0.40', '0.40'), ('0.45', '0.45'), ('0.50', '0.50'), ('0.55', '0.55'), ('0.60', '0.60'),
+]
+
+AIR_CHOICES = [
+    ('1%', '1%'), ('2%', '2%'), ('3%', '3%'), ('4%', '4%'), ('5%', '5%'),
+]
+
+TEMP_CHOICES = [
+    ('10°C', '10°C'), ('15°C', '15°C'), ('20°C', '20°C'), ('25°C', '25°C'), ('30°C', '30°C'), ('35°C', '35°C'),
+]
+
+CIMENT_TENEUR_CHOICES = [
+    ('300 kg/m³', '300 kg/m³'), ('320 kg/m³', '320 kg/m³'), ('350 kg/m³', '350 kg/m³'), ('380 kg/m³', '380 kg/m³'), ('400 kg/m³', '400 kg/m³'),
+]
+
+MASSE_VOL_CHOICES = [
+    ('2200 kg/m³', '2200 kg/m³'), ('2300 kg/m³', '2300 kg/m³'), ('2400 kg/m³', '2400 kg/m³'), ('2500 kg/m³', '2500 kg/m³'),
+]
+
+TRANSPORTEUR_CHOICES = [
+    ('Interne', 'Interne'), ('Sous-traitant', 'Sous-traitant'), ('Client', 'Client'),
+]
+
+POMPE_CHOICES = [
+    ('Aucune', 'Aucune'), ('Pompe mobile', 'Pompe mobile'), ('Pompe stationnaire', 'Pompe stationnaire'), ('Tremie', 'Trémie'),
+]
+
 class OrdreProduction(models.Model):
     numero_bon = models.CharField(max_length=20, unique=True, null=True, blank=True, help_text="Numéro de bon de production")
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE)
@@ -15,6 +80,21 @@ class OrdreProduction(models.Model):
     vehicule = models.ForeignKey(Vehicule, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordres_production')
     statut = models.CharField(max_length=20, choices=[('planifie', 'Planifié'), ('en_cours', 'En cours'), ('termine', 'Terminé'), ('annule', 'Annulé')], default='planifie')
     matieres_sorties_calculees = models.BooleanField(default=False)  # Pour éviter les doublons
+
+    # Champs caractéristiques du béton (listes déroulantes)
+    classe_exposition = models.CharField(max_length=10, choices=EXPOSITION_CHOICES, null=True, blank=True, help_text="Classe d'exposition")
+    classe_consistance = models.CharField(max_length=5, choices=CONSISTANCE_CHOICES, null=True, blank=True, help_text="Classe de consistance")
+    classe_teneur_chlorure = models.CharField(max_length=10, choices=CHLORURE_CHOICES, null=True, blank=True, help_text="Classe de teneur en chlorure")
+    d_max = models.CharField(max_length=10, choices=D_MAX_CHOICES, null=True, blank=True, help_text="Granulométrie D max")
+    ciment_type_classe = models.CharField(max_length=30, choices=CIMENT_CHOICES, null=True, blank=True, help_text="Type et classe de ciment")
+    adjuvant_type = models.CharField(max_length=20, choices=ADJUVANT_CHOICES, null=True, blank=True, help_text="Type d’adjuvant")
+    rapport_e_c = models.CharField(max_length=10, choices=RAPPORTEC_CHOICES, null=True, blank=True, help_text="Rapport E/C")
+    teneur_en_air = models.CharField(max_length=5, choices=AIR_CHOICES, null=True, blank=True, help_text="Teneur en air")
+    temperature_beton = models.CharField(max_length=10, choices=TEMP_CHOICES, null=True, blank=True, help_text="Température du béton")
+    teneur_en_ciment = models.CharField(max_length=15, choices=CIMENT_TENEUR_CHOICES, null=True, blank=True, help_text="Teneur en ciment")
+    masse_volumique = models.CharField(max_length=15, choices=MASSE_VOL_CHOICES, null=True, blank=True, help_text="Masse volumique")
+    transporteur = models.CharField(max_length=20, choices=TRANSPORTEUR_CHOICES, null=True, blank=True, help_text="Transporteur")
+    pompe = models.CharField(max_length=20, choices=POMPE_CHOICES, null=True, blank=True, help_text="Pompe")
 
     def save(self, *args, **kwargs):
         if not self.numero_bon:
