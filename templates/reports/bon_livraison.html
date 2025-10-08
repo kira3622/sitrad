@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Bon de Livraison — Duplicata</title>
+  <style>
+    @page { size: A4; margin: 16mm; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
+    .title { text-align: center; font-weight: bold; }
+    .dup { display: block; font-size: 11px; margin-top: 2px; }
+    .row { display: grid; grid-gap: 6px; margin: 8px 0; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-5 { grid-template-columns: repeat(5, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-6 { grid-template-columns: repeat(6, 1fr); }
+    .cell { border: 1px solid #999; padding: 6px; min-height: 40px; }
+    .label { font-size: 11px; color: #555; display: block; margin-bottom: 4px; }
+    .designation { font-weight: bold; }
+    .footer { margin-top: 8px; font-size: 10px; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="title">
+    BON DE LIVRAISON
+    <span class="dup">DUPLICATA</span>
+  </div>
+
+  <!-- En-tête gauche/droite -->
+  <div class="row grid-2">
+    <div class="cell">
+      <span class="label">DATE</span>
+      {{ bl.date|date:"d/m/Y" }}
+      <br>
+      <span class="label">CLIENT</span>
+      {{ client.name }}
+      <br>
+      <span class="label">CHANTIER</span>
+      {{ bl.site }}
+    </div>
+    <div class="cell">
+      <span class="label">BON N°</span>
+      {{ bl.number }}
+      <br>
+      <span class="label">CENTRALE</span>
+      {{ plant.name }}
+      <br>
+      <span class="label">CODE CLIENT</span>
+      {{ client.code }}
+    </div>
+  </div>
+
+  <!-- Quantités et commande -->
+  <div class="row grid-5">
+    <div class="cell">
+      <span class="label">QUANTITÉ LIVRÉE</span>
+      {{ concrete.volume_m3 }} m³
+    </div>
+    <div class="cell">
+      <span class="label">N° DE COMMANDE</span>
+      {{ bl.command_number }}
+    </div>
+    <div class="cell">
+      <span class="label">QTÉ COMMANDÉE</span>
+      {{ bl.ordered_quantity_m3 }} m³
+    </div>
+    <div class="cell">
+      <span class="label">QTÉ CUMULÉE</span>
+      {{ bl.cumulative_quantity_m3 }} m³
+    </div>
+    <div class="cell">
+      <span class="label">CODE BÉTON</span>
+      {{ concrete.code }}
+    </div>
+  </div>
+
+  <!-- Désignation -->
+  <div class="row">
+    <div class="cell designation">
+      <span class="label">DESIGNATION :</span>
+      {{ concrete.designation|default:"MICRO-BETON" }}
+    </div>
+  </div>
+
+  <!-- Caractéristiques du béton : classes -->
+  <div class="row grid-5">
+    <div class="cell">
+      <span class="label">CLASSE DE RÉSISTANCE</span>
+      {{ concrete.resistance_class }}
+    </div>
+    <div class="cell">
+      <span class="label">CLASSE D’EXPOSITION</span>
+      {{ concrete.exposure_class }}
+    </div>
+    <div class="cell">
+      <span class="label">CLASSE DE CONSISTANCE</span>
+      {{ concrete.consistency }}
+    </div>
+    <div class="cell">
+      <span class="label">CLASSE DE TENEUR EN CHLORURE</span>
+      {{ concrete.chloride_class }}
+    </div>
+    <div class="cell">
+      <span class="label">D max</span>
+      {{ concrete.dmax_mm }} mm
+    </div>
+  </div>
+
+  <!-- Caractéristiques : composition -->
+  <div class="row grid-5">
+    <div class="cell">
+      <span class="label">TYPE ET CLASSE DE CIMENT</span>
+      {{ concrete.cement_type }}
+    </div>
+    <div class="cell">
+      <span class="label">TYPE D’ADJUVANT</span>
+      {{ concrete.additive_type }}
+    </div>
+    <div class="cell">
+      <span class="label">RAPPORT E/C</span>
+      {{ concrete.ec_ratio }}
+    </div>
+    <div class="cell">
+      <span class="label">TENEUR EN AIR</span>
+      {{ concrete.air_content_percent }} %
+    </div>
+    <div class="cell">
+      <span class="label">TEMPÉRATURE DU BÉTON</span>
+      {{ quality.temperature_c }} °C
+    </div>
+  </div>
+
+  <!-- Caractéristiques : teneurs et masse volumique -->
+  <div class="row grid-3">
+    <div class="cell">
+      <span class="label">TENEUR EN CIMENT</span>
+      {{ concrete.cement_content_kg_per_m3 }} kg/m³
+    </div>
+    <div class="cell">
+      <span class="label">MASSE VOLUMIQUE</span>
+      {{ concrete.density_kg_per_m3 }} kg/m³
+    </div>
+    <div class="cell"></div>
+  </div>
+
+  <!-- Transport -->
+  <div class="row grid-5">
+    <div class="cell">
+      <span class="label">TRANSPORTEUR</span>
+      {{ transport.carrier }}
+    </div>
+    <div class="cell">
+      <span class="label">MATRICULE DU CAMION</span>
+      {{ transport.mixer_number }}
+    </div>
+    <div class="cell">
+      <span class="label">NOM DU CHAUFFEUR</span>
+      {{ transport.driver }}
+    </div>
+    <div class="cell">
+      <span class="label">SERVICES</span>
+      {{ transport.services }}
+    </div>
+    <div class="cell">
+      <span class="label">RÉFÉRENCE</span>
+      {{ transport.reference }}
+    </div>
+  </div>
+
+  <!-- Horaires -->
+  <div class="row grid-5">
+    <div class="cell">
+      <span class="label">H. 1ERE</span>
+      {{ transport.first_time }}
+    </div>
+    <div class="cell">
+      <span class="label">H. ARRIVÉE</span>
+      {{ transport.arrival_time }}
+    </div>
+    <div class="cell">
+      <span class="label">H. DÉBUT</span>
+      {{ transport.start_time }}
+    </div>
+    <div class="cell">
+      <span class="label">H. FIN</span>
+      {{ transport.end_time }}
+    </div>
+    <div class="cell">
+      <span class="label">RETOUR CENTRALE</span>
+      {{ transport.return_time }}
+    </div>
+  </div>
+
+  <!-- Notes et Réception -->
+  <div class="row grid-2">
+    <div class="cell" style="min-height:100px;">
+      <span class="label">NOTES</span>
+      {{ bl.notes }}
+    </div>
+    <div class="cell" style="min-height:100px;">
+      <span class="label">RÉCEPTION</span>
+      VISA & CACHET:
+    </div>
+  </div>
+
+  <div class="footer">
+    * Béton à propriété spécifique (BPS) ou à composition prescrite (BCP) conformes à la norme NM10.1.008<br>
+    Il est strictement interdit à notre chauffeur de rajouter de l’eau ou d’autres ingrédients.<br>
+    La durée de mise en œuvre du béton ne dépasse pas 120 min.
+  </div>
+</body>
+</html>

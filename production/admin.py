@@ -12,7 +12,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
         'chauffeur', 'vehicule', 'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
-        'masse_volumique', 'transporteur', 'pompe', 'statut', 'matieres_sorties_calculees', 'actions_sorties'
+        'masse_volumique', 'transporteur', 'pompe', 'statut', 'matieres_sorties_calculees', 'actions_sorties', 'delivery_note_link'
     )
     list_filter = (
         'statut', 'date_production', 'matieres_sorties_calculees', 'chauffeur', 'vehicule',
@@ -26,7 +26,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
         'masse_volumique', 'transporteur', 'pompe',
-        'statut'
+        'statut', 'actions_sorties', 'delivery_note_link'
     )
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
@@ -76,7 +76,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
         'masse_volumique', 'transporteur', 'pompe',
-        'statut', 'matieres_sorties_calculees', 'actions_sorties'
+        'statut', 'matieres_sorties_calculees', 'actions_sorties', 'delivery_note_link'
     )
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
