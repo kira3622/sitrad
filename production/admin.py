@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from .models import OrdreProduction, LotProduction
 
@@ -129,7 +129,14 @@ class OrdreProductionAdmin(admin.ModelAdmin):
     def delivery_note_link(self, obj):
         if not obj.pk:
             return "Disponible après enregistrement"
-        url = reverse('delivery_note_pdf', args=[obj.pk])
+        # Tentative de résolution du lien PDF avec namespace, puis sans, puis fallback chemin direct
+        try:
+            url = reverse('production:delivery_note_pdf', args=[obj.pk])
+        except NoReverseMatch:
+            try:
+                url = reverse('delivery_note_pdf', args=[obj.pk])
+            except NoReverseMatch:
+                url = f"/production/orders/{obj.pk}/delivery-note.pdf"
         return format_html('<a class="button" href="{}" target="_blank">Télécharger Bon de Livraison (PDF)</a>', url)
     delivery_note_link.short_description = "Bon de Livraison"
 admin.site.register(OrdreProduction, OrdreProductionAdmin)
