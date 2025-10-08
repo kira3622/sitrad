@@ -53,17 +53,22 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/production_admin.css',)
         }
-    readonly_fields = ('delivery_note_link',)
+    readonly_fields = ('delivery_note_link', 'actions_sorties')
     fields = (
         'numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production', 'chauffeur', 'vehicule', 'statut', 'matieres_sorties_calculees', 'actions_sorties')
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
     
     def actions_sorties(self, obj):
-        """Affiche les boutons d'action pour calculer les sorties de matières"""
+        """Affiche les boutons d'action pour calculer les sorties de matières.
+        Sur la vue d'ajout (obj non défini), afficher un texte informatif.
+        """
+        if not obj or not getattr(obj, 'pk', None):
+            return "Disponible après enregistrement"
+
         preview_url = reverse('production:preview_sorties_ordre', args=[obj.id])
         calculer_url = reverse('production:calculer_sorties_ordre', args=[obj.id])
-        
+
         if obj.matieres_sorties_calculees:
             status_icon = "✅"
             status_text = "Calculées"
@@ -74,7 +79,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
             status_text = "À calculer"
             button_class = "default"
             button_text = "Calculer"
-        
+
         return format_html(
             '{} {} | <a href="{}" class="button {}">👁️ Prévisualiser</a> | '
             '<a href="#" onclick="calculerSorties({})" class="button {}">{} {}</a>',
