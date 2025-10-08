@@ -13,6 +13,8 @@ from reportlab.lib.units import mm
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.db.models import Sum
+from django.conf import settings
+import os
 
 @login_required
 @require_POST
@@ -227,7 +229,9 @@ def delivery_note_pdf(request, pk):
     cumulative_quantity = OrdreProduction.objects.filter(commande=op.commande).aggregate(total=Sum('quantite_produire'))['total'] or 0
 
     # Contexte pour le template bon_livraison.html
+    logo_path = os.path.join(settings.STATIC_ROOT, 'images', 'sitrad_logo_real.png')
     context = {
+        'logo_path': logo_path,
         'bl': {
             'date': op.date_production,
             'number': op.numero_bon or f'OP-{op.id}',
