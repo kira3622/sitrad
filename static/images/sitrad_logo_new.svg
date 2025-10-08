@@ -1,0 +1,35 @@
+<svg width="400" height="120" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond blanc pour la conversion PNG -->
+  <rect width="400" height="120" fill="white"/>
+  
+  <!-- Formes courbes rouges modernes basées sur le nouveau logo -->
+  <g fill="#E31E24">
+    <!-- Forme courbe principale (la plus grande) -->
+    <ellipse cx="50" cy="60" rx="35" ry="20" transform="rotate(-15 50 60)" opacity="0.9"/>
+    
+    <!-- Forme courbe secondaire -->
+    <ellipse cx="85" cy="55" rx="30" ry="18" transform="rotate(-10 85 55)" opacity="0.8"/>
+    
+    <!-- Forme courbe tertiaire -->
+    <ellipse cx="115" cy="52" rx="25" ry="15" transform="rotate(-5 115 52)" opacity="0.7"/>
+    
+    <!-- Forme courbe d'accent -->
+    <ellipse cx="140" cy="50" rx="20" ry="12" transform="rotate(0 140 50)" opacity="0.6"/>
+  </g>
+  
+  <!-- Texte Sitrad avec typographie moderne -->
+  <g font-family="Arial, sans-serif" font-weight="bold" font-size="48">
+    <!-- S -->
+    <text x="180" y="80" fill="#000000">S</text>
+    <!-- i (en vert) -->
+    <text x="220" y="80" fill="#00A651">i</text>
+    <!-- t -->
+    <text x="240" y="80" fill="#000000">t</text>
+    <!-- r -->
+    <text x="270" y="80" fill="#000000">r</text>
+    <!-- a -->
+    <text x="300" y="80" fill="#000000">a</text>
+    <!-- d -->
+    <text x="330" y="80" fill="#000000">d</text>
+  </g>
+</svg>

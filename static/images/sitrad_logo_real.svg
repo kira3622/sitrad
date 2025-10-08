@@ -1,23 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80">
-  <!-- Logo Sitrad officiel - reproduction fidèle de l'image fournie -->
+<svg width="200" height="60" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Formes courbes rouges modernes -->
+  <g fill="#E31E24">
+    <!-- Forme courbe principale -->
+    <path d="M5 15 Q25 5, 45 15 Q55 20, 50 30 Q45 40, 25 35 Q5 30, 5 15 Z" opacity="0.9"/>
+    
+    <!-- Forme courbe secondaire -->
+    <path d="M20 20 Q35 12, 50 20 Q58 25, 55 35 Q50 45, 35 40 Q20 35, 20 20 Z" opacity="0.7"/>
+    
+    <!-- Forme courbe d'accent -->
+    <path d="M35 25 Q45 18, 55 25 Q60 28, 58 35 Q55 42, 45 38 Q35 33, 35 25 Z" opacity="0.8"/>
+  </g>
   
-  <!-- Première forme courbe rouge (gauche) - plus grande et allongée -->
-  <path d="M 15 35 Q 45 15 75 35 Q 45 55 15 35 Z" fill="#E31E24"/>
-  
-  <!-- Deuxième forme courbe rouge (centre-gauche) -->
-  <path d="M 55 32 Q 80 18 105 32 Q 80 46 55 32 Z" fill="#E31E24"/>
-  
-  <!-- Troisième forme courbe rouge (centre) -->
-  <path d="M 85 30 Q 105 20 125 30 Q 105 40 85 30 Z" fill="#E31E24"/>
-  
-  <!-- Quatrième forme courbe rouge (centre-droite) -->
-  <path d="M 110 28 Q 125 22 140 28 Q 125 34 110 28 Z" fill="#E31E24"/>
-  
-  <!-- Cinquième forme courbe rouge (droite) - la plus petite -->
-  <path d="M 130 26 Q 140 24 150 26 Q 140 28 130 26 Z" fill="#E31E24"/>
-  
-  <!-- Texte Sitrad avec le "i" vert caractéristique -->
-  <text x="20" y="65" font-family="Arial, sans-serif" font-size="28" font-weight="bold">
-    <tspan fill="#2C2C2C">S</tspan><tspan fill="#4CAF50">i</tspan><tspan fill="#2C2C2C">trad</tspan>
-  </text>
+  <!-- Texte Sitrad -->
+  <g font-family="Arial, sans-serif" font-weight="bold" font-size="24">
+    <!-- S -->
+    <text x="75" y="40" fill="#000000">S</text>
+    <!-- i (en vert) -->
+    <text x="90" y="40" fill="#00A651">i</text>
+    <!-- t -->
+    <text x="100" y="40" fill="#000000">t</text>
+    <!-- r -->
+    <text x="110" y="40" fill="#000000">r</text>
+    <!-- a -->
+    <text x="125" y="40" fill="#000000">a</text>
+    <!-- d -->
+    <text x="140" y="40" fill="#000000">d</text>
+  </g>
 </svg>
