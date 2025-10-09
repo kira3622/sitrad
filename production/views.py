@@ -17,6 +17,7 @@ from django.conf import settings
 import os
 from django.templatetags.static import static
 from django.contrib.staticfiles.storage import staticfiles_storage
+import base64
 
 @login_required
 @require_POST
@@ -231,12 +232,28 @@ def delivery_note_pdf(request, pk):
     cumulative_quantity = OrdreProduction.objects.filter(commande=op.commande).aggregate(total=Sum('quantite_produire'))['total'] or 0
 
     # Contexte pour le template bon_livraison.html
-    # Prefer the requested PNG; fallback to default logo if missing to avoid 404 in PDF.
+    # Try to get logo as base64 data URL to avoid xhtml2pdf HTTP issues
     logo_rel_path = 'images/sitrad_logo_real.png'
     if not staticfiles_storage.exists(logo_rel_path):
         logo_rel_path = 'images/logo.png'
-    # Use an absolute HTTP URL that xhtml2pdf can fetch.
-    logo_url = request.build_absolute_uri(static(logo_rel_path))
+    
+    try:
+        # Read the image file and encode as base64
+        with staticfiles_storage.open(logo_rel_path, 'rb') as logo_file:
+            logo_data = logo_file.read()
+            logo_base64 = base64.b64encode(logo_data).decode('utf-8')
+            # Determine MIME type based on file extension
+            if logo_rel_path.endswith('.png'):
+                mime_type = 'image/png'
+            elif logo_rel_path.endswith('.jpg') or logo_rel_path.endswith('.jpeg'):
+                mime_type = 'image/jpeg'
+            else:
+                mime_type = 'image/png'  # default
+            logo_url = f"data:{mime_type};base64,{logo_base64}"
+    except Exception as e:
+        # Fallback to HTTP URL if base64 fails
+        logo_url = request.build_absolute_uri(static(logo_rel_path))
+    
     context = {
         'logo_url': logo_url,
         'bl': {
