@@ -6,7 +6,7 @@ L'API Béton est une API REST complète développée avec Django REST Framework 
 
 ### 🔗 URLs de base
 - **Développement**: `http://127.0.0.1:8000/api/v1/`
-- **Production**: `https://beton-project.onrender.com/api/v1/`
+- **Production**: `https://sitrad-web.onrender.com/api/v1/`
 
 ### 🔐 Authentification
 L'API utilise l'authentification JWT (JSON Web Tokens) pour sécuriser tous les endpoints.
