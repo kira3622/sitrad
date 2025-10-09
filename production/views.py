@@ -16,6 +16,7 @@ from django.db.models import Sum
 from django.conf import settings
 import os
 from django.templatetags.static import static
+from django.contrib.staticfiles.storage import staticfiles_storage
 
 @login_required
 @require_POST
@@ -230,8 +231,12 @@ def delivery_note_pdf(request, pk):
     cumulative_quantity = OrdreProduction.objects.filter(commande=op.commande).aggregate(total=Sum('quantite_produire'))['total'] or 0
 
     # Contexte pour le template bon_livraison.html
-    # Utiliser une URL absolue accessible par xhtml2pdf (HTTP) plutôt qu'un chemin fichier.
-    logo_url = request.build_absolute_uri(static('images/sitrad_logo_real.png'))
+    # Prefer the requested PNG; fallback to default logo if missing to avoid 404 in PDF.
+    logo_rel_path = 'images/sitrad_logo_real.png'
+    if not staticfiles_storage.exists(logo_rel_path):
+        logo_rel_path = 'images/logo.png'
+    # Use an absolute HTTP URL that xhtml2pdf can fetch.
+    logo_url = request.build_absolute_uri(static(logo_rel_path))
     context = {
         'logo_url': logo_url,
         'bl': {
