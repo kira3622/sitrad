@@ -13,6 +13,62 @@ class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
         fields = ['id', 'nom', 'adresse', 'telephone', 'email']
+    
+    def clean_id(self):
+        """Validation personnalisée pour l'ID"""
+        id_value = self.cleaned_data.get('id')
+        
+        # Si l'ID est vide, Django générera automatiquement
+        if not id_value:
+            return id_value
+            
+        # Vérifier si l'ID existe déjà (sauf pour l'objet actuel)
+        if self.instance and self.instance.pk:
+            # Modification d'un objet existant
+            existing = Client.objects.filter(id=id_value).exclude(pk=self.instance.pk).first()
+        else:
+            # Création d'un nouvel objet
+            existing = Client.objects.filter(id=id_value).first()
+            
+        if existing:
+            raise forms.ValidationError(f"Un client avec l'ID {id_value} existe déjà.")
+            
+        return id_value
+    
+    def save(self, commit=True):
+        """Sauvegarde personnalisée pour gérer la modification d'ID"""
+        # Si c'est une modification et que l'ID a changé
+        if self.instance.pk and self.cleaned_data.get('id') and self.cleaned_data.get('id') != self.instance.pk:
+            new_id = self.cleaned_data.get('id')
+            old_instance = self.instance
+            
+            if commit:
+                # Créer un nouvel objet avec le nouvel ID
+                new_instance = Client(
+                    id=new_id,
+                    nom=self.cleaned_data.get('nom'),
+                    adresse=self.cleaned_data.get('adresse'),
+                    telephone=self.cleaned_data.get('telephone'),
+                    email=self.cleaned_data.get('email')
+                )
+                new_instance.save()
+                
+                # Mettre à jour les relations (chantiers, etc.)
+                old_instance.chantiers.all().update(client=new_instance)
+                
+                # Supprimer l'ancien objet
+                old_instance.delete()
+                
+                return new_instance
+            else:
+                # Mode sans commit, retourner l'instance modifiée
+                instance = super().save(commit=False)
+                instance.pk = new_id
+                instance.id = new_id
+                return instance
+        
+        # Cas normal : pas de changement d'ID
+        return super().save(commit=commit)
 
 class ChantierInline(admin.TabularInline):
     model = Chantier
@@ -45,6 +101,11 @@ class ClientAdmin(admin.ModelAdmin):
     search_fields = ('nom', 'adresse', 'email')
     list_filter = ('chantiers__commande__statut',)
     fields = ('id', 'nom', 'adresse', 'telephone', 'email')
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Permet l'édition de l'ID même sur les objets existants"""
+        # Retourne une liste vide pour permettre l'édition de tous les champs
+        return []
     
     def nombre_chantiers_display(self, obj):
         count = obj.nombre_chantiers()
