@@ -1,6 +1,7 @@
 from django.db import models
 
 class Client(models.Model):
+    id = models.AutoField(primary_key=True, editable=True, verbose_name="ID Client")
     nom = models.CharField(max_length=200)
     adresse = models.CharField(max_length=255)
     telephone = models.CharField(max_length=20, blank=True)
