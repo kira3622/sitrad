@@ -1,6 +1,18 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django import forms
 from .models import Client, Chantier
+
+class ClientForm(forms.ModelForm):
+    id = forms.IntegerField(
+        required=False,
+        help_text="Laissez vide pour génération automatique ou entrez un ID personnalisé",
+        label="ID Client"
+    )
+    
+    class Meta:
+        model = Client
+        fields = ['id', 'nom', 'adresse', 'telephone', 'email']
 
 class ChantierInline(admin.TabularInline):
     model = Chantier
@@ -27,18 +39,12 @@ class ChantierInline(admin.TabularInline):
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
+    form = ClientForm
     inlines = [ChantierInline]
     list_display = ('id', 'nom', 'adresse', 'telephone', 'email', 'nombre_chantiers_display', 'chantiers_actifs_display')
     search_fields = ('nom', 'adresse', 'email')
     list_filter = ('chantiers__commande__statut',)
     fields = ('id', 'nom', 'adresse', 'telephone', 'email')
-    
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if not obj:  # Si c'est un nouvel objet (ajout)
-            form.base_fields['id'].help_text = "Laissez vide pour génération automatique ou entrez un ID personnalisé"
-            form.base_fields['id'].required = False
-        return form
     
     def nombre_chantiers_display(self, obj):
         count = obj.nombre_chantiers()
