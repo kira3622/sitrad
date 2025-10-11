@@ -111,6 +111,6 @@ class AlerteStockAdmin(admin.ModelAdmin):
 
 
 # Configuration du titre de l'admin
-admin.site.site_header = "Gestion du Gasoil - Administration"
+admin.site.site_header = "Gestion Central SITRAD"
 admin.site.site_title = "Gestion Gasoil"
 admin.site.index_title = "Home › Tableau de bord - Gestion Central SITRAD"
