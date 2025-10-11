@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django import forms
-from .models import Client, Chantier, CommercialDashboard
+from .models import Client, Chantier, CommercialDashboard, AgentCommercial
 from django.shortcuts import redirect
 from django.urls import reverse
 
@@ -176,6 +176,21 @@ class CommercialDashboardAdmin(admin.ModelAdmin):
             return redirect(reverse('commercial_dashboard'))
         except Exception:
             return redirect('/customers/commercial/')
+
+
+@admin.register(AgentCommercial)
+class AgentCommercialAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'telephone', 'email', 'actif', 'nombre_clients_display')
+    search_fields = ('nom', 'telephone', 'email')
+    list_filter = ('actif',)
+    filter_horizontal = ('clients',)
+
+    def nombre_clients_display(self, obj):
+        try:
+            return obj.clients.count()
+        except Exception:
+            return 0
+    nombre_clients_display.short_description = "Nb clients"
     
     def nombre_commandes_display(self, obj):
         count = obj.nombre_commandes()

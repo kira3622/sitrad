@@ -74,3 +74,19 @@ class Chantier(models.Model):
     class Meta:
         verbose_name = "Chantier"
         verbose_name_plural = "Chantiers"
+
+
+class AgentCommercial(models.Model):
+    nom = models.CharField(max_length=200)
+    telephone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    actif = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    clients = models.ManyToManyField(Client, related_name='agents', blank=True)
+
+    def __str__(self):
+        return self.nom
+
+    class Meta:
+        verbose_name = "Agent commercial"
+        verbose_name_plural = "Agents commerciaux"
