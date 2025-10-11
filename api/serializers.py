@@ -58,6 +58,12 @@ class CommandeSerializer(serializers.ModelSerializer):
 
 class OrdreProductionSerializer(serializers.ModelSerializer):
     commande_reference = serializers.CharField(source='commande.reference', read_only=True)
+    pompe_nom = serializers.CharField(source='pompe.nom', read_only=True)
+    pompe_marque = serializers.CharField(source='pompe.marque', read_only=True)
+    pompe_modele = serializers.CharField(source='pompe.modele', read_only=True)
+    pompe_statut = serializers.CharField(source='pompe.statut', read_only=True)
+    pompe_debit_max = serializers.DecimalField(source='pompe.debit_max', max_digits=10, decimal_places=2, read_only=True)
+    pompe_operateur_nom = serializers.CharField(source='pompe.operateur.nom', read_only=True)
     
     class Meta:
         model = OrdreProduction

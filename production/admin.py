@@ -12,14 +12,14 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
         'chauffeur', 'vehicule', 'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
-        'masse_volumique', 'transporteur', 'pompe', 'statut', 'matieres_sorties_calculees', 'actions_sorties'
+        'masse_volumique', 'transporteur', 'pompe_display', 'statut', 'matieres_sorties_calculees', 'actions_sorties'
     )
     list_filter = (
         'statut', 'date_production', 'matieres_sorties_calculees', 'chauffeur', 'vehicule',
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
-        'ciment_type_classe', 'adjuvant_type', 'transporteur', 'pompe'
+        'ciment_type_classe', 'adjuvant_type', 'transporteur', 'pompe__statut', 'pompe__marque'
     )
-    search_fields = ('numero_bon', 'commande__client__nom', 'formule__nom', 'chauffeur__nom', 'vehicule__immatriculation')
+    search_fields = ('numero_bon', 'commande__client__nom', 'formule__nom', 'chauffeur__nom', 'vehicule__immatriculation', 'pompe__nom', 'pompe__numero_serie')
     fields = (
         'numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
         'chauffeur', 'vehicule',
@@ -32,6 +32,35 @@ class OrdreProductionAdmin(admin.ModelAdmin):
     readonly_fields = ('delivery_note_link',)
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
+    
+    def get_queryset(self, request):
+        """Optimiser les requêtes en incluant les relations"""
+        return super().get_queryset(request).select_related(
+            'commande', 'formule', 'chauffeur', 'vehicule', 'pompe', 'pompe__operateur'
+        )
+    
+    def pompe_display(self, obj):
+        """Affiche les informations de la pompe de manière formatée"""
+        if obj.pompe:
+            statut_color = {
+                'disponible': 'green',
+                'en_service': 'blue', 
+                'maintenance': 'orange',
+                'hors_service': 'red'
+            }.get(obj.pompe.statut, 'gray')
+            
+            return format_html(
+                '<span style="color: {}; font-weight: bold;">{}</span><br>'
+                '<small>{} {} - Débit: {}m³/h</small>',
+                statut_color,
+                obj.pompe.nom,
+                obj.pompe.marque,
+                obj.pompe.modele,
+                obj.pompe.debit_max
+            )
+        return "Aucune"
+    pompe_display.short_description = "Pompe"
+    pompe_display.admin_order_field = 'pompe__nom'
     
     def actions_sorties(self, obj):
         """Affiche les boutons d'action pour calculer les sorties de matières"""

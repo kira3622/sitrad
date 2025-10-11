@@ -68,7 +68,9 @@ class CommandeViewSet(viewsets.ModelViewSet):
 
 
 class OrdreProductionViewSet(viewsets.ModelViewSet):
-    queryset = OrdreProduction.objects.all().select_related('commande')
+    queryset = OrdreProduction.objects.all().select_related(
+        'commande', 'formule', 'chauffeur', 'vehicule', 'pompe', 'pompe__operateur'
+    )
     serializer_class = OrdreProductionSerializer
     permission_classes = [IsAuthenticated]
 
@@ -217,7 +219,9 @@ def production_en_cours(request):
     """
     API endpoint pour la production en cours
     """
-    production = OrdreProduction.objects.select_related('commande').filter(
+    production = OrdreProduction.objects.select_related(
+        'commande', 'formule', 'chauffeur', 'vehicule', 'pompe', 'pompe__operateur'
+    ).filter(
         statut='en_cours'
     ).order_by('-date_production')[:10]
     serializer = OrdreProductionSerializer(production, many=True)

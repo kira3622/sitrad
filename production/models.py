@@ -2,7 +2,7 @@ from django.db import models
 from django.db import transaction
 from orders.models import Commande
 from formulas.models import FormuleBeton
-from logistics.models import Chauffeur, Vehicule
+from logistics.models import Chauffeur, Vehicule, Pompe
 
 # Choix pour caractéristiques du béton (listes déroulantes)
 EXPOSITION_CHOICES = [
@@ -94,7 +94,7 @@ class OrdreProduction(models.Model):
     teneur_en_ciment = models.CharField(max_length=15, choices=CIMENT_TENEUR_CHOICES, null=True, blank=True, help_text="Teneur en ciment")
     masse_volumique = models.CharField(max_length=15, choices=MASSE_VOL_CHOICES, null=True, blank=True, help_text="Masse volumique")
     transporteur = models.CharField(max_length=20, choices=TRANSPORTEUR_CHOICES, null=True, blank=True, help_text="Transporteur")
-    pompe = models.CharField(max_length=20, choices=POMPE_CHOICES, null=True, blank=True, help_text="Pompe")
+    pompe = models.ForeignKey(Pompe, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordres_production', verbose_name="Pompe")
 
     def save(self, *args, **kwargs):
         if not self.numero_bon:
