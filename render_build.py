@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Script de build pour Render avec diagnostic complet
+Script de build pour Render avec diagnostic complet et migration forcée des pompes
 """
 import os
 import sys
@@ -25,6 +25,41 @@ def run_command(command, description):
     except Exception as e:
         print(f"❌ Erreur lors de {description}: {e}")
         return False
+
+def force_pompes_migration():
+    """Force l'application des migrations de pompes"""
+    print("\n=== FORCE MIGRATION POMPES ===")
+    
+    # Vérifier les migrations en attente
+    print("🔍 Vérification des migrations en attente...")
+    result = subprocess.run([
+        sys.executable, "manage.py", "showmigrations", "--plan"
+    ], capture_output=True, text=True)
+    
+    if result.returncode == 0:
+        print("📋 Migrations disponibles:")
+        print(result.stdout)
+    
+    # Forcer la création des migrations si nécessaire
+    print("🔧 Génération des migrations de pompes...")
+    subprocess.run([
+        sys.executable, "manage.py", "makemigrations", "production", "--name", "add_pompes_fields"
+    ], capture_output=True, text=True)
+    
+    # Appliquer toutes les migrations
+    print("🚀 Application forcée de toutes les migrations...")
+    result = subprocess.run([
+        sys.executable, "manage.py", "migrate", "--noinput"
+    ], capture_output=True, text=True)
+    
+    if result.returncode == 0:
+        print("✅ Migrations appliquées avec succès")
+        print(result.stdout)
+    else:
+        print("❌ Erreur lors de l'application des migrations")
+        print(result.stderr)
+    
+    return result.returncode == 0
 
 def diagnostic_formules():
     """Diagnostic complet des formules"""
@@ -270,6 +305,11 @@ def main():
     print("\n5. Gestion des migrations...")
     run_command("python manage.py showmigrations", "Affichage des migrations")
     run_command("python manage.py makemigrations", "Création des migrations")
+    
+    # Force migration des pompes
+    if not force_pompes_migration():
+        print("❌ Échec de la migration forcée des pompes")
+        sys.exit(1)
     
     if not run_command("python manage.py migrate", "Application des migrations"):
         print("❌ Échec des migrations")
