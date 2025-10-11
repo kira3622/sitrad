@@ -30,6 +30,7 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path('billing/', include('billing.urls')),
     path('production/', include('production.urls')),
+    path('customers/', include('customers.urls')),
     path('fuel/', include('fuel_management.urls')),
     
     # API REST

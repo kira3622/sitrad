@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Module Commercial — Clients & KPIs</title>
+  <style>
+    body { font-family: Segoe UI, Roboto, Arial, sans-serif; margin: 20px; color:#1f2937; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .card { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; background: #fff; }
+    .title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .kpi { font-size: 14px; color: #374151; }
+    .kpi strong { font-size: 22px; color: #111827; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border:1px solid #e5e7eb; padding:8px; font-size: 12px; }
+    th { background:#f9fafb; text-align:left; }
+  </style>
+  </head>
+<body>
+  <div class="title">Tableau de bord commercial</div>
+  <div class="grid">
+    <div class="card kpi">
+      <div>Clients</div>
+      <strong>{{ clients_count }}</strong>
+    </div>
+    <div class="card kpi">
+      <div>Commandes</div>
+      <strong>{{ commandes_count }}</strong>
+    </div>
+    <div class="card kpi">
+      <div>Factures</div>
+      <strong>{{ factures_count }}</strong>
+    </div>
+    <div class="card kpi">
+      <div>Montant total factures</div>
+      <strong>{{ montant_total_factures|floatformat:2 }}</strong>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
+    <div class="card">
+      <div class="title" style="font-size:14px;">Top clients par commandes</div>
+      <table>
+        <thead>
+          <tr><th>Client</th><th>Nb commandes</th></tr>
+        </thead>
+        <tbody>
+          {% for c in top_clients_commandes %}
+            <tr>
+              <td>{{ c.nom|default:c.name }}</td>
+              <td>{{ c.nb_commandes|default:0 }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="2">Aucune donnée disponible</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="title" style="font-size:14px;">Top clients par montant facturé</div>
+      <table>
+        <thead>
+          <tr><th>Client</th><th>Montant</th></tr>
+        </thead>
+        <tbody>
+          {% for c in top_clients_factures %}
+            <tr>
+              <td>{{ c.nom|default:c.name }}</td>
+              <td>{{ c.total_factures|default:0|floatformat:2 }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="2">Aucune donnée disponible</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="margin-top:12px; color:#6b7280; font-size:12px;">Mis à jour: {{ now|date:"d/m/Y H:i" }}</div>
+  </body>
+</html>
