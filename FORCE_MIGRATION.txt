@@ -1,0 +1,2 @@
+Force migration at 2025-10-11 11:03:48
+This file forces the application of pending migrations.
