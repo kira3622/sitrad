@@ -335,5 +335,47 @@ def main():
     
     print("\n✅ BUILD RENDER TERMINÉ AVEC SUCCÈS")
 
+
+    
+    # === SECTION DE DEBUG AGRESSIVE ===
+    print("🔥 FORÇAGE DES MIGRATIONS - DEBUG AGRESSIF")
+    print(f"📅 Timestamp: {datetime.now()}")
+    
+    # Vérifier les migrations en attente
+    print("🔍 Vérification des migrations en attente...")
+    result = subprocess.run([
+        sys.executable, "manage.py", "showmigrations", "--plan"
+    ], capture_output=True, text=True)
+    print(f"📋 Migrations plan:\n{result.stdout}")
+    
+    # Forcer la création de migrations pour production
+    print("🏗️  Création forcée des migrations production...")
+    result = subprocess.run([
+        sys.executable, "manage.py", "makemigrations", "production", 
+        "--name", "force_add_pompes_fields", "--verbosity", "2"
+    ], capture_output=True, text=True)
+    print(f"📝 Makemigrations output:\n{result.stdout}")
+    if result.stderr:
+        print(f"⚠️  Makemigrations errors:\n{result.stderr}")
+    
+    # Appliquer toutes les migrations avec verbosité maximale
+    print("🚀 Application forcée de toutes les migrations...")
+    result = subprocess.run([
+        sys.executable, "manage.py", "migrate", "--verbosity", "2", "--noinput"
+    ], capture_output=True, text=True)
+    print(f"✅ Migration output:\n{result.stdout}")
+    if result.stderr:
+        print(f"⚠️  Migration errors:\n{result.stderr}")
+    
+    # Vérifier l'état final
+    print("🔍 Vérification finale des migrations...")
+    result = subprocess.run([
+        sys.executable, "manage.py", "showmigrations"
+    ], capture_output=True, text=True)
+    print(f"📊 État final des migrations:\n{result.stdout}")
+    
+    print("🏁 SECTION DE DEBUG AGRESSIVE TERMINÉE")
+    # === FIN SECTION DE DEBUG AGRESSIVE ===
+
 if __name__ == "__main__":
     main()
