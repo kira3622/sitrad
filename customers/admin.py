@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django import forms
-from .models import Client, Chantier
+from .models import Client, Chantier, CommercialDashboard
+from django.shortcuts import redirect
+from django.urls import reverse
 
 class ClientForm(forms.ModelForm):
     id = forms.IntegerField(
@@ -127,6 +129,53 @@ class ChantierAdmin(admin.ModelAdmin):
     list_filter = ('client', 'commande__statut')
     search_fields = ('nom', 'adresse', 'client__nom')
     readonly_fields = ('nombre_commandes_display', 'statut_chantier_display', 'derniere_commande_display')
+
+    def nombre_commandes_display(self, obj):
+        return obj.nombre_commandes()
+    nombre_commandes_display.short_description = "Nb commandes"
+
+    def statut_chantier_display(self, obj):
+        return obj.statut_chantier()
+    statut_chantier_display.short_description = "Statut"
+
+    def derniere_commande_display(self, obj):
+        derniere = obj.derniere_commande()
+        if derniere:
+            try:
+                return f"{derniere.date_commande} ({derniere.get_statut_display()})"
+            except Exception:
+                return str(derniere)
+        return "-"
+    derniere_commande_display.short_description = "Dernière commande"
+
+
+@admin.register(CommercialDashboard)
+class CommercialDashboardAdmin(admin.ModelAdmin):
+    """Entrée d'admin pour le tableau de bord commercial.
+    Redirige vers la vue frontend 'commercial_dashboard'.
+    """
+    list_display = ()
+    actions = None
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        # Ne pas afficher d'objets dans la liste
+        return Client.objects.none()
+
+    def changelist_view(self, request, extra_context=None):
+        # Rediriger vers la vue du dashboard commercial
+        try:
+            return redirect(reverse('commercial_dashboard'))
+        except Exception:
+            return redirect('/customers/commercial/')
     
     def nombre_commandes_display(self, obj):
         count = obj.nombre_commandes()

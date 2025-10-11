@@ -30,6 +30,15 @@ class Client(models.Model):
         verbose_name = "Client"
         verbose_name_plural = "Clients"
 
+class CommercialDashboard(Client):
+    """Proxy pour exposer un module 'Tableau de bord commercial' dans l'admin.
+    Aucun enregistrement n'est affiché; sert uniquement de point d'entrée.
+    """
+    class Meta:
+        proxy = True
+        verbose_name = "Tableau de bord commercial"
+        verbose_name_plural = "Tableau de bord commercial"
+
 class Chantier(models.Model):
     nom = models.CharField(max_length=200)
     adresse = models.CharField(max_length=255)
