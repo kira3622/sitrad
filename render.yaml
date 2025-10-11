@@ -1,7 +1,7 @@
 # Configuration Render pour beton-project - Force Deploy ChantierViewSet Fix: 2024-01-20-15h30
 services:
   - type: web
-    name: beton-project
+    name: sitrad-web
     env: python
     plan: free
     buildCommand: "python render_build.py"
@@ -18,7 +18,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
-        value: beton-project.onrender.com
+        value: sitrad-web.onrender.com
       - key: DJANGO_SUPERUSER_USERNAME
         value: admin
       - key: DJANGO_SUPERUSER_EMAIL
