@@ -95,6 +95,7 @@ class OrdreProduction(models.Model):
     masse_volumique = models.CharField(max_length=15, choices=MASSE_VOL_CHOICES, null=True, blank=True, help_text="Masse volumique")
     transporteur = models.CharField(max_length=20, choices=TRANSPORTEUR_CHOICES, null=True, blank=True, help_text="Transporteur")
     pompe = models.ForeignKey(Pompe, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordres_production', verbose_name="Pompe")
+    agent_commercial = models.ForeignKey('customers.AgentCommercial', on_delete=models.SET_NULL, null=True, blank=True, related_name='ordres_production', verbose_name="Agent commercial")
 
     def save(self, *args, **kwargs):
         if not self.numero_bon:

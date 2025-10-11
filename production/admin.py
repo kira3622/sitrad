@@ -25,7 +25,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'chauffeur', 'vehicule',
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
-        'masse_volumique', 'transporteur', 'pompe',
+        'masse_volumique', 'transporteur', 'pompe', 'agent_commercial',
         'statut', 'actions_sorties', 'delivery_note_link'
     )
     # Important: pour qu'un champ non-modèle apparaisse dans "fields", il doit être listé dans readonly_fields
@@ -106,7 +106,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'chauffeur', 'vehicule',
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
-        'masse_volumique', 'transporteur', 'pompe',
+        'masse_volumique', 'transporteur', 'pompe', 'agent_commercial',
         'statut', 'matieres_sorties_calculees', 'actions_sorties', 'delivery_note_link'
     )
     inlines = [LotProductionInline]

@@ -296,6 +296,7 @@ def delivery_note_pdf(request, pk):
             'mixer_number': getattr(op.vehicule, 'immatriculation', ''),
             'driver': getattr(op.chauffeur, 'nom', ''),
             'services': op.pompe or '',
+            'agent_commercial': getattr(getattr(op, 'agent_commercial', None), 'nom', ''),
             'reference': op.numero_bon or f'OP-{op.id}',
             'first_time': '',
             'arrival_time': '',
