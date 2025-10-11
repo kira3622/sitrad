@@ -12,6 +12,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Nettoyage des valeurs non numériques avant la conversion en ForeignKey (bigint)
+        migrations.RunSQL(
+            sql=(
+                """
+                UPDATE production_ordreproduction
+                SET pompe = NULL
+                WHERE pompe IS NOT NULL AND (
+                    pompe IN ('Aucune','None','', 'Pompe mobile','Pompe stationnaire','Tremie','Trémie')
+                    OR NOT pompe ~ '^[0-9]+$'
+                );
+                """
+            ),
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         migrations.AlterField(
             model_name='ordreproduction',
             name='pompe',
