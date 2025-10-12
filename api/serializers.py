@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from customers.models import Client, Chantier
-from orders.models import Commande
+from orders.models import Commande, LigneCommande
 # No direct model imports to prevent circular dependencies
 from production.models import OrdreProduction
 from inventory.models import MatierePremiere
@@ -37,6 +37,12 @@ class CommandeSerializer(serializers.ModelSerializer):
     client_nom = serializers.CharField(source='client.nom', read_only=True)
     clientId = serializers.IntegerField(source='client', write_only=True, required=False)
     chantierId = serializers.IntegerField(source='chantier', write_only=True, required=False, allow_null=True)
+    lignes = serializers.SerializerMethodField(read_only=True)
+
+    class LigneCommandeWriteSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = LigneCommande
+            fields = ['formule', 'quantite']
     
     class Meta:
         model = Commande
@@ -46,14 +52,35 @@ class CommandeSerializer(serializers.ModelSerializer):
             'chantier': {'write_only': True, 'required': False},
         }
     
+    def get_lignes(self, obj):
+        # Retour lecture des lignes (id, formule, quantite)
+        return [{'id': l.id, 'formule': l.formule_id, 'quantite': str(l.quantite)} for l in obj.lignes.all()] if hasattr(obj, 'lignes') else []
+
     def create(self, validated_data):
-        # Gérer les champs clientId et chantierId envoyés par Android
+        # Injecter clientId/chantierId depuis l'app Android
         if 'clientId' in self.initial_data:
             validated_data['client_id'] = self.initial_data['clientId']
         if 'chantierId' in self.initial_data and self.initial_data['chantierId'] is not None:
             validated_data['chantier_id'] = self.initial_data['chantierId']
-        
-        return super().create(validated_data)
+
+        # Extraire les lignes imbriquées éventuelles
+        lignes_data = self.initial_data.get('lignes', None)
+
+        commande = super().create(validated_data)
+
+        if lignes_data:
+            # Valider et créer chaque ligne
+            write_serializer = self.LigneCommandeWriteSerializer(data=lignes_data, many=isinstance(lignes_data, list))
+            write_serializer.is_valid(raise_exception=True)
+            data_list = write_serializer.validated_data if isinstance(write_serializer.validated_data, list) else [write_serializer.validated_data]
+            for ld in data_list:
+                LigneCommande.objects.create(
+                    commande=commande,
+                    formule=ld['formule'],
+                    quantite=ld['quantite']
+                )
+
+        return commande
 
 
 class OrdreProductionSerializer(serializers.ModelSerializer):

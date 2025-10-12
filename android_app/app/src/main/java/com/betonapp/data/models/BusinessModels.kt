@@ -49,7 +49,9 @@ data class Commande(
     val numero: String? = null,
     @SerializedName("date_livraison_prevue")
     val dateLivraisonPrevue: String? = null,
-    val deliveryNotified: Boolean = false
+    val deliveryNotified: Boolean = false,
+    @SerializedName("lignes")
+    val lignes: List<LigneCommande>? = null
 ) : Parcelable
 
 @Parcelize
@@ -62,6 +64,14 @@ data class FormuleBeton(
     val resistanceRequise: String? = null,
     @SerializedName("quantite_produite_reference")
     val quantiteProduiteReference: String? = null
+) : Parcelable
+
+@Parcelize
+data class LigneCommande(
+    val id: Int? = null,
+    @SerializedName("formule")
+    val formuleId: Int,
+    val quantite: Double
 ) : Parcelable
 
 @Parcelize

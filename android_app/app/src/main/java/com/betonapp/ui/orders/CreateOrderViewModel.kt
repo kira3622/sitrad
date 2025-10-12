@@ -106,6 +106,10 @@ class CreateOrderViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             try {
+                // Trouver l'ID de la formule correspondant au type de béton sélectionné
+                val selectedFormula = _formulas.value.firstOrNull { it.nom == typeBeton }
+                    ?: throw Exception("Formule de béton introuvable : $typeBeton")
+
                 // Nouveau modèle Commande: IDs et champs simplifiés
                 val nouvelleCommande = Commande(
                     id = 0, // L'API assignera un ID
@@ -114,7 +118,13 @@ class CreateOrderViewModel @Inject constructor(
                     dateCommande = getCurrentDate(),
                     dateLivraisonSouhaitee = dateLivraisonPrevue,
                     statut = "en_attente",
-                    clientNom = clientNom
+                    clientNom = clientNom,
+                    lignes = listOf(
+                        LigneCommande(
+                            formuleId = selectedFormula.id,
+                            quantite = quantite
+                        )
+                    )
                 )
 
                 ordersRepository.createOrder(nouvelleCommande)
