@@ -130,7 +130,7 @@ def rapport_commandes(request):
     # Commandes dans la période
     commandes = Commande.objects.filter(
         date_commande__range=[date_debut, date_fin]
-    ).select_related('client', 'chantier')
+    ).select_related('client', 'chantier').prefetch_related('lignes__formule')
     
     if statut_filtre:
         commandes = commandes.filter(statut=statut_filtre)

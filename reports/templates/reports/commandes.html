@@ -309,6 +309,7 @@
                         <th>Date livraison souhaitée</th>
                         <th>Délai (jours)</th>
                         <th>Statut</th>
+                        <th>Lignes (Formule — Qté)</th>
                         <th>Alerte</th>
                     </tr>
                 </thead>
@@ -324,6 +325,13 @@
                             <span class="status-badge status-{{ item.commande.statut }}">
                                 {{ item.commande.get_statut_display }}
                             </span>
+                        </td>
+                        <td>
+                            {% for ligne in item.commande.lignes.all %}
+                                {{ ligne.formule.nom }} — {{ ligne.quantite|floatformat:1 }} m³{% if not forloop.last %}<br>{% endif %}
+                            {% empty %}
+                                -
+                            {% endfor %}
                         </td>
                         <td>
                             {% if item.en_retard %}
