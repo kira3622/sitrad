@@ -703,7 +703,7 @@ class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
 
 // Configuration Retrofit
 val retrofit = Retrofit.Builder()
-    .baseUrl("https://beton-project.onrender.com/api/v1/")
+    .baseUrl("https://sitrad-web.onrender.com/api/v1/")
     .addConverterFactory(GsonConverterFactory.create())
     .client(
         OkHttpClient.Builder()
@@ -741,7 +741,7 @@ data class Commande(
 
 ### URL de Production
 ```
-https://beton-project.onrender.com/api/v1/
+https://sitrad-web.onrender.com/api/v1/
 ```
 
 ### Variables d'Environnement

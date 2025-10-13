@@ -29,7 +29,7 @@ Ajoutez ces variables dans l'onglet "Environment" :
 PYTHON_VERSION=3.11.0
 DJANGO_SETTINGS_MODULE=beton_project.production_settings
 DEBUG=False
-ALLOWED_HOSTS=beton-project.onrender.com
+ALLOWED_HOSTS=sitrad-web.onrender.com
 DJANGO_SUPERUSER_USERNAME=admin
 DJANGO_SUPERUSER_EMAIL=admin@example.com
 DJANGO_SUPERUSER_PASSWORD=admin123
@@ -54,7 +54,7 @@ DATABASE_URL=[sera automatiquement défini par la base de données]
 ```yaml
 services:
   - type: web
-    name: beton-project
+    name: sitrad-web
     env: python
     buildCommand: "./build.sh"
     startCommand: "gunicorn beton_project.wsgi:application"
@@ -62,11 +62,11 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: DJANGO_SETTINGS_MODULE
-        value: beton_project.production_settings
+        value: beton_project.settings
       - key: DEBUG
         value: False
       - key: ALLOWED_HOSTS
-        value: beton-project.onrender.com
+        value: sitrad-web.onrender.com
       - key: DJANGO_SUPERUSER_USERNAME
         value: admin
       - key: DJANGO_SUPERUSER_EMAIL
@@ -104,16 +104,16 @@ databases:
 
 Une fois le déploiement réussi, testez :
 
-1. **Page d'accueil** : `https://beton-project.onrender.com/`
-2. **Interface admin** : `https://beton-project.onrender.com/admin/`
-3. **Module production** : `https://beton-project.onrender.com/production/`
-4. **Calcul des matières** : `https://beton-project.onrender.com/production/preview-sorties/`
+1. **Page d'accueil** : `https://sitrad-web.onrender.com/`
+2. **Interface admin** : `https://sitrad-web.onrender.com/admin/`
+3. **Module production** : `https://sitrad-web.onrender.com/production/`
+4. **Calcul des matières** : `https://sitrad-web.onrender.com/production/preview-sorties/`
 
 ## 🔗 Liens Utiles
 
 - **Repository GitHub** : https://github.com/kira3622/sitrad
 - **Render Dashboard** : https://dashboard.render.com
-- **URL de Production** : https://beton-project.onrender.com (une fois déployé)
+- **URL de Production** : https://sitrad-web.onrender.com (une fois déployé)
 
 ## 📝 Notes Importantes
 

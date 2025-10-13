@@ -54,7 +54,7 @@ gradlew.bat build
 
 ### API Backend
 L'application est configurée pour se connecter à :
-- **Production** : `https://beton-project.onrender.com/api/v1/`
+- **Production** : `https://sitrad-web.onrender.com/api/v1/`
 - **Debug** : `http://10.0.2.2:8000/api/v1/` (émulateur Android)
 
 ### Modification de l'URL API
