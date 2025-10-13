@@ -69,16 +69,57 @@ class CommandeSerializer(serializers.ModelSerializer):
         commande = super().create(validated_data)
 
         if lignes_data:
-            # Valider et créer chaque ligne
-            write_serializer = self.LigneCommandeWriteSerializer(data=lignes_data, many=isinstance(lignes_data, list))
-            write_serializer.is_valid(raise_exception=True)
-            data_list = write_serializer.validated_data if isinstance(write_serializer.validated_data, list) else [write_serializer.validated_data]
-            for ld in data_list:
-                LigneCommande.objects.create(
-                    commande=commande,
-                    formule=ld['formule'],
-                    quantite=ld['quantite']
+            # Normaliser les lignes pour tolérer différentes clés et formats
+            raw_list = lignes_data if isinstance(lignes_data, list) else [lignes_data]
+            normalized = []
+
+            from decimal import Decimal, InvalidOperation
+            for item in raw_list:
+                # Récupérer la valeur de formule depuis différentes clés possibles
+                formule_value = (
+                    item.get('formule')
+                    or item.get('formuleId')
+                    or item.get('formule_id')
+                    or item.get('typeBeton')  # parfois envoyé en tant que nom de formule
                 )
+
+                formule_obj_or_id = None
+                if isinstance(formule_value, int):
+                    # Utiliser directement l'ID
+                    formule_obj_or_id = formule_value
+                elif isinstance(formule_value, str) and formule_value.strip():
+                    # Recherche par nom
+                    try:
+                        formule_obj_or_id = FormuleBeton.objects.only('id').get(nom=formule_value).id
+                    except FormuleBeton.DoesNotExist:
+                        formule_obj_or_id = None
+
+                # Convertir la quantité en Decimal de façon robuste
+                qv = item.get('quantite')
+                quantite_decimal = None
+                if qv is not None:
+                    try:
+                        quantite_decimal = Decimal(str(qv))
+                    except (InvalidOperation, TypeError, ValueError):
+                        quantite_decimal = None
+
+                # Ajoute uniquement si les champs essentiels sont valides
+                if formule_obj_or_id is not None and quantite_decimal is not None:
+                    normalized.append({
+                        'formule': formule_obj_or_id,
+                        'quantite': quantite_decimal,
+                    })
+
+            if normalized:
+                # Valider et créer chaque ligne à partir des données normalisées
+                write_serializer = self.LigneCommandeWriteSerializer(data=normalized, many=True)
+                write_serializer.is_valid(raise_exception=True)
+                for ld in write_serializer.validated_data:
+                    LigneCommande.objects.create(
+                        commande=commande,
+                        formule=ld['formule'],
+                        quantite=ld['quantite']
+                    )
 
         return commande
 
