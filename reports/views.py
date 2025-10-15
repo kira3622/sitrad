@@ -657,30 +657,35 @@ def rapport_ratios_m3(request):
     else:
         date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
 
-    # Section 1: Théorique par formule
-    formules = FormuleBeton.objects.all().prefetch_related('composition__matiere_premiere')
-    formules_data = []
-    for formule in formules:
-        comp_data = []
-        quantite_ref = formule.quantite_produite_reference or Decimal('1')
-        for comp in formule.composition.all():
-            try:
-                par_m3 = (comp.quantite / quantite_ref)
-            except Exception:
-                par_m3 = comp.quantite
-            comp_data.append({
-                'matiere': comp.matiere_premiere.nom,
-                'unite': comp.matiere_premiere.unite_mesure,
-                'par_m3': par_m3,
+    # Section 1: Théorique par Matière
+    from inventory.models import MatierePremiere
+    matieres = MatierePremiere.objects.prefetch_related('composition_set__formule').all()
+    matieres_theorique_data = []
+    for matiere in matieres:
+        formules_usage = []
+        for comp in matiere.composition_set.all():
+            formule = comp.formule
+            quantite_ref = formule.quantite_produite_reference or Decimal('1')
+            if quantite_ref > 0:
+                par_m3 = comp.quantite / quantite_ref
+            else:
+                par_m3 = Decimal('0')
+            
+            formules_usage.append({
+                'formule_nom': formule.nom,
+                'ratio': par_m3
             })
-        formules_data.append({
-            'formule': formule,
-            'composition_par_m3': comp_data,
-        })
+        
+        if formules_usage:
+            matieres_theorique_data.append({
+                'matiere_nom': matiere.nom,
+                'unite': matiere.unite_mesure,
+                'formules_usage': formules_usage
+            })
 
     # Section 2: Consommation réelle par m³ (période)
-    lots = LotProduction.objects.filter(date_heure_production__date__range=[date_debut, date_fin])
-    total_m3_produits = lots.aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
+    ordres_produits = OrdreProduction.objects.filter(statut='terminé', date_production__range=[date_debut, date_fin])
+    total_m3_produits = ordres_produits.aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
     mouvements_sorties = MouvementStock.objects.filter(
         type_mouvement='sortie',
         date_mouvement__date__range=[date_debut, date_fin]
@@ -705,7 +710,7 @@ def rapport_ratios_m3(request):
         'title': 'Ratios Matières par m³',
         'date_debut': date_debut,
         'date_fin': date_fin,
-        'formules_data': formules_data,
+        'matieres_theorique_data': matieres_theorique_data,
         'total_m3_produits': total_m3_produits,
         'ratios_reels': ratios_reels,
     }
