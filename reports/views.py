@@ -635,6 +635,83 @@ def _get_production_data(request):
         'production_par_formule': production_par_formule,
     }
 
+# ==================== RAPPORTS MATIÈRES PAR M³ ====================
+
+def rapport_ratios_m3(request):
+    """Rapport des ratios de chaque matière première par mètre cube produit.
+
+    - Section 1: Théorique par formule (composition normalisée par m³)
+    - Section 2: Consommation réelle par m³ sur une période (sorties stock / m³ produits)
+    """
+    # Filtres de date
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+
+    if not date_debut:
+        date_debut = (timezone.now() - timedelta(days=30)).date()
+    else:
+        date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+
+    if not date_fin:
+        date_fin = timezone.now().date()
+    else:
+        date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+
+    # Section 1: Théorique par formule
+    formules = FormuleBeton.objects.all().prefetch_related('composition__matiere_premiere')
+    formules_data = []
+    for formule in formules:
+        comp_data = []
+        quantite_ref = formule.quantite_produite_reference or Decimal('1')
+        for comp in formule.composition.all():
+            try:
+                par_m3 = (comp.quantite / quantite_ref)
+            except Exception:
+                par_m3 = comp.quantite
+            comp_data.append({
+                'matiere': comp.matiere_premiere.nom,
+                'unite': comp.matiere_premiere.unite_mesure,
+                'par_m3': par_m3,
+            })
+        formules_data.append({
+            'formule': formule,
+            'composition_par_m3': comp_data,
+        })
+
+    # Section 2: Consommation réelle par m³ (période)
+    lots = LotProduction.objects.filter(date_heure_production__date__range=[date_debut, date_fin])
+    total_m3_produits = lots.aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
+    mouvements_sorties = MouvementStock.objects.filter(
+        type_mouvement='sortie',
+        date_mouvement__date__range=[date_debut, date_fin]
+    )
+
+    ratios_reels = []
+    if total_m3_produits and total_m3_produits > 0:
+        agr = mouvements_sorties.values(
+            'matiere_premiere__nom', 'matiere_premiere__unite_mesure'
+        ).annotate(total_sorties=Sum('quantite')).order_by('matiere_premiere__nom')
+        for item in agr:
+            total_sorties = item['total_sorties'] or Decimal('0')
+            ratio = total_sorties / total_m3_produits if total_m3_produits > 0 else Decimal('0')
+            ratios_reels.append({
+                'matiere': item['matiere_premiere__nom'],
+                'unite': item['matiere_premiere__unite_mesure'],
+                'ratio_par_m3': ratio,
+                'total_sorties': total_sorties,
+            })
+
+    context = {
+        'title': 'Ratios Matières par m³',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'formules_data': formules_data,
+        'total_m3_produits': total_m3_produits,
+        'ratios_reels': ratios_reels,
+    }
+
+    return render(request, 'reports/ratios_m3.html', context)
+
 def _get_commandes_data(request):
     # Logique similaire à rapport_commandes mais simplifiée pour PDF
     pass

@@ -38,7 +38,17 @@ class OrdersRepository @Inject constructor(
         return if (response.isSuccessful) {
             response.body() ?: throw Exception("Erreur lors de la création")
         } else {
-            throw Exception("Erreur lors de la création de la commande")
+            val code = response.code()
+            val errorBody = try {
+                response.errorBody()?.string()
+            } catch (e: Exception) {
+                null
+            }
+            android.util.Log.e(
+                "OrdersRepository",
+                "Création de commande échouée (HTTP $code). Payload=${encodedOrder} Erreur=${errorBody}"
+            )
+            throw Exception("Création de commande échouée (HTTP $code): ${errorBody ?: "aucun détail"}")
         }
     }
 

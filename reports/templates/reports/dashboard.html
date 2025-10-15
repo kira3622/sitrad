@@ -258,7 +258,7 @@
                 <a href="{% url 'reports:export_pdf' 'stock' %}" class="btn btn-secondary">Export PDF</a>
             </div>
         </div>
-        
+
         <div class="report-card financier">
             <div class="icon">💰</div>
             <h3>Rapports Financiers</h3>
@@ -266,6 +266,15 @@
             <div class="report-actions">
                 <a href="{% url 'reports:financier' %}" class="btn btn-primary">Voir le rapport</a>
                 <a href="{% url 'reports:export_pdf' 'financier' %}" class="btn btn-secondary">Export PDF</a>
+            </div>
+        </div>
+
+        <div class="report-card ratios">
+            <div class="icon">⚖️</div>
+            <h3>Ratios matières par m³</h3>
+            <p>Ex: ciment par m³ fabriqué; théorique et réel par période.</p>
+            <div class="report-actions">
+                <a href="{% url 'reports:ratios_m3' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
     </div>

@@ -1,0 +1,82 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Ratios Matières par m³{% endblock %}
+
+{% block content %}
+<div class="content" style="margin: 20px;">
+  <h1>Ratios Matières par m³</h1>
+
+  <form method="get" class="filters" style="margin: 16px 0; display: flex; gap: 12px; align-items: center;">
+    <label>
+      Date début:
+      <input type="date" name="date_debut" value="{{ date_debut }}" />
+    </label>
+    <label>
+      Date fin:
+      <input type="date" name="date_fin" value="{{ date_fin }}" />
+    </label>
+    <button type="submit" class="button" style="padding: 6px 12px;">Mettre à jour</button>
+  </form>
+
+  <section style="margin-top: 24px;">
+    <h2>Consommation réelle par m³ (période)</h2>
+    <p>Période: {{ date_debut }} → {{ date_fin }} | Total produit: <strong>{{ total_m3_produits }} m³</strong></p>
+
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matière</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Unité</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Sorties totales</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Consommation / m³</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if total_m3_produits and total_m3_produits > 0 %}
+          {% for item in ratios_reels %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.matiere }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.unite }}</td>
+            <td style="text-align:right; padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.total_sorties }}</td>
+            <td style="text-align:right; padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.ratio_par_m3 }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="4" style="padding:12px; text-align:center; color:#777;">Aucune production sur la période sélectionnée.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </section>
+
+  <section style="margin-top: 32px;">
+    <h2>Théorique par Formule (composition normalisée par m³)</h2>
+    {% for bloc in formules_data %}
+      <div style="margin: 18px 0;">
+        <h3 style="margin: 8px 0;">Formule: {{ bloc.formule.nom }}{% if bloc.formule.resistance_requise %} — {{ bloc.formule.resistance_requise }}{% endif %}</h3>
+        <table class="listing" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matière</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Unité</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Quantité / m³</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in bloc.composition_par_m3 %}
+            <tr>
+              <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ row.matiere }}</td>
+              <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ row.unite }}</td>
+              <td style="text-align:right; padding:8px; border-bottom:1px solid #f0f0f0;">{{ row.par_m3 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% empty %}
+      <p style="color:#777;">Aucune formule enregistrée.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

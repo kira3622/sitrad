@@ -106,8 +106,8 @@ class CreateOrderViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             try {
-                // Trouver l'ID de la formule correspondant au type de béton sélectionné
-                val selectedFormula = _formulas.value.firstOrNull { it.nom == typeBeton }
+                // Trouver l'ID de la formule correspondant au type de béton sélectionné (tolérant aux espaces/casse)
+                val selectedFormula = _formulas.value.firstOrNull { it.nom.trim().equals(typeBeton.trim(), ignoreCase = true) }
                     ?: throw Exception("Formule de béton introuvable : $typeBeton")
 
                 // Nouveau modèle Commande: IDs et champs simplifiés
