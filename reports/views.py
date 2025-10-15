@@ -685,8 +685,9 @@ def rapport_ratios_m3(request):
 
     # Section 2: Consommation réelle par m³ (période)
     ordres_produits = OrdreProduction.objects.filter(date_production__range=[date_debut, date_fin])
-    # Re-calculer le total des m3 produits pour la période
-    total_m3_produits = ordres_produits.aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
+    lots_produits = LotProduction.objects.filter(ordre_production__in=ordres_produits)
+    total_m3_produits = lots_produits.aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
+
     mouvements_sorties = MouvementStock.objects.filter(
         type_mouvement='sortie',
         date_mouvement__date__range=[date_debut, date_fin]
