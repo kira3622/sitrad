@@ -690,6 +690,15 @@ def rapport_ratios_m3(request):
     )
     total_m3_produits = lots_produits.aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
 
+    # Fallback: si aucun lot n'est trouvé, utiliser les ordres terminés (proxy de production réelle)
+    if not total_m3_produits or total_m3_produits == 0:
+        total_termine = OrdreProduction.objects.filter(
+            date_production__range=[date_debut, date_fin],
+            statut='termine'
+        ).aggregate(total=Sum('quantite_produire'))['total'] or Decimal('0')
+        if total_termine and total_termine > 0:
+            total_m3_produits = total_termine
+
     mouvements_sorties = MouvementStock.objects.filter(
         type_mouvement='sortie',
         date_mouvement__date__range=[date_debut, date_fin]
