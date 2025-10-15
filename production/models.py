@@ -6,12 +6,12 @@ from logistics.models import Chauffeur, Vehicule, Pompe
 
 # Choix pour caractéristiques du béton (listes déroulantes)
 EXPOSITION_CHOICES = [
-    ('XC1', 'XC1'), ('XC2', 'XC2'), ('XC3', 'XC3'), ('XC4', 'XC4'),
-    ('XD1', 'XD1'), ('XD2', 'XD2'), ('XD3', 'XD3'),
-    ('XS1', 'XS1'), ('XS2', 'XS2'), ('XS3', 'XS3'),
-    ('XF1', 'XF1'), ('XF2', 'XF2'), ('XF3', 'XF3'), ('XF4', 'XF4'),
+    ('X0', 'X0'),
+    ('XCA1', 'XCA1'), ('XCA2', 'XCA2'),
+    ('XM1', 'XM1'), ('XM2', 'XM2'),
+    ('XCL', 'XCL'),
+    ('XG1', 'XG1'), ('XG2', 'XG2'),
     ('XA1', 'XA1'), ('XA2', 'XA2'), ('XA3', 'XA3'),
-    ('XM1', 'XM1'), ('XM2', 'XM2'), ('XM3', 'XM3'),
 ]
 
 CONSISTANCE_CHOICES = [
@@ -27,10 +27,8 @@ D_MAX_CHOICES = [
 ]
 
 CIMENT_CHOICES = [
-    ('CEM I 42.5R', 'CEM I 42.5R'),
-    ('CEM II/A-M 42.5N', 'CEM II/A-M 42.5N'),
-    ('CEM II/B-M 32.5N', 'CEM II/B-M 32.5N'),
-    ('CEM III/A 42.5N', 'CEM III/A 42.5N'),
+    ('CPJ 55', 'CPJ 55'),
+    ('CPJ 55 PM', 'CPJ 55 PM'),
 ]
 
 ADJUVANT_CHOICES = [
@@ -42,7 +40,7 @@ ADJUVANT_CHOICES = [
 ]
 
 RAPPORTEC_CHOICES = [
-    ('0.35', '0.35'), ('0.40', '0.40'), ('0.45', '0.45'), ('0.50', '0.50'), ('0.55', '0.55'), ('0.60', '0.60'),
+    ('0.35', '0.35'), ('0.40', '0.40'), ('0.45', '0.45'), ('0.50', '0.50'), ('0.55', '0.55'), ('0.60', '0.60'), ('0.65', '0.65'),
 ]
 
 AIR_CHOICES = [
