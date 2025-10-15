@@ -8,6 +8,8 @@ import time
 import json
 from datetime import datetime
 
+print("Executing monitor_deployment.py...")
+
 # Configuration
 API_BASE_URL = "https://sitrad-web.onrender.com"
 USERNAME = "admin"
@@ -15,9 +17,10 @@ PASSWORD = "admin123"
 
 def get_auth_token():
     """Obtenir le token d'authentification"""
+    print("Attempting to get auth token...")
     try:
         response = requests.post(
-            f"{API_BASE_URL}/auth/login/",
+            f"{API_BASE_URL}/api/v1/auth/token/",
             json={"username": USERNAME, "password": PASSWORD},
             timeout=30
         )
