@@ -659,11 +659,11 @@ def rapport_ratios_m3(request):
 
     # Section 1: Théorique par Matière
     from inventory.models import MatierePremiere
-    matieres = MatierePremiere.objects.prefetch_related('composition_set__formule').all()
+    matieres = MatierePremiere.objects.prefetch_related('compositionformule_set__formule').all()
     matieres_theorique_data = []
     for matiere in matieres:
         formules_usage = []
-        for comp in matiere.composition_set.all():
+        for comp in matiere.compositionformule_set.all():
             formule = comp.formule
             quantite_ref = formule.quantite_produite_reference or Decimal('1')
             if quantite_ref > 0:
