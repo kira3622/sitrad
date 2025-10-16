@@ -704,6 +704,11 @@ def rapport_ratios_m3(request):
         date_mouvement__date__range=[date_debut, date_fin]
     )
 
+    # Total des sorties sur la période (somme brute des sorties uniquement)
+    total_sorties_global = mouvements_sorties.aggregate(
+        total=Sum('quantite')
+    )['total'] or Decimal('0')
+
     ratios_reels = []
     if total_m3_produits and total_m3_produits > 0:
         agr = mouvements_sorties.values(
@@ -719,6 +724,12 @@ def rapport_ratios_m3(request):
                 'total_sorties': total_sorties,
             })
 
+    # Consommation moyenne par m³ (sur l'ensemble des matières) si production > 0
+    consommation_moyenne_par_m3 = (
+        total_sorties_global / total_m3_produits
+        if total_m3_produits and total_m3_produits > 0 else Decimal('0')
+    )
+
     context = {
         'title': 'Ratios Matières par m³',
         'date_debut': date_debut,
@@ -726,6 +737,8 @@ def rapport_ratios_m3(request):
         'matieres_theorique_data': matieres_theorique_data,
         'total_m3_produits': total_m3_produits,
         'ratios_reels': ratios_reels,
+        'total_sorties_global': total_sorties_global,
+        'consommation_moyenne_par_m3': consommation_moyenne_par_m3,
     }
 
     return render(request, 'reports/ratios_m3.html', context)

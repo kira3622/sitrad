@@ -20,7 +20,7 @@
 
   <section style="margin-top: 24px;">
     <h2>Consommation réelle par m³ (période)</h2>
-    <p>Période: {{ date_debut }} → {{ date_fin }} | Total produit: <strong>{{ total_m3_produits }} m³</strong></p>
+    <p>Période: {{ date_debut }} → {{ date_fin }} | Total produit: <strong>{{ total_m3_produits|floatformat:2 }} m³</strong></p>
 
     <table class="listing" style="width: 100%; border-collapse: collapse;">
       <thead>
@@ -37,8 +37,8 @@
           <tr>
             <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.matiere }}</td>
             <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.unite }}</td>
-            <td style="text-align:right; padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.total_sorties }}</td>
-            <td style="text-align:right; padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.ratio_par_m3 }}</td>
+            <td style="text-align:right; padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.total_sorties|floatformat:2 }}</td>
+            <td style="text-align:right; padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.ratio_par_m3|floatformat:3 }}</td>
           </tr>
           {% endfor %}
         {% else %}
@@ -47,6 +47,13 @@
           </tr>
         {% endif %}
       </tbody>
+      <tfoot>
+        <tr>
+          <th style="text-align:left; padding:8px; border-top:1px solid #ddd;" colspan="2">TOTAL sorties (période)</th>
+          <th style="text-align:right; padding:8px; border-top:1px solid #ddd;">{{ total_sorties_global|floatformat:2 }}</th>
+          <th style="text-align:right; padding:8px; border-top:1px solid #ddd;">{{ consommation_moyenne_par_m3|floatformat:3 }}</th>
+        </tr>
+      </tfoot>
     </table>
   </section>
 
