@@ -277,6 +277,15 @@
                 <a href="{% url 'reports:ratios_m3' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
+
+        <div class="report-card clients-journalier">
+            <div class="icon">🗓️</div>
+            <h3>Journalier Clients</h3>
+            <p>Somme de la production par client pour un jour donné.</p>
+            <div class="report-actions">
+                <a href="{% url 'reports:clients_journalier' %}" class="btn btn-primary">Voir le rapport</a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

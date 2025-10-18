@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Rapport Journalier Clients{% endblock %}
+
+{% block content %}
+<div class="content" style="margin: 20px;">
+  <h1>Rapport Journalier de Production par Client</h1>
+
+  <form method="get" class="filters" style="margin: 16px 0; display: flex; gap: 12px; align-items: center;">
+    <label>
+      Date:
+      <input type="date" name="jour" value="{{ jour }}" />
+    </label>
+    <button type="submit" class="button" style="padding: 6px 12px;">Mettre à jour</button>
+  </form>
+
+  <p>Jour: <strong>{{ jour }}</strong> | Source: <em>{{ source }}</em></p>
+
+  {% if production_par_client and production_par_client|length > 0 %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Client</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Production (m³)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Nombre</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in production_par_client %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.client_nom }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ item.total_m3|floatformat:2 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ item.nb }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th style="text-align:left; padding:8px; border-top:1px solid #ddd;">Total</th>
+          <th style="text-align:right; padding:8px; border-top:1px solid #ddd;">{{ total_global|floatformat:2 }} m³</th>
+          <th></th>
+        </tr>
+      </tfoot>
+    </table>
+  {% else %}
+    <div class="no-data" style="margin-top: 16px;">
+      <p>Aucune production enregistrée pour ce jour.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

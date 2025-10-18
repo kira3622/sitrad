@@ -872,3 +872,74 @@ def rapport_mouvements_par_jour(request):
     }
     
     return render(request, 'reports/mouvements_par_jour.html', context)
+
+
+def rapport_journalier_clients(request):
+    """
+    Rapport journalier: somme de la production par client sur un jour donné.
+    Utilise les lots produits (réel). Si aucun lot pour le jour, fallback sur les ordres terminés.
+    """
+    # Paramètre de date
+    jour_param = request.GET.get('jour')
+    if jour_param:
+        try:
+            jour = datetime.strptime(jour_param, '%Y-%m-%d').date()
+        except ValueError:
+            jour = timezone.now().date()
+    else:
+        jour = timezone.now().date()
+
+    production_par_client = []
+    source = 'lots'
+
+    # Production réelle via lots
+    lots = LotProduction.objects.filter(
+        date_heure_production__date=jour
+    ).select_related('ordre_production__commande__client')
+
+    if lots.exists():
+        agr = lots.values(
+            'ordre_production__commande__client__id',
+            'ordre_production__commande__client__nom'
+        ).annotate(
+            total_m3=Sum('quantite_produite'),
+            nb=Count('id')
+        ).order_by('-total_m3')
+        for item in agr:
+            production_par_client.append({
+                'client_nom': item['ordre_production__commande__client__nom'],
+                'total_m3': item['total_m3'] or Decimal('0'),
+                'nb': item['nb']
+            })
+    else:
+        # Fallback: ordres terminés du jour (proxy de production réelle)
+        source = 'ordres'
+        ordres = OrdreProduction.objects.filter(
+            date_production=jour,
+            statut='termine'
+        ).select_related('commande__client')
+        agr = ordres.values(
+            'commande__client__id',
+            'commande__client__nom'
+        ).annotate(
+            total_m3=Sum('quantite_produire'),
+            nb=Count('id')
+        ).order_by('-total_m3')
+        for item in agr:
+            production_par_client.append({
+                'client_nom': item['commande__client__nom'],
+                'total_m3': item['total_m3'] or Decimal('0'),
+                'nb': item['nb']
+            })
+
+    total_global = sum([p['total_m3'] for p in production_par_client]) if production_par_client else Decimal('0')
+
+    context = {
+        'title': 'Rapport Journalier de Production par Client',
+        'jour': jour,
+        'production_par_client': production_par_client,
+        'total_global': total_global,
+        'source': source,
+    }
+
+    return render(request, 'reports/clients_journalier.html', context)
