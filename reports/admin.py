@@ -35,6 +35,7 @@ class RapportAdmin(admin.ModelAdmin):
             'stock': reverse('reports:stock'),
             'financier': reverse('reports:financier'),
             'ratios_m3': reverse('reports:ratios_m3'),
+            'clients_journalier': reverse('reports:clients_journalier'),
         }
         return super().changelist_view(request, extra_context=extra_context)
 
