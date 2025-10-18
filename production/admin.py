@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from .models import OrdreProduction, LotProduction
+from orders.models import Commande
 
 class LotProductionInline(admin.TabularInline):
     model = LotProduction
@@ -112,6 +113,16 @@ class OrdreProductionAdmin(admin.ModelAdmin):
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
     
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        try:
+            # Filtrer uniquement à l'ajout: exclure les commandes livrées
+            if obj is None and 'commande' in form.base_fields:
+                form.base_fields['commande'].queryset = Commande.objects.exclude(statut='livree')
+        except Exception:
+            # En cas d'erreur, ne pas bloquer le formulaire
+            pass
+        return form
     def actions_sorties(self, obj):
         """Affiche les boutons d'action pour calculer les sorties de matières.
         Sur la vue d'ajout (obj non défini), afficher un texte informatif.
