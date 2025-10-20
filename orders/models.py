@@ -7,6 +7,7 @@ class Commande(models.Model):
     chantier = models.ForeignKey(Chantier, on_delete=models.CASCADE, null=True, blank=True)
     date_commande = models.DateField(auto_now_add=True)
     date_livraison_souhaitee = models.DateField()
+    heure_livraison_souhaitee = models.TimeField(null=True, blank=True)  # heure de livraison souhaitée
     statut = models.CharField(max_length=20, choices=[('en_attente', 'En attente'), ('validee', 'Validée'), ('en_production', 'En production'), ('livree', 'Livrée'), ('annulee', 'Annulée')], default='en_attente')
 
     def __str__(self):
