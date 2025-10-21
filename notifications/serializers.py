@@ -63,3 +63,37 @@ class MarkAsReadSerializer(serializers.Serializer):
         default=False,
         help_text="Marquer toutes les notifications comme lues"
     )
+
+
+# ======== Web Push =========
+from .models import WebPushSubscription
+
+class WebPushSubscriptionSerializer(serializers.ModelSerializer):
+    # Supporte le payload standard du navigateur: { endpoint, keys: { p256dh, auth } }
+    keys = serializers.DictField(write_only=True, required=False)
+
+    class Meta:
+        model = WebPushSubscription
+        fields = ['id', 'user', 'endpoint', 'p256dh', 'auth', 'browser', 'active', 'created_at', 'updated_at', 'keys']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        keys = attrs.pop('keys', None)
+        if keys:
+            attrs['p256dh'] = keys.get('p256dh')
+            attrs['auth'] = keys.get('auth')
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+        endpoint = validated_data['endpoint']
+        defaults = {
+            'user': user,
+            'p256dh': validated_data.get('p256dh', ''),
+            'auth': validated_data.get('auth', ''),
+            'browser': validated_data.get('browser', ''),
+            'active': True,
+        }
+        obj, _created = WebPushSubscription.objects.update_or_create(endpoint=endpoint, defaults=defaults)
+        return obj

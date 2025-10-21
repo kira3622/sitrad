@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'activity',
     'billing',
+    'cost_calculation',
     'customers',
     'formulas',
     'fuel_management',
@@ -275,3 +276,9 @@ try:
     from .production_settings import *
 except ImportError:
     pass
+
+
+# ======== Web Push (VAPID) ========
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
+VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@example.com')

@@ -1,0 +1,241 @@
+{% extends "cost_calculation/base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt text-primary"></i> Dashboard - Calcul des Coûts</h2>
+    <a href="{% url 'cost_calculation:nouveau_calcul' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nouveau Calcul
+    </a>
+</div>
+
+<!-- Statistiques principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ total_calculs }}</div>
+            <div>Total Calculs</div>
+            <small><i class="fas fa-calculator"></i> Tous les calculs</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <div class="stats-number">{{ calculs_ce_mois }}</div>
+            <div>Ce Mois</div>
+            <small><i class="fas fa-calendar-month"></i> Calculs récents</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+            <div class="stats-number">{{ coût_moyen_m3|floatformat:2 }}€</div>
+            <div>Coût Moyen/m³</div>
+            <small><i class="fas fa-euro-sign"></i> Prix unitaire</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">
+            <div class="stats-number">
+                {% if repartition_coûts.matieres %}
+                    {{ repartition_coûts.matieres|floatformat:1 }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+            <div>Part Matières</div>
+            <small><i class="fas fa-boxes"></i> Répartition</small>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques et répartition -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie"></i> Répartition des Coûts Moyens</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="costBreakdownChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Détails Moyens</h5>
+            </div>
+            <div class="card-body">
+                <div class="cost-breakdown">
+                    <div class="cost-item">
+                        <span><i class="fas fa-boxes text-primary"></i> Matières Premières</span>
+                        <span class="cost-badge">{{ repartition_coûts.matieres|default:0|floatformat:2 }}€/m³</span>
+                    </div>
+                    <div class="cost-item">
+                        <span><i class="fas fa-users text-success"></i> Main d'Œuvre</span>
+                        <span class="cost-badge" style="background: linear-gradient(45deg, #28a745, #20c997);">{{ repartition_coûts.main_oeuvre|default:0|floatformat:2 }}€/m³</span>
+                    </div>
+                    <div class="cost-item">
+                        <span><i class="fas fa-cogs text-warning"></i> Frais Généraux</span>
+                        <span class="cost-badge" style="background: linear-gradient(45deg, #ffc107, #fd7e14);">{{ repartition_coûts.frais_generaux|default:0|floatformat:2 }}€/m³</span>
+                    </div>
+                    <div class="cost-item">
+                        <span><i class="fas fa-truck text-info"></i> Transport</span>
+                        <span class="cost-badge" style="background: linear-gradient(45deg, #17a2b8, #6f42c1);">{{ repartition_coûts.transport|default:0|floatformat:2 }}€/m³</span>
+                    </div>
+                    <div class="cost-item">
+                        <span><strong>Total Moyen</strong></span>
+                        <span class="cost-badge" style="background: linear-gradient(45deg, #dc3545, #e83e8c); font-size: 1em;">{{ coût_moyen_m3|default:0|floatformat:2 }}€/m³</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Derniers calculs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-history"></i> Derniers Calculs</h5>
+                <a href="{% url 'cost_calculation:liste_calculs' %}" class="btn btn-outline-primary btn-sm">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if derniers_calculs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Référence</th>
+                                    <th>Formule</th>
+                                    <th>Quantité</th>
+                                    <th>Coût Total</th>
+                                    <th>Coût/m³</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for calcul in derniers_calculs %}
+                                <tr>
+                                    <td><span class="badge bg-secondary">#{{ calcul.id }}</span></td>
+                                    <td>
+                                        {% if calcul.commande %}
+                                            <i class="fas fa-shopping-cart text-primary"></i>
+                                            Commande {{ calcul.commande.id }}
+                                        {% elif calcul.ordre_production %}
+                                            <i class="fas fa-industry text-success"></i>
+                                            {{ calcul.ordre_production.numero_bon }}
+                                        {% else %}
+                                            <i class="fas fa-calculator text-info"></i>
+                                            Simulation
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ calcul.formule.nom }}</strong>
+                                        {% if calcul.formule.description %}
+                                            <br><small class="text-muted">{{ calcul.formule.description|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ calcul.quantite_calculee|floatformat:2 }} {{ calcul.unite_mesure }}</td>
+                                    <td>
+                                        <strong class="text-success">{{ calcul.coût_total|floatformat:2 }}€</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ calcul.coût_unitaire_total|floatformat:2 }}€/m³</span>
+                                    </td>
+                                    <td>
+                                        {{ calcul.date_calcul|date:"d/m/Y H:i" }}
+                                        <br><small class="text-muted">{{ calcul.calculé_par|default:"Système" }}</small>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'cost_calculation:detail_calcul' calcul.id %}" 
+                                           class="btn btn-sm btn-outline-primary btn-action"
+                                           data-bs-toggle="tooltip" title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun calcul disponible</h5>
+                        <p class="text-muted">Commencez par créer votre premier calcul de coût.</p>
+                        <a href="{% url 'cost_calculation:nouveau_calcul' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Créer un calcul
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Graphique de répartition des coûts
+    const ctx = document.getElementById('costBreakdownChart').getContext('2d');
+    
+    const matieres = {{ repartition_coûts.matieres|default:0 }};
+    const mainOeuvre = {{ repartition_coûts.main_oeuvre|default:0 }};
+    const fraisGeneraux = {{ repartition_coûts.frais_generaux|default:0 }};
+    const transport = {{ repartition_coûts.transport|default:0 }};
+    
+    const total = matieres + mainOeuvre + fraisGeneraux + transport;
+    
+    if (total > 0) {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Matières Premières', 'Main d\'Œuvre', 'Frais Généraux', 'Transport'],
+                datasets: [{
+                    data: [matieres, mainOeuvre, fraisGeneraux, transport],
+                    backgroundColor: [
+                        '#007bff',
+                        '#28a745',
+                        '#ffc107',
+                        '#17a2b8'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': ' + formatCurrency(value) + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        // Afficher un message si pas de données
+        ctx.canvas.parentElement.innerHTML = '<div class="text-center py-4"><i class="fas fa-chart-pie fa-3x text-muted mb-3"></i><h6 class="text-muted">Aucune donnée disponible</h6><p class="text-muted">Les graphiques apparaîtront après vos premiers calculs.</p></div>';
+    }
+});
+</script>
+{% endblock %}

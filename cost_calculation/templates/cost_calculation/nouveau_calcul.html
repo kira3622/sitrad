@@ -1,0 +1,510 @@
+{% extends "cost_calculation/base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-plus-circle"></i> Nouveau Calcul de Coût</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'cost_calculation:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Nouveau Calcul</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="btn-group">
+        <button type="button" class="btn btn-outline-info" onclick="simulateCalcul()">
+            <i class="fas fa-play"></i> Simulation
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+            <i class="fas fa-undo"></i> Réinitialiser
+        </button>
+    </div>
+</div>
+
+<form id="calculForm" method="post">
+    {% csrf_token %}
+    
+    <!-- Étape 1: Sélection de base -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-cog"></i> Configuration de Base</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="type_calcul" class="form-label">Type de Calcul</label>
+                        <select name="type_calcul" id="type_calcul" class="form-select" required>
+                            <option value="">Sélectionner un type</option>
+                            <option value="commande">Commande Client</option>
+                            <option value="production">Ordre de Production</option>
+                            <option value="simulation">Simulation</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3" id="reference_field" style="display: none;">
+                        <label for="reference_id" class="form-label">Référence</label>
+                        <select name="reference_id" id="reference_id" class="form-select">
+                            <option value="">Sélectionner une référence</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="formule" class="form-label">Formule de Béton</label>
+                        <select name="formule" id="formule" class="form-select" required>
+                            <option value="">Sélectionner une formule</option>
+                            {% for formule in formules %}
+                                <option value="{{ formule.id }}" 
+                                        data-resistance="{{ formule.resistance_requise }}"
+                                        data-quantite-ref="{{ formule.quantite_reference }}">
+                                    {{ formule.nom }}
+                                    {% if formule.resistance_requise %} - {{ formule.resistance_requise }} MPa{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="quantite" class="form-label">Quantité à Produire</label>
+                        <div class="input-group">
+                            <input type="number" name="quantite" id="quantite" class="form-control" 
+                                   step="0.01" min="0.01" required>
+                            <select name="unite_mesure" id="unite_mesure" class="form-select" style="max-width: 100px;">
+                                <option value="m3">m³</option>
+                                <option value="tonne">Tonne</option>
+                                <option value="litre">Litre</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="marge_beneficiaire" class="form-label">Marge Bénéficiaire (%)</label>
+                        <input type="number" name="marge_beneficiaire" id="marge_beneficiaire" 
+                               class="form-control" step="0.1" min="0" max="100" value="15">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Description (optionnel)</label>
+                <textarea name="description" id="description" class="form-control" rows="2" 
+                          placeholder="Description du calcul ou notes particulières..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Étape 2: Paramètres de coûts -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="fas fa-sliders-h"></i> Paramètres de Coûts</h5>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadDefaultCosts()">
+                <i class="fas fa-download"></i> Charger les coûts par défaut
+            </button>
+        </div>
+        <div class="card-body">
+            <!-- Coûts des matières premières -->
+            <div class="mb-4">
+                <h6><i class="fas fa-boxes text-primary"></i> Coûts des Matières Premières</h6>
+                <div id="matieres_container">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Sélectionnez d'abord une formule pour voir les matières premières nécessaires.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coûts de main d'œuvre -->
+            <div class="mb-4">
+                <h6><i class="fas fa-users text-success"></i> Coûts de Main d'Œuvre</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="cout_main_oeuvre_production" class="form-label">Production (€/h)</label>
+                            <input type="number" name="cout_main_oeuvre_production" id="cout_main_oeuvre_production" 
+                                   class="form-control" step="0.01" min="0" value="25.00">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="heures_production" class="form-label">Heures de Production</label>
+                            <input type="number" name="heures_production" id="heures_production" 
+                                   class="form-control" step="0.1" min="0" value="1.0">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="charges_sociales" class="form-label">Charges Sociales (%)</label>
+                            <input type="number" name="charges_sociales" id="charges_sociales" 
+                                   class="form-control" step="0.1" min="0" max="100" value="45.0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frais généraux -->
+            <div class="mb-4">
+                <h6><i class="fas fa-cogs text-warning"></i> Frais Généraux</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="frais_fixes" class="form-label">Frais Fixes (€)</label>
+                            <input type="number" name="frais_fixes" id="frais_fixes" 
+                                   class="form-control" step="0.01" min="0" value="50.00">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="frais_variables_pct" class="form-label">Frais Variables (%)</label>
+                            <input type="number" name="frais_variables_pct" id="frais_variables_pct" 
+                                   class="form-control" step="0.1" min="0" max="100" value="5.0">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="amortissement" class="form-label">Amortissement (€)</label>
+                            <input type="number" name="amortissement" id="amortissement" 
+                                   class="form-control" step="0.01" min="0" value="20.00">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="assurance" class="form-label">Assurance (€)</label>
+                            <input type="number" name="assurance" id="assurance" 
+                                   class="form-control" step="0.01" min="0" value="15.00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coûts de transport -->
+            <div class="mb-4">
+                <h6><i class="fas fa-truck text-info"></i> Coûts de Transport</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="distance_livraison" class="form-label">Distance de Livraison (km)</label>
+                            <input type="number" name="distance_livraison" id="distance_livraison" 
+                                   class="form-control" step="0.1" min="0" value="10.0">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="cout_km" class="form-label">Coût par km (€)</label>
+                            <input type="number" name="cout_km" id="cout_km" 
+                                   class="form-control" step="0.01" min="0" value="1.50">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="frais_livraison_fixes" class="form-label">Frais Fixes de Livraison (€)</label>
+                            <input type="number" name="frais_livraison_fixes" id="frais_livraison_fixes" 
+                                   class="form-control" step="0.01" min="0" value="25.00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Étape 3: Aperçu et validation -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-eye"></i> Aperçu du Calcul</h5>
+        </div>
+        <div class="card-body">
+            <div id="preview_container">
+                <div class="text-center py-4">
+                    <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Remplissez les champs ci-dessus pour voir l'aperçu du calcul</p>
+                    <button type="button" class="btn btn-outline-primary" onclick="updatePreview()">
+                        <i class="fas fa-sync"></i> Calculer l'aperçu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="d-flex justify-content-between">
+        <a href="{% url 'cost_calculation:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+        <div>
+            <button type="button" class="btn btn-outline-info me-2" onclick="saveAsDraft()">
+                <i class="fas fa-save"></i> Sauvegarder comme brouillon
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check"></i> Créer le Calcul
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block page_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du changement de type de calcul
+    document.getElementById('type_calcul').addEventListener('change', function() {
+        const referenceField = document.getElementById('reference_field');
+        const referenceSelect = document.getElementById('reference_id');
+        
+        if (this.value === 'commande' || this.value === 'production') {
+            referenceField.style.display = 'block';
+            loadReferences(this.value);
+        } else {
+            referenceField.style.display = 'none';
+            referenceSelect.innerHTML = '<option value="">Sélectionner une référence</option>';
+        }
+    });
+
+    // Gestion du changement de formule
+    document.getElementById('formule').addEventListener('change', function() {
+        if (this.value) {
+            loadFormuleComposition(this.value);
+            updatePreview();
+        } else {
+            document.getElementById('matieres_container').innerHTML = 
+                '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Sélectionnez d\'abord une formule pour voir les matières premières nécessaires.</div>';
+        }
+    });
+
+    // Mise à jour automatique de l'aperçu
+    const formInputs = document.querySelectorAll('#calculForm input, #calculForm select');
+    formInputs.forEach(input => {
+        input.addEventListener('change', updatePreview);
+    });
+
+    // Gestion de la soumission du formulaire
+    document.getElementById('calculForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitCalcul();
+    });
+});
+
+function loadReferences(type) {
+    const referenceSelect = document.getElementById('reference_id');
+    referenceSelect.innerHTML = '<option value="">Chargement...</option>';
+    
+    let url = '';
+    if (type === 'commande') {
+        url = '/cost-calculation/api/commandes/';
+    } else if (type === 'production') {
+        url = '/cost-calculation/api/ordres-production/';
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            referenceSelect.innerHTML = '<option value="">Sélectionner une référence</option>';
+            data.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                if (type === 'commande') {
+                    option.textContent = `Commande ${item.id} - ${item.client_nom || 'Client inconnu'}`;
+                } else {
+                    option.textContent = `${item.numero_bon} - ${item.formule_nom || 'Formule inconnue'}`;
+                }
+                referenceSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            referenceSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        });
+}
+
+function loadFormuleComposition(formuleId) {
+    fetch(`/cost-calculation/api/formules/${formuleId}/composition/`)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('matieres_container');
+            let html = '<div class="table-responsive"><table class="table table-sm"><thead class="table-light"><tr><th>Matière Première</th><th>Quantité Nécessaire</th><th>Prix Unitaire (€)</th><th>Coût Transport (€)</th><th>Coût Stockage (€)</th></tr></thead><tbody>';
+            
+            data.compositions.forEach(comp => {
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${comp.matiere_premiere.nom}</strong>
+                            <br><small class="text-muted">${comp.matiere_premiere.unite_mesure}</small>
+                        </td>
+                        <td>
+                            <input type="number" name="quantite_${comp.matiere_premiere.id}" 
+                                   class="form-control form-control-sm" 
+                                   value="${comp.quantite}" step="0.01" min="0" readonly>
+                        </td>
+                        <td>
+                            <input type="number" name="prix_${comp.matiere_premiere.id}" 
+                                   class="form-control form-control-sm matiere-prix" 
+                                   value="${comp.matiere_premiere.prix_unitaire || 0}" step="0.01" min="0">
+                        </td>
+                        <td>
+                            <input type="number" name="transport_${comp.matiere_premiere.id}" 
+                                   class="form-control form-control-sm matiere-transport" 
+                                   value="0" step="0.01" min="0">
+                        </td>
+                        <td>
+                            <input type="number" name="stockage_${comp.matiere_premiere.id}" 
+                                   class="form-control form-control-sm matiere-stockage" 
+                                   value="0" step="0.01" min="0">
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+            
+            // Ajouter les événements de mise à jour
+            container.querySelectorAll('input').forEach(input => {
+                input.addEventListener('change', updatePreview);
+            });
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            document.getElementById('matieres_container').innerHTML = 
+                '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erreur lors du chargement de la composition</div>';
+        });
+}
+
+function updatePreview() {
+    const formData = new FormData(document.getElementById('calculForm'));
+    
+    fetch('/cost-calculation/api/simulate/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayPreview(data.calcul);
+        } else {
+            document.getElementById('preview_container').innerHTML = 
+                '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> ' + (data.error || 'Erreur lors du calcul') + '</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        document.getElementById('preview_container').innerHTML = 
+            '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erreur lors de la simulation</div>';
+    });
+}
+
+function displayPreview(calcul) {
+    const html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-info-circle text-primary"></i> Résumé</h6>
+                <table class="table table-sm table-borderless">
+                    <tr><td><strong>Quantité:</strong></td><td>${calcul.quantite} ${calcul.unite_mesure}</td></tr>
+                    <tr><td><strong>Formule:</strong></td><td>${calcul.formule_nom}</td></tr>
+                    <tr><td><strong>Coût Total:</strong></td><td><strong class="text-success">${formatCurrency(calcul.cout_total)}</strong></td></tr>
+                    <tr><td><strong>Coût Unitaire:</strong></td><td><span class="badge bg-info">${formatCurrency(calcul.cout_unitaire)}/m³</span></td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-chart-pie text-success"></i> Répartition</h6>
+                <div class="cost-breakdown">
+                    <div class="cost-item">
+                        <span><i class="fas fa-boxes text-primary"></i> Matières</span>
+                        <span class="cost-badge">${formatCurrency(calcul.cout_matieres)}</span>
+                    </div>
+                    <div class="cost-item">
+                        <span><i class="fas fa-users text-success"></i> Main d'Œuvre</span>
+                        <span class="cost-badge">${formatCurrency(calcul.cout_main_oeuvre)}</span>
+                    </div>
+                    <div class="cost-item">
+                        <span><i class="fas fa-cogs text-warning"></i> Frais Généraux</span>
+                        <span class="cost-badge">${formatCurrency(calcul.cout_frais_generaux)}</span>
+                    </div>
+                    <div class="cost-item">
+                        <span><i class="fas fa-truck text-info"></i> Transport</span>
+                        <span class="cost-badge">${formatCurrency(calcul.cout_transport)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('preview_container').innerHTML = html;
+}
+
+function submitCalcul() {
+    const formData = new FormData(document.getElementById('calculForm'));
+    
+    fetch('/cost-calculation/api/calculs/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.id) {
+            showAlert('Calcul créé avec succès', 'success');
+            setTimeout(() => {
+                window.location.href = `/cost-calculation/calculs/${data.id}/`;
+            }, 1000);
+        } else {
+            showAlert('Erreur lors de la création: ' + (data.error || 'Erreur inconnue'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showAlert('Erreur lors de la création du calcul', 'danger');
+    });
+}
+
+function simulateCalcul() {
+    updatePreview();
+}
+
+function resetForm() {
+    if (confirm('Êtes-vous sûr de vouloir réinitialiser le formulaire ?')) {
+        document.getElementById('calculForm').reset();
+        document.getElementById('matieres_container').innerHTML = 
+            '<div class="alert alert-info"><i class="fas fa-info-circle"></i> Sélectionnez d\'abord une formule pour voir les matières premières nécessaires.</div>';
+        document.getElementById('preview_container').innerHTML = 
+            '<div class="text-center py-4"><i class="fas fa-calculator fa-3x text-muted mb-3"></i><p class="text-muted">Remplissez les champs ci-dessus pour voir l\'aperçu du calcul</p></div>';
+        document.getElementById('reference_field').style.display = 'none';
+    }
+}
+
+function loadDefaultCosts() {
+    fetch('/cost-calculation/api/default-costs/')
+        .then(response => response.json())
+        .then(data => {
+            // Charger les coûts par défaut dans les champs
+            Object.keys(data).forEach(key => {
+                const field = document.getElementById(key);
+                if (field) {
+                    field.value = data[key];
+                }
+            });
+            showAlert('Coûts par défaut chargés', 'success');
+            updatePreview();
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors du chargement des coûts par défaut', 'warning');
+        });
+}
+
+function saveAsDraft() {
+    // Implémentation pour sauvegarder comme brouillon
+    showAlert('Fonctionnalité de brouillon à implémenter', 'info');
+}
+</script>
+{% endblock %}

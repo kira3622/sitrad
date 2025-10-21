@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import (
 )
 
 from . import views
-from notifications.views import NotificationViewSet
+from notifications.views import NotificationViewSet, WebPushSubscriptionViewSet
 
 # Configuration du router pour les ViewSets
 router = DefaultRouter()
@@ -24,6 +24,7 @@ router.register(r'approvisionnements', views.ApprovisionnementViewSet)
 router.register(r'stock-carburant', views.StockCarburantViewSet)
 router.register(r'formules', views.FormuleBetonViewSet)
 router.register(r'notifications', NotificationViewSet, basename='notification')
+router.register(r'webpush-subscriptions', WebPushSubscriptionViewSet, basename='webpush-subscription')
 
 app_name = 'api'
 
@@ -39,6 +40,8 @@ urlpatterns = [
     path('commandes/recentes/', views.commandes_recentes, name='commandes_recentes'),
     path('production/en-cours/', views.production_en_cours, name='production_en_cours'),
     path('test-notifications/', views.test_notifications_endpoint, name='test_notifications'),
+    path('webpush/public-key/', views.webpush_public_key, name='webpush_public_key'),
+    path('webpush/test-send/', views.webpush_test_send, name='webpush_test_send'),
     
     # Routes automatiques des ViewSets (incluant notifications)
     path('', include(router.urls)),

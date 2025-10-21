@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .cost-card {
+        border-left: 4px solid #007bff;
+        transition: all 0.3s ease;
+    }
+    .cost-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .cost-breakdown {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    .cost-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .cost-item:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    .cost-badge {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875em;
+    }
+    .sidebar-nav {
+        background: #f8f9fa;
+        min-height: calc(100vh - 56px);
+        padding: 1rem 0;
+    }
+    .nav-link {
+        color: #495057;
+        padding: 0.75rem 1rem;
+        margin: 0.25rem 0;
+        border-radius: 0.375rem;
+        transition: all 0.3s ease;
+    }
+    .nav-link:hover, .nav-link.active {
+        background-color: #007bff;
+        color: white;
+    }
+    .nav-link i {
+        width: 20px;
+        margin-right: 0.5rem;
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .btn-action {
+        padding: 0.25rem 0.5rem;
+        margin: 0 0.125rem;
+        border-radius: 4px;
+    }
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+    .alert-custom {
+        border-left: 4px solid;
+        border-radius: 0 4px 4px 0;
+    }
+    .alert-info.alert-custom {
+        border-left-color: #17a2b8;
+    }
+    .alert-success.alert-custom {
+        border-left-color: #28a745;
+    }
+    .alert-warning.alert-custom {
+        border-left-color: #ffc107;
+    }
+    .alert-danger.alert-custom {
+        border-left-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-3 col-lg-2 sidebar-nav">
+            <div class="d-flex flex-column">
+                <h5 class="text-center mb-3">
+                    <i class="fas fa-calculator text-primary"></i>
+                    Calcul des Coûts
+                </h5>
+                
+                <nav class="nav flex-column">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                       href="{% url 'cost_calculation:dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                    
+                    <a class="nav-link {% if request.resolver_match.url_name == 'nouveau_calcul' %}active{% endif %}" 
+                       href="{% url 'cost_calculation:nouveau_calcul' %}">
+                        <i class="fas fa-plus-circle"></i>
+                        Nouveau Calcul
+                    </a>
+                    
+                    <a class="nav-link {% if request.resolver_match.url_name == 'liste_calculs' %}active{% endif %}" 
+                       href="{% url 'cost_calculation:liste_calculs' %}">
+                        <i class="fas fa-list"></i>
+                        Liste des Calculs
+                    </a>
+                    
+                    <hr class="my-2">
+                    
+                    <h6 class="text-muted px-3 mb-2">Gestion des Coûts</h6>
+                    
+                    <a class="nav-link {% if request.resolver_match.url_name == 'gestion_coûts_matieres' %}active{% endif %}" 
+                       href="{% url 'cost_calculation:gestion_coûts_matieres' %}">
+                        <i class="fas fa-boxes"></i>
+                        Matières Premières
+                    </a>
+                    
+                    <a class="nav-link {% if request.resolver_match.url_name == 'gestion_coûts_main_oeuvre' %}active{% endif %}" 
+                       href="{% url 'cost_calculation:gestion_coûts_main_oeuvre' %}">
+                        <i class="fas fa-users"></i>
+                        Main d'Œuvre
+                    </a>
+                    
+                    <a class="nav-link {% if request.resolver_match.url_name == 'gestion_frais_generaux' %}active{% endif %}" 
+                       href="{% url 'cost_calculation:gestion_frais_generaux' %}">
+                        <i class="fas fa-cogs"></i>
+                        Frais Généraux
+                    </a>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <!-- Messages -->
+            {% if messages %}
+                <div class="mt-3">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-custom alert-dismissible fade show" role="alert">
+                            {% if message.tags == 'error' %}
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% elif message.tags == 'success' %}
+                                <i class="fas fa-check-circle me-2"></i>
+                            {% elif message.tags == 'warning' %}
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle me-2"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Page Content -->
+            {% block page_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Fonctions utilitaires pour le module de calcul des coûts
+    
+    // Formatage des nombres
+    function formatCurrency(amount, currency = 'EUR') {
+        return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: 2
+        }).format(amount);
+    }
+    
+    // Formatage des nombres avec séparateurs
+    function formatNumber(number, decimals = 2) {
+        return new Intl.NumberFormat('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        }).format(number);
+    }
+    
+    // Confirmation de suppression
+    function confirmDelete(message = 'Êtes-vous sûr de vouloir supprimer cet élément ?') {
+        return confirm(message);
+    }
+    
+    // Affichage des tooltips Bootstrap
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    // Auto-hide des alertes après 5 secondes
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+
+{% block page_js %}
+{% endblock %}
+{% endblock %}

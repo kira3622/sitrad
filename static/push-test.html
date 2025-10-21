@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Web Push</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 20px; }
+    label { display:block; margin-top: 10px; }
+    input { width: 100%; padding: 6px; }
+    button { margin-top: 12px; padding: 8px 12px; }
+    pre { background: #f6f6f6; padding: 10px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Test Web Push</h1>
+  <p>Cette page enregistre le service worker et s'abonne aux notifications Web Push pour navigateur Android/Chrome.</p>
+
+  <label>Base URL API (ex: https://votre-app.onrender.com/api/v1/)
+    <input id="apiBase" value="/api/v1/" />
+  </label>
+  <label>Token d'accès (Bearer JWT)
+    <input id="accessToken" placeholder="collez ici votre token" />
+  </label>
+
+  <button id="registerSW">1) Enregistrer Service Worker</button>
+  <button id="subscribePush">2) S'abonner Web Push</button>
+
+  <h2>Logs</h2>
+  <pre id="logs"></pre>
+
+<script>
+const logsEl = document.getElementById('logs');
+function log(msg, obj) {
+  logsEl.textContent += `\n${new Date().toISOString()} - ${msg}`;
+  if (obj) logsEl.textContent += `\n${JSON.stringify(obj, null, 2)}`;
+}
+
+async function fetchPublicKey(apiBase) {
+  const url = new URL(apiBase, window.location.origin);
+  url.pathname = url.pathname.replace(/\/?$/, '/') + 'webpush/public-key/';
+  const res = await fetch(url.toString());
+  const data = await res.json();
+  log('VAPID public key', data);
+  return data.vapidPublicKey;
+}
+
+async function registerSW() {
+  try {
+    const reg = await navigator.serviceWorker.register('/service-worker.js');
+    log('Service worker enregistré', reg);
+    return reg;
+  } catch (e) {
+    log('Erreur enregistrement service worker', { error: String(e) });
+    throw e;
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+async function subscribePush() {
+  const apiBase = document.getElementById('apiBase').value;
+  const token = document.getElementById('accessToken').value;
+  if (!token) { log('Token manquant'); return; }
+
+  const permission = await Notification.requestPermission();
+  log('Permission notifications', permission);
+  if (permission !== 'granted') { return; }
+
+  const reg = await registerSW();
+  const publicKey = await fetchPublicKey(apiBase);
+  if (!publicKey) { log('Clé VAPID manquante — configurez VAPID_PUBLIC_KEY côté serveur'); return; }
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicKey)
+  });
+
+  const payload = {
+    endpoint: sub.endpoint,
+    keys: { p256dh: sub.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))) : '',
+            auth: sub.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))) : '' },
+    browser: navigator.userAgent
+  };
+
+  const url = new URL(apiBase, window.location.origin);
+  url.pathname = url.pathname.replace(/\/?$/, '/') + 'webpush-subscriptions/';
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  log('Abonnement enregistré', data);
+}
+
+// Boutons
+
+document.getElementById('registerSW').addEventListener('click', registerSW);
+document.getElementById('subscribePush').addEventListener('click', subscribePush);
+</script>
+</body>
+</html>

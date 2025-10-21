@@ -1,0 +1,394 @@
+{% extends "cost_calculation/base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-list"></i> Liste des Calculs de Coûts</h2>
+    <a href="{% url 'cost_calculation:nouveau_calcul' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nouveau Calcul
+    </a>
+</div>
+
+<!-- Filtres -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="formule" class="form-label">Formule</label>
+                <select name="formule" id="formule" class="form-select">
+                    <option value="">Toutes les formules</option>
+                    {% for formule in formules %}
+                        <option value="{{ formule.id }}" {% if request.GET.formule == formule.id|stringformat:"s" %}selected{% endif %}>
+                            {{ formule.nom }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_debut" class="form-label">Date début</label>
+                <input type="date" name="date_debut" id="date_debut" class="form-control" value="{{ request.GET.date_debut }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_fin" class="form-label">Date fin</label>
+                <input type="date" name="date_fin" id="date_fin" class="form-control" value="{{ request.GET.date_fin }}">
+            </div>
+            <div class="col-md-3">
+                <label for="type" class="form-label">Type</label>
+                <select name="type" id="type" class="form-select">
+                    <option value="">Tous les types</option>
+                    <option value="commande" {% if request.GET.type == "commande" %}selected{% endif %}>Commandes</option>
+                    <option value="production" {% if request.GET.type == "production" %}selected{% endif %}>Production</option>
+                    <option value="simulation" {% if request.GET.type == "simulation" %}selected{% endif %}>Simulations</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+                <a href="{% url 'cost_calculation:liste_calculs' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Résultats -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-table"></i> Calculs ({{ calculs.count }} résultat{{ calculs.count|pluralize }})</h5>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-success btn-sm" onclick="exportToExcel()">
+                <i class="fas fa-file-excel"></i> Excel
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="exportToPDF()">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if calculs %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="calculTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>ID</th>
+                            <th>Référence</th>
+                            <th>Formule</th>
+                            <th>Quantité</th>
+                            <th>Coût Total</th>
+                            <th>Coût/m³</th>
+                            <th>Marge (%)</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for calcul in calculs %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input row-select" value="{{ calcul.id }}">
+                            </td>
+                            <td><span class="badge bg-secondary">#{{ calcul.id }}</span></td>
+                            <td>
+                                {% if calcul.commande %}
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-shopping-cart text-primary me-2"></i>
+                                        <div>
+                                            <strong>Commande {{ calcul.commande.id }}</strong>
+                                            {% if calcul.commande.client %}
+                                                <br><small class="text-muted">{{ calcul.commande.client.nom }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% elif calcul.ordre_production %}
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-industry text-success me-2"></i>
+                                        <div>
+                                            <strong>{{ calcul.ordre_production.numero_bon }}</strong>
+                                            <br><small class="text-muted">Production</small>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calculator text-info me-2"></i>
+                                        <div>
+                                            <strong>Simulation</strong>
+                                            <br><small class="text-muted">{{ calcul.description|default:"Sans description" }}</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ calcul.formule.nom }}</strong>
+                                {% if calcul.formule.resistance_requise %}
+                                    <br><small class="text-muted">{{ calcul.formule.resistance_requise }} MPa</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ calcul.quantite_calculee|floatformat:2 }}</strong> {{ calcul.unite_mesure }}
+                            </td>
+                            <td>
+                                <strong class="text-success">{{ calcul.coût_total|floatformat:2 }}€</strong>
+                                {% if calcul.coût_matieres %}
+                                    <br><small class="text-muted">
+                                        Mat: {{ calcul.coût_matieres|floatformat:2 }}€
+                                        {% if calcul.coût_main_oeuvre %} | MO: {{ calcul.coût_main_oeuvre|floatformat:2 }}€{% endif %}
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info fs-6">{{ calcul.coût_unitaire_total|floatformat:2 }}€/m³</span>
+                                {% if calcul.coût_unitaire_matieres %}
+                                    <br><small class="text-muted">{{ calcul.coût_unitaire_matieres|floatformat:2 }}€/m³ mat.</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if calcul.marge_beneficiaire %}
+                                    <span class="badge bg-success">{{ calcul.marge_beneficiaire|floatformat:1 }}%</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ calcul.date_calcul|date:"d/m/Y H:i" }}
+                                <br><small class="text-muted">{{ calcul.calculé_par|default:"Système" }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'cost_calculation:detail_calcul' calcul.id %}" 
+                                       class="btn btn-sm btn-outline-primary btn-action"
+                                       data-bs-toggle="tooltip" title="Voir détails">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-success btn-action"
+                                            onclick="duplicateCalcul({{ calcul.id }})"
+                                            data-bs-toggle="tooltip" title="Dupliquer">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger btn-action"
+                                            onclick="deleteCalcul({{ calcul.id }})"
+                                            data-bs-toggle="tooltip" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <nav aria-label="Navigation des pages">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun calcul trouvé</h5>
+                <p class="text-muted">Aucun calcul ne correspond à vos critères de recherche.</p>
+                <a href="{% url 'cost_calculation:nouveau_calcul' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Créer un nouveau calcul
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Actions groupées -->
+{% if calculs %}
+<div class="card mt-3" id="bulkActions" style="display: none;">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <strong id="selectedCount">0</strong> calcul(s) sélectionné(s)
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-success" onclick="bulkExport()">
+                    <i class="fas fa-download"></i> Exporter
+                </button>
+                <button type="button" class="btn btn-outline-danger" onclick="bulkDelete()">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block page_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la sélection multiple
+    const selectAll = document.getElementById('selectAll');
+    const rowSelects = document.querySelectorAll('.row-select');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+
+    function updateBulkActions() {
+        const selected = document.querySelectorAll('.row-select:checked');
+        if (selected.length > 0) {
+            bulkActions.style.display = 'block';
+            selectedCount.textContent = selected.length;
+        } else {
+            bulkActions.style.display = 'none';
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            rowSelects.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkActions();
+        });
+    }
+
+    rowSelects.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+});
+
+function duplicateCalcul(calculId) {
+    if (confirm('Voulez-vous dupliquer ce calcul ?')) {
+        fetch(`/cost-calculation/api/calculs/${calculId}/duplicate/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Calcul dupliqué avec succès', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert('Erreur lors de la duplication', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la duplication', 'danger');
+        });
+    }
+}
+
+function deleteCalcul(calculId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce calcul ? Cette action est irréversible.')) {
+        fetch(`/cost-calculation/api/calculs/${calculId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                showAlert('Calcul supprimé avec succès', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert('Erreur lors de la suppression', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la suppression', 'danger');
+        });
+    }
+}
+
+function exportToExcel() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('format', 'excel');
+    window.open(`/cost-calculation/export/?${params.toString()}`, '_blank');
+}
+
+function exportToPDF() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('format', 'pdf');
+    window.open(`/cost-calculation/export/?${params.toString()}`, '_blank');
+}
+
+function bulkExport() {
+    const selected = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => cb.value);
+    if (selected.length === 0) return;
+    
+    const params = new URLSearchParams();
+    params.set('ids', selected.join(','));
+    params.set('format', 'excel');
+    window.open(`/cost-calculation/export/?${params.toString()}`, '_blank');
+}
+
+function bulkDelete() {
+    const selected = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => cb.value);
+    if (selected.length === 0) return;
+    
+    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selected.length} calcul(s) ? Cette action est irréversible.`)) {
+        Promise.all(selected.map(id => 
+            fetch(`/cost-calculation/api/calculs/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+        ))
+        .then(() => {
+            showAlert(`${selected.length} calcul(s) supprimé(s) avec succès`, 'success');
+            setTimeout(() => location.reload(), 1000);
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showAlert('Erreur lors de la suppression groupée', 'danger');
+        });
+    }
+}
+</script>
+{% endblock %}

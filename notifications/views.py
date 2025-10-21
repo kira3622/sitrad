@@ -130,3 +130,50 @@ class NotificationViewSet(viewsets.ModelViewSet):
             {'message': 'Notification supprimée avec succès'},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+# ======== Web Push Subscriptions =========
+from .models import WebPushSubscription
+from .serializers import WebPushSubscriptionSerializer
+
+class WebPushSubscriptionViewSet(viewsets.ModelViewSet):
+    serializer_class = WebPushSubscriptionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Restreint aux abonnements de l'utilisateur connecté
+        qs = WebPushSubscription.objects.all()
+        user = self.request.user
+        if user and user.is_authenticated:
+            qs = qs.filter(user=user)
+        else:
+            qs = qs.none()
+        # Filtrer par actif si demandé
+        active = self.request.query_params.get('active')
+        if active is not None:
+            qs = qs.filter(active=active.lower() == 'true')
+        return qs.order_by('-updated_at')
+
+    def create(self, request, *args, **kwargs):
+        # Upsert sur endpoint pour éviter les doublons
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    @action(detail=False, methods=['post'], url_path='unsubscribe')
+    def unsubscribe(self, request):
+        endpoint = request.data.get('endpoint')
+        if not endpoint:
+            return Response({'error': 'endpoint requis'}, status=status.HTTP_400_BAD_REQUEST)
+        count = WebPushSubscription.objects.filter(user=request.user, endpoint=endpoint).update(active=False)
+        return Response({'message': 'Désabonnement effectué', 'updated_count': count})
+
+    @action(detail=False, methods=['post'], url_path='resubscribe')
+    def resubscribe(self, request):
+        endpoint = request.data.get('endpoint')
+        if not endpoint:
+            return Response({'error': 'endpoint requis'}, status=status.HTTP_400_BAD_REQUEST)
+        count = WebPushSubscription.objects.filter(user=request.user, endpoint=endpoint).update(active=True)
+        return Response({'message': 'Réabonnement effectué', 'updated_count': count})

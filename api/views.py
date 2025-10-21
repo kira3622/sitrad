@@ -249,3 +249,30 @@ def api_health_check(request):
         'message': 'API is running',
         'timestamp': timezone.now().isoformat()
     })
+
+
+# ======== Web Push: exposer clé publique VAPID =========
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def webpush_public_key(request):
+    key = getattr(settings, 'VAPID_PUBLIC_KEY', None) or settings.SECRETS.get('VAPID_PUBLIC_KEY') if hasattr(settings, 'SECRETS') else None
+    return Response({
+        'vapidPublicKey': key
+    })
+
+# ======== Web Push: envoi test =========
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def webpush_test_send(request):
+    """Envoie une notification Web Push de test aux abonnements de l'utilisateur."""
+    payload = request.data or {}
+    if 'title' not in payload:
+        payload['title'] = 'Test Web Push'
+    if 'message' not in payload:
+        payload['message'] = 'Ceci est une notification de test.'
+    try:
+        from notifications.utils import broadcast_webpush_to_user
+        result = broadcast_webpush_to_user(request.user, payload)
+        return Response({'status': 'ok', 'result': result})
+    except Exception as e:
+        return Response({'status': 'error', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

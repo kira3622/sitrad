@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic.base import RedirectView
 from production.views import delivery_note_pdf
+from .views import service_worker, push_test_page
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/admin/', permanent=True)),
@@ -25,10 +26,15 @@ urlpatterns = [
     # Route explicite pour le PDF Bon de Livraison (assure la disponibilité en production)
     path('production/orders/<int:pk>/delivery-note.pdf', delivery_note_pdf, name='delivery_note_pdf'),
     
+    # Fichiers root-level pour Web Push
+    path('service-worker.js', service_worker, name='service_worker'),
+    path('push-test/', push_test_page, name='push_test_page'),
+    
     # Applications web
     path('activity/', include('activity.urls')),
     path('reports/', include('reports.urls')),
     path('billing/', include('billing.urls')),
+    path('cost-calculation/', include('cost_calculation.urls')),
     path('production/', include('production.urls')),
     path('customers/', include('customers.urls')),
     path('fuel/', include('fuel_management.urls')),
