@@ -17,14 +17,20 @@ class CategorieCoûtAdmin(admin.ModelAdmin):
 
 @admin.register(CoûtMatierePremiere)
 class CoûtMatierePremiereAdmin(admin.ModelAdmin):
-    list_display = ('matiere_premiere', 'prix_unitaire', 'coût_transport', 'coût_stockage', 'prix_total_unitaire', 'actif', 'date_debut')
+    list_display = ('matiere_premiere', 'prix_unitaire', 'coût_transport', 'coût_stockage', 'display_prix_total_unitaire', 'actif', 'date_debut')
     list_filter = ('actif', 'date_debut', 'date_fin', 'matiere_premiere')
     search_fields = ('matiere_premiere__nom', 'fournisseur', 'reference_fournisseur')
     ordering = ('-date_debut',)
-    readonly_fields = ('prix_total_unitaire',)
+    # Supprime la référence directe au champ non-modèle pour éviter KeyError pendant l'ajout
+    # readonly_fields = ('prix_total_unitaire',)
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('matiere_premiere')
+
+    # Affichage du prix total unitaire calculé (propriété sur le modèle)
+    def display_prix_total_unitaire(self, obj):
+        return f"{obj.prix_total_unitaire:.4f}"
+    display_prix_total_unitaire.short_description = "Prix total unitaire"
 
 
 @admin.register(CoûtMainOeuvre)
@@ -98,13 +104,10 @@ class CalculCoûtRevientAdmin(admin.ModelAdmin):
         }),
     )
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('commande', 'ordre_production', 'formule')
-
     def view_link(self, obj):
-        url = reverse('cost_calculation:detail_calcul', args=[obj.pk])
-        return format_html('<a href="{}" target="_blank">Voir détail</a>', url)
-    view_link.short_description = 'Détail'
+        url = reverse('admin:cost_calculation_calculcoûtrevient_change', args=[obj.id])
+        return format_html('<a href="{}">Voir</a>', url)
+    view_link.short_description = "Détail"
 
 
 @admin.register(DetailCoûtMatiere)
