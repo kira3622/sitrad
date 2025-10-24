@@ -17,6 +17,7 @@ from stock.models import MouvementStock
 from inventory.models import MatierePremiere
 from billing.models import Facture, LigneFacture
 from formulas.models import FormuleBeton, CompositionFormule
+from logistics.models import Vehicule, Livraison, Chauffeur
 
 # Vue principale des rapports
 def dashboard_reports(request):
@@ -943,3 +944,110 @@ def rapport_journalier_clients(request):
     }
 
     return render(request, 'reports/clients_journalier.html', context)
+
+
+def rapport_journalier_vehicules(request):
+    """
+    Rapport journalier par véhicule: somme des voyages (livraisons livrées) et total des livraisons (m³) pour un jour donné.
+    - Voyages: nombre de "Livraison" avec statut livrée ce jour, groupé par véhicule.
+    - Volume livré: somme des lots produits ce jour groupés par véhicule; fallback sur ordres terminés si aucun lot.
+    """
+    jour_param = request.GET.get('jour')
+    if jour_param:
+        try:
+            jour = datetime.strptime(jour_param, '%Y-%m-%d').date()
+        except ValueError:
+            jour = timezone.now().date()
+    else:
+        jour = timezone.now().date()
+
+    # Comptage des voyages via livraisons livrées
+    livraisons = Livraison.objects.filter(
+        date_livraison=jour,
+        statut='livree',
+        vehicule__isnull=False
+    ).select_related('vehicule', 'commande')
+
+    voyages_par_vehicule = livraisons.values(
+        'vehicule__id', 'vehicule__immatriculation', 'vehicule__modele', 'vehicule__chauffeur__nom'
+    ).annotate(
+        voyages=Count('id')
+    )
+
+    # Calcul du volume livré via lots (réel); fallback ordres terminés
+    lots = LotProduction.objects.filter(
+        date_heure_production__date=jour,
+        ordre_production__vehicule__isnull=False
+    ).select_related('ordre_production__vehicule', 'ordre_production__chauffeur')
+
+    source_volume = 'lots'
+    if lots.exists():
+        volumes_par_vehicule = lots.values(
+            'ordre_production__vehicule__id',
+            'ordre_production__vehicule__immatriculation',
+            'ordre_production__vehicule__modele',
+            'ordre_production__chauffeur__nom'
+        ).annotate(
+            total_m3=Sum('quantite_produite'),
+            nb_lots=Count('id')
+        )
+    else:
+        source_volume = 'ordres'
+        ordres = OrdreProduction.objects.filter(
+            date_production=jour,
+            statut='termine',
+            vehicule__isnull=False
+        ).select_related('vehicule', 'chauffeur')
+        volumes_par_vehicule = ordres.values(
+            'vehicule__id',
+            'vehicule__immatriculation',
+            'vehicule__modele',
+            'chauffeur__nom'
+        ).annotate(
+            total_m3=Sum('quantite_produire'),
+            nb_lots=Count('id')
+        )
+
+    # Fusionner voyages et volumes par véhicule
+    # Construire dict par véhicule id
+    data_par_vehicule = {}
+    for v in volumes_par_vehicule:
+        vid = v.get('vehicule__id') or v.get('ordre_production__vehicule__id')
+        data_par_vehicule[vid] = {
+            'vehicule': f"{v.get('vehicule__modele', v.get('ordre_production__vehicule__modele'))} ({v.get('vehicule__immatriculation', v.get('ordre_production__vehicule__immatriculation'))})",
+            'chauffeur_nom': v.get('chauffeur__nom', v.get('ordre_production__chauffeur__nom')),
+            'total_m3': v['total_m3'] or Decimal('0'),
+            'voyages': 0
+        }
+
+    for l in voyages_par_vehicule:
+        vid = l['vehicule__id']
+        key_present = data_par_vehicule.get(vid)
+        if key_present:
+            data_par_vehicule[vid]['voyages'] = l['voyages']
+        else:
+            # véhicule avec voyages mais sans volume (ex: livraison sans lot ce jour)
+            data_par_vehicule[vid] = {
+                'vehicule': f"{l['vehicule__modele']} ({l['vehicule__immatriculation']})",
+                'chauffeur_nom': l['vehicule__chauffeur__nom'],
+                'total_m3': Decimal('0'),
+                'voyages': l['voyages']
+            }
+
+    # Liste finale triée par volume desc
+    vehicules_stats = list(data_par_vehicule.values())
+    vehicules_stats.sort(key=lambda x: (x['total_m3'], x['voyages']), reverse=True)
+
+    total_volume = sum([v['total_m3'] for v in vehicules_stats]) if vehicules_stats else Decimal('0')
+    total_voyages = sum([v['voyages'] for v in vehicules_stats]) if vehicules_stats else 0
+
+    context = {
+        'title': 'Rapport Journalier par Véhicule',
+        'jour': jour,
+        'vehicules_stats': vehicules_stats,
+        'total_volume': total_volume,
+        'total_voyages': total_voyages,
+        'source_volume': source_volume,
+    }
+
+    return render(request, 'reports/vehicules_journalier.html', context)

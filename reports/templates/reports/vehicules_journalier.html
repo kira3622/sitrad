@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Rapport Journalier Véhicules{% endblock %}
+
+{% block content %}
+<div class="content" style="margin: 20px;">
+  <h1>Rapport Journalier par Véhicule</h1>
+
+  <form method="get" class="filters" style="margin: 16px 0; display: flex; gap: 12px; align-items: center;">
+    <label>
+      Date:
+      <input type="date" name="jour" value="{{ jour }}" />
+    </label>
+    <button type="submit" class="button" style="padding: 6px 12px;">Mettre à jour</button>
+  </form>
+
+  <p>
+    Jour: <strong>{{ jour }}</strong>
+    | Volume source: <em>{{ source_volume }}</em>
+  </p>
+
+  {% if vehicules_stats and vehicules_stats|length > 0 %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Véhicule</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Chauffeur</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Voyages</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Volume livré (m³)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in vehicules_stats %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.vehicule }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.chauffeur_nom|default:"-" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ item.voyages }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ item.total_m3|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th style="text-align:left; padding:8px; border-top:1px solid #ddd;">Totaux</th>
+          <th></th>
+          <th style="text-align:right; padding:8px; border-top:1px solid #ddd;">{{ total_voyages }}</th>
+          <th style="text-align:right; padding:8px; border-top:1px solid #ddd;">{{ total_volume|floatformat:2 }} m³</th>
+        </tr>
+      </tfoot>
+    </table>
+  {% else %}
+    <div class="no-data" style="margin-top: 16px;">
+      <p>Aucun voyage ou volume enregistré pour ce jour.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

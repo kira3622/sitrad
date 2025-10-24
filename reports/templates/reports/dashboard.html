@@ -286,6 +286,15 @@
                 <a href="{% url 'reports:clients_journalier' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
+
+        <div class="report-card vehicules-journalier">
+            <div class="icon">🚚</div>
+            <h3>Journalier Véhicules</h3>
+            <p>Voyages livrés et volume livré par véhicule pour un jour donné.</p>
+            <div class="report-actions">
+                <a href="{% url 'reports:vehicules_journalier' %}" class="btn btn-primary">Voir le rapport</a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
