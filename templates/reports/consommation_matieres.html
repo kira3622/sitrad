@@ -1,0 +1,137 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}Consommation Matières Premières{% endblock %}
+
+{% block extrahead %}
+<style>
+  .report-container { padding: 16px; }
+  .filters { display:flex; gap:12px; align-items:center; margin-bottom:16px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  table { width:100%; border-collapse: collapse; }
+  th, td { padding:8px; border-bottom:1px solid #e0e0e0; }
+  th { background:#fafafa; text-align:left; }
+  .kpi { display:flex; gap:24px; margin:12px 0; }
+  .kpi-item { background:#f7f9fc; padding:12px 16px; border-radius:8px; }
+  .chart-card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:16px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+  <h1>Consommation Matières Premières</h1>
+
+  <form method="get" class="filters">
+    <label>
+      Du
+      <input type="date" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}">
+    </label>
+    <label>
+      Au
+      <input type="date" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}">
+    </label>
+    <label>
+      Matière
+      <select name="matiere_premiere">
+        <option value="">Toutes</option>
+        {% for m in matieres %}
+          <option value="{{ m.id }}" {% if m.id|stringformat:'s' == matiere_id %}selected{% endif %}>{{ m.nom }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="button">Filtrer</button>
+  </form>
+
+  <div class="kpi">
+    <div class="kpi-item">
+      <div>Total sorties (période)</div>
+      <div style="font-weight:600; font-size:20px;">{{ total_sorties_global }}</div>
+    </div>
+    <div class="kpi-item">
+      <div>Période</div>
+      <div>{{ date_debut }} — {{ date_fin }}</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <h3>Consommation par matière</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Matière</th>
+            <th>Total</th>
+            <th>Unité</th>
+            <th>Mouvements</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in sorties_par_matiere %}
+          <tr>
+            <td>{{ row.matiere_premiere__nom }}</td>
+            <td>{{ row.total }}</td>
+            <td>{{ row.matiere_premiere__unite_mesure }}</td>
+            <td>{{ row.nb }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4">Aucune sortie sur la période.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="chart-card">
+      <h3>Consommation quotidienne</h3>
+      <canvas id="chartDaily" height="120"></canvas>
+    </div>
+  </div>
+
+  <h3 style="margin-top:20px;">Détail quotidien</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Jour</th>
+        <th>Total sorties</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in sorties_par_jour %}
+      <tr>
+        <td>{{ d.jour|date:"Y-m-d" }}</td>
+        <td>{{ d.total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="2">Aucune donnée pour la période.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+(function() {
+  const labels = [{% for d in sorties_par_jour %}'{{ d.jour|date:"Y-m-d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const dataVals = [{% for d in sorties_par_jour %}{{ d.total|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const ctx = document.getElementById('chartDaily').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Sorties (période)',
+        data: dataVals,
+        borderColor: '#FF5722',
+        backgroundColor: 'rgba(255,87,34,0.15)',
+        tension: 0.25,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: true } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+})();
+</script>
+{% endblock %}

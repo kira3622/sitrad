@@ -745,6 +745,72 @@ def rapport_ratios_m3(request):
 
     return render(request, 'reports/ratios_m3.html', context)
 
+# ==================== RAPPORTS CONSOMMATION MATIÈRES ====================
+
+def rapport_consommation_matieres(request):
+    """Rapport de consommation des matières premières sur une période.
+    - Filtre par dates et matière optionnelle
+    - Agrégations: total des sorties, par matière, par jour
+    """
+    # Filtres de date
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    matiere_id = request.GET.get('matiere_premiere')
+
+    if not date_fin:
+        date_fin = timezone.now().date()
+    else:
+        date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+
+    if not date_debut:
+        date_debut = date_fin - timedelta(days=30)
+    else:
+        date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+
+    # Mouvements de sortie sur la période
+    mouvements = MouvementStock.objects.filter(
+        type_mouvement='sortie',
+        date_mouvement__date__gte=date_debut,
+        date_mouvement__date__lte=date_fin
+    ).select_related('matiere_premiere')
+
+    if matiere_id:
+        mouvements = mouvements.filter(matiere_premiere_id=matiere_id)
+
+    # Totaux globaux
+    total_sorties_global = mouvements.aggregate(total=Sum('quantite'))['total'] or Decimal('0')
+
+    # Sorties par matière première
+    sorties_par_matiere = mouvements.values(
+        'matiere_premiere__nom', 'matiere_premiere__unite_mesure'
+    ).annotate(
+        total=Sum('quantite'),
+        nb=Count('id')
+    ).order_by('-total')
+
+    # Sorties quotidiennes
+    sorties_par_jour = mouvements.annotate(
+        jour=TruncDay('date_mouvement')
+    ).values('jour').annotate(
+        total=Sum('quantite')
+    ).order_by('jour')
+
+    # Liste des matières pour le filtre
+    matieres = MatierePremiere.objects.all().order_by('nom')
+
+    context = {
+        'title': 'Consommation Matières Premières',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'matiere_id': matiere_id,
+        'total_sorties_global': total_sorties_global,
+        'sorties_par_matiere': sorties_par_matiere,
+        'sorties_par_jour': sorties_par_jour,
+        'matieres': matieres,
+    }
+
+    return render(request, 'reports/consommation_matieres.html', context)
+
 def _get_commandes_data(request):
     # Logique similaire à rapport_commandes mais simplifiée pour PDF
     pass
