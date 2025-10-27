@@ -18,6 +18,11 @@ urlpatterns = [
     path('clients-journalier/', views.rapport_journalier_clients, name='clients_journalier'),
     path('vehicules-journalier/', views.rapport_journalier_vehicules, name='vehicules_journalier'),
     
+    # Endpoints JSON pour graphiques admin
+    path('json/daily-production/', views.json_daily_production, name='json_daily_production'),
+    path('json/daily-orders/', views.json_daily_orders, name='json_daily_orders'),
+    path('json/daily-deliveries/', views.json_daily_deliveries, name='json_daily_deliveries'),
+    
     # Export PDF
     path('export/<str:type_rapport>/', views.export_rapport_pdf, name='export_pdf'),
 ]

@@ -2,11 +2,12 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
 from django.db.models import Sum, Count, Avg, Q, Max
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, TruncDay
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 import json
+from django.contrib.admin.views.decorators import staff_member_required
 
 # Import des modèles
 from .models import Rapport
@@ -1051,3 +1052,88 @@ def rapport_journalier_vehicules(request):
     }
 
     return render(request, 'reports/vehicules_journalier.html', context)
+
+
+@staff_member_required
+def json_daily_production(request):
+    """JSON: production journalière (m³) sur les 14 derniers jours, avec fallback lots→ordres."""
+    today = timezone.now().date()
+    days = [today - timedelta(days=i) for i in range(13, -1, -1)]
+    labels = []
+    data_m3 = []
+
+    for d in days:
+        labels.append(d.strftime('%Y-%m-%d'))
+        lots_total = LotProduction.objects.filter(
+            date_heure_production__date=d
+        ).aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
+        if lots_total and lots_total > 0:
+            value = lots_total
+        else:
+            ordres_total = OrdreProduction.objects.filter(
+                date_production=d,
+                statut='termine'
+            ).aggregate(total=Sum('quantite_produire'))['total'] or Decimal('0')
+            value = ordres_total or Decimal('0')
+        data_m3.append(float(value))
+
+    return JsonResponse({
+        'labels': labels,
+        'data_m3': data_m3,
+    })
+
+
+@staff_member_required
+def json_daily_orders(request):
+    """JSON: commandes créées par jour sur les 14 derniers jours (total et livrées)."""
+    today = timezone.now().date()
+    days = [today - timedelta(days=i) for i in range(13, -1, -1)]
+    labels = []
+    data_total = []
+    data_livrees = []
+
+    for d in days:
+        labels.append(d.strftime('%Y-%m-%d'))
+        total = Commande.objects.filter(date_commande=d).count()
+        livrees = Commande.objects.filter(date_commande=d, statut='livree').count()
+        data_total.append(total)
+        data_livrees.append(livrees)
+
+    return JsonResponse({
+        'labels': labels,
+        'data_total': data_total,
+        'data_livrees': data_livrees,
+    })
+
+
+@staff_member_required
+def json_daily_deliveries(request):
+    """JSON: livraisons journalières (voyages) et volume m³ produit (proxy) sur 14 jours."""
+    today = timezone.now().date()
+    days = [today - timedelta(days=i) for i in range(13, -1, -1)]
+    labels = []
+    data_voyages = []
+    data_m3 = []
+
+    for d in days:
+        labels.append(d.strftime('%Y-%m-%d'))
+        voyages = Livraison.objects.filter(date_livraison=d, statut='livree').count()
+        lots_total = LotProduction.objects.filter(
+            date_heure_production__date=d
+        ).aggregate(total=Sum('quantite_produite'))['total'] or Decimal('0')
+        if lots_total and lots_total > 0:
+            m3 = lots_total
+        else:
+            ordres_total = OrdreProduction.objects.filter(
+                date_production=d,
+                statut='termine'
+            ).aggregate(total=Sum('quantite_produire'))['total'] or Decimal('0')
+            m3 = ordres_total or Decimal('0')
+        data_voyages.append(voyages)
+        data_m3.append(float(m3))
+
+    return JsonResponse({
+        'labels': labels,
+        'data_voyages': data_voyages,
+        'data_m3': data_m3,
+    })

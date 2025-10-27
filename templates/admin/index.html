@@ -42,7 +42,22 @@
             margin: 20px 0;
             border-radius: 4px;
         }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .chart-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -118,4 +133,241 @@
 {% else %}
     <p>{% trans "You don't have permission to view or edit anything." %}</p>
 {% endif %}
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Production journalière (m³)</h3>
+        <canvas id="chartProduction" height="120"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Commandes journalières</h3>
+        <canvas id="chartOrders" height="120"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Livraisons journalières</h3>
+        <canvas id="chartDeliveries" height="120"></canvas>
+    </div>
+</div>
+
+<script>
+(function() {
+    const urlProduction = "{% url 'reports:json_daily_production' %}";
+    const urlOrders = "{% url 'reports:json_daily_orders' %}";
+    const urlDeliveries = "{% url 'reports:json_daily_deliveries' %}";
+
+    // Production chart
+    fetch(urlProduction).then(r => r.json()).then(d => {
+        const ctx = document.getElementById('chartProduction').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: d.labels,
+                datasets: [{
+                    label: 'm³ produits',
+                    data: d.data_m3,
+                    borderColor: '#2196F3',
+                    backgroundColor: 'rgba(33,150,243,0.15)',
+                    tension: 0.25,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+
+    // Orders chart
+    fetch(urlOrders).then(r => r.json()).then(d => {
+        const ctx = document.getElementById('chartOrders').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: d.labels,
+                datasets: [
+                    {
+                        label: 'Total commandes',
+                        data: d.data_total,
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76,175,80,0.15)',
+                        tension: 0.25,
+                        fill: true,
+                    },
+                    {
+                        label: 'Commandes livrées',
+                        data: d.data_livrees,
+                        borderColor: '#9C27B0',
+                        backgroundColor: 'rgba(156,39,176,0.10)',
+                        tension: 0.25,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+
+    // Deliveries chart
+    fetch(urlDeliveries).then(r => r.json()).then(d => {
+        const ctx = document.getElementById('chartDeliveries').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: d.labels,
+                datasets: [
+                    {
+                        label: 'Voyages (livraisons)',
+                        data: d.data_voyages,
+                        borderColor: '#FF9800',
+                        backgroundColor: 'rgba(255,152,0,0.15)',
+                        tension: 0.25,
+                        fill: true,
+                    },
+                    {
+                        label: 'm³ produits (proxy)',
+                        data: d.data_m3,
+                        borderColor: '#F44336',
+                        backgroundColor: 'rgba(244,67,54,0.10)',
+                        tension: 0.25,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+})();
+</script>
+
 {% endblock %}
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Production journalière (m³)</h3>
+        <canvas id="chartProduction" height="120"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Commandes journalières</h3>
+        <canvas id="chartOrders" height="120"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Livraisons journalières</h3>
+        <canvas id="chartDeliveries" height="120"></canvas>
+    </div>
+</div>
+
+<script>
+(function() {
+    const urlProduction = "{% url 'reports:json_daily_production' %}";
+    const urlOrders = "{% url 'reports:json_daily_orders' %}";
+    const urlDeliveries = "{% url 'reports:json_daily_deliveries' %}";
+
+    // Production chart
+    fetch(urlProduction).then(r => r.json()).then(d => {
+        const ctx = document.getElementById('chartProduction').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: d.labels,
+                datasets: [{
+                    label: 'm³ produits',
+                    data: d.data_m3,
+                    borderColor: '#2196F3',
+                    backgroundColor: 'rgba(33,150,243,0.15)',
+                    tension: 0.25,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+
+    // Orders chart
+    fetch(urlOrders).then(r => r.json()).then(d => {
+        const ctx = document.getElementById('chartOrders').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: d.labels,
+                datasets: [
+                    {
+                        label: 'Total commandes',
+                        data: d.data_total,
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76,175,80,0.15)',
+                        tension: 0.25,
+                        fill: true,
+                    },
+                    {
+                        label: 'Commandes livrées',
+                        data: d.data_livrees,
+                        borderColor: '#9C27B0',
+                        backgroundColor: 'rgba(156,39,176,0.10)',
+                        tension: 0.25,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+
+    // Deliveries chart
+    fetch(urlDeliveries).then(r => r.json()).then(d => {
+        const ctx = document.getElementById('chartDeliveries').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: d.labels,
+                datasets: [
+                    {
+                        label: 'Voyages (livraisons)',
+                        data: d.data_voyages,
+                        borderColor: '#FF9800',
+                        backgroundColor: 'rgba(255,152,0,0.15)',
+                        tension: 0.25,
+                        fill: true,
+                    },
+                    {
+                        label: 'm³ produits (proxy)',
+                        data: d.data_m3,
+                        borderColor: '#F44336',
+                        backgroundColor: 'rgba(244,67,54,0.10)',
+                        tension: 0.25,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+})();
+</script>
