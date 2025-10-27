@@ -5,9 +5,7 @@
 {% block content %}
 <div class="content" style="margin: 20px;">
   <h1>Rapport Journalier de Production par Client</h1>
-  <div style="display:flex; justify-content:flex-end; margin: 8px 0 16px;">
-    <a href="/admin/reports/rapport/" class="button" target="_blank" rel="noopener">Accès rapide: Rapports Admin</a>
-  </div>
+  {% include 'reports/_quick_access.html' %}
 
   <form method="get" class="filters" style="margin: 16px 0; display: flex; gap: 12px; align-items: center;">
     <label>
