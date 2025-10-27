@@ -228,6 +228,7 @@
         <h1>📋 Rapport des Commandes</h1>
         <p>Période du {{ date_debut }} au {{ date_fin }}</p>
     </div>
+    {% include 'reports/_quick_access.html' %}
     
     <div class="export-actions">
         <a href="{% url 'reports:dashboard' %}" class="btn-export" style="background-color: #6c757d;"><i class="fas fa-arrow-left"></i> <i class="fas fa-chart-bar"></i> <i class="fas fa-tachometer-alt"></i></a>

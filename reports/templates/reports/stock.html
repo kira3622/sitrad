@@ -226,6 +226,7 @@
         <h1>📦 Rapport de Stock</h1>
         <p>État des stocks et mouvements des 30 derniers jours</p>
     </div>
+    {% include 'reports/_quick_access.html' %}
     
     <div class="export-actions">
         <a href="{% url 'reports:dashboard' %}" class="btn-export" style="background-color: #6c757d;"><i class="fas fa-arrow-left"></i> <i class="fas fa-chart-bar"></i> <i class="fas fa-tachometer-alt"></i></a>
