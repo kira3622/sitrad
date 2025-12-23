@@ -6,6 +6,7 @@ app_name = 'reports'
 urlpatterns = [
     # Dashboard principal
     path('', views.dashboard_reports, name='dashboard'),
+    path('acces-rapide/', views.acces_rapide_reports, name='acces_rapide'),
     
     # Rapports spécialisés
     path('production/', views.rapport_production, name='production'),

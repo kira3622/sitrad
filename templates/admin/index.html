@@ -56,6 +56,82 @@
             padding: 16px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        /* Styles pour la section d'accès rapide aux rapports */
+        .quick-reports-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .quick-reports-section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        
+        .quick-reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .quick-report-card {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .quick-report-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .quick-report-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        
+        .quick-report-card h3 {
+            color: #343a40;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .quick-report-card p {
+            color: #6c757d;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .quick-report-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+        
+        .quick-report-btn:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .quick-report-btn i {
+            margin-right: 5px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
@@ -63,6 +139,45 @@
 {% block content %}
 <div class="test-marker">
     ✅ TEMPLATE PERSONNALISÉ ACTIF - Context Processor Test
+</div>
+
+<!-- Section d'accès rapide aux rapports -->
+<div class="quick-reports-section">
+    <h2>📊 Accès Rapide aux Rapports</h2>
+    <div class="quick-reports-grid">
+        <div class="quick-report-card">
+            <div class="quick-report-icon">
+                <i class="fas fa-calculator"></i>
+            </div>
+            <h3>Coût de Formule Béton</h3>
+            <p>Calcul du coût des formules avec moyenne des prix des matières premières</p>
+            <a href="{% url 'reports:cout_formule' %}" class="quick-report-btn">
+                <i class="fas fa-chart-bar"></i> Voir le Rapport
+            </a>
+        </div>
+        
+        <div class="quick-report-card">
+            <div class="quick-report-icon">
+                <i class="fas fa-tachometer-alt"></i>
+            </div>
+            <h3>Tableau de Bord Complet</h3>
+            <p>Accès à tous les rapports et analyses métier</p>
+            <a href="{% url 'reports:acces_rapide' %}" class="quick-report-btn">
+                <i class="fas fa-list"></i> Accès Rapide
+            </a>
+        </div>
+        
+        <div class="quick-report-card">
+            <div class="quick-report-icon">
+                <i class="fas fa-industry"></i>
+            </div>
+            <h3>Rapports de Production</h3>
+            <p>Analyse des productions et performances</p>
+            <a href="{% url 'reports:dashboard' %}" class="quick-report-btn">
+                <i class="fas fa-chart-line"></i> Production
+            </a>
+        </div>
+    </div>
 </div>
 
 <div class="dashboard-stats">

@@ -1,0 +1,240 @@
+<!-- Widget d'accès rapide aux rapports -->
+<div class="quick-reports-widget">
+    <style>
+        .quick-reports-widget {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            z-index: 1050;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-width: 200px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .quick-reports-widget.collapsed {
+            padding: 15px;
+            min-width: auto;
+        }
+        
+        .quick-reports-widget.collapsed .report-links {
+            display: none;
+        }
+        
+        .quick-reports-header {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toggle-widget {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-widget:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+        
+        .report-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .report-link {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .report-link::before {
+            content: '';
+            position: absolute;
+            left: -100%;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .report-link:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+            text-decoration: none;
+            color: white;
+        }
+        
+        .report-link:hover::before {
+            left: 100%;
+        }
+        
+        .report-link i {
+            margin-right: 8px;
+            width: 16px;
+            text-align: center;
+        }
+        
+        .report-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .quick-reports-widget {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                top: auto;
+                transform: none;
+                min-width: 60px;
+                padding: 15px;
+            }
+            
+            .quick-reports-widget.collapsed {
+                border-radius: 50%;
+                width: 60px;
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .quick-reports-header {
+                margin-bottom: 0;
+            }
+            
+            .quick-reports-header span {
+                display: none;
+            }
+            
+            .quick-reports-widget:not(.collapsed) {
+                min-width: 250px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+        }
+    </style>
+    
+    <div class="quick-reports-header">
+        <span><i class="fas fa-chart-bar"></i> Accès Rapide</span>
+        <button class="toggle-widget" onclick="toggleQuickReports()">
+            <i class="fas fa-chevron-right" id="toggle-icon"></i>
+        </button>
+    </div>
+    
+    <ul class="report-links">
+        <li>
+            <a href="{% url 'reports:acces_rapide' %}" class="report-link">
+                <i class="fas fa-bolt"></i>Accès Rapide
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'reports:dashboard' %}" class="report-link">
+                <i class="fas fa-tachometer-alt"></i>Tableau de bord
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'reports:cout_formule' %}" class="report-link">
+                <i class="fas fa-calculator"></i>Coût Formule Béton
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'reports:production' %}" class="report-link">
+                <i class="fas fa-industry"></i>Rapports Production
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'reports:consommation_matieres' %}" class="report-link">
+                <i class="fas fa-chart-line"></i>Consommations
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'reports:stock' %}" class="report-link">
+                <i class="fas fa-boxes"></i>État des Stocks
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'reports:financier' %}" class="report-link">
+                <i class="fas fa-euro-sign"></i>Rapports Financiers
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'reports:cout_formule' %}" class="report-link">
+                <i class="fas fa-money-bill-wave"></i>Coût des Formules
+            </a>
+        </li>
+    </ul>
+</div>
+
+<script>
+    function toggleQuickReports() {
+        const widget = document.querySelector('.quick-reports-widget');
+        const icon = document.getElementById('toggle-icon');
+        
+        widget.classList.toggle('collapsed');
+        
+        if (widget.classList.contains('collapsed')) {
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chart-bar');
+        } else {
+            icon.classList.remove('fa-chart-bar');
+            icon.classList.add('fa-chevron-right');
+        }
+        
+        // Sauvegarder l'état dans localStorage
+        localStorage.setItem('quickReportsCollapsed', widget.classList.contains('collapsed'));
+    }
+    
+    // Restaurer l'état au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        const widget = document.querySelector('.quick-reports-widget');
+        const icon = document.getElementById('toggle-icon');
+        const isCollapsed = localStorage.getItem('quickReportsCollapsed') === 'true';
+        
+        if (isCollapsed) {
+            widget.classList.add('collapsed');
+            icon.classList.remove('fa-chevron-right');
+            icon.classList.add('fa-chart-bar');
+        }
+    });
+</script>

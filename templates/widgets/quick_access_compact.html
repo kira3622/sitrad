@@ -1,0 +1,223 @@
+<!-- Widget d'accès rapide compact -->
+{% if has_quick_reports %}
+<div class="quick-access-widget compact">
+    <style>
+        .quick-access-widget.compact {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .quick-access-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: white;
+        }
+        
+        .quick-access-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .quick-access-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-access-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+        
+        .quick-access-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-access-links.collapsed {
+            display: none;
+        }
+        
+        .quick-access-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quick-access-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .quick-access-link:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+            text-decoration: none;
+            color: white;
+        }
+        
+        .quick-access-link:hover::before {
+            left: 100%;
+        }
+        
+        .quick-access-link i {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .quick-access-more {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .btn-more-reports {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-more-reports:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Animation pour l'apparition */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .quick-access-widget {
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .quick-access-links {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-access-title {
+                font-size: 1.1rem;
+            }
+            
+            .quick-access-widget.compact {
+                padding: 15px;
+                margin: 15px 0;
+            }
+        }
+    </style>
+    
+    <div class="quick-access-header">
+        <h3 class="quick-access-title">
+            <i class="fas fa-bolt"></i>
+            Accès Rapide aux Rapports
+        </h3>
+        <button class="quick-access-toggle" onclick="toggleQuickAccess()" title="Afficher/Masquer">
+            <i class="fas fa-chevron-down" id="quick-access-icon"></i>
+        </button>
+    </div>
+    
+    <div class="quick-access-links" id="quick-access-links">
+        {% for report in quick_reports %}
+        <a href="{{ report.url }}" class="quick-access-link" title="{{ report.description }}">
+            <i class="{{ report.icon }}"></i>
+            <span>{{ report.title }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    
+    <div class="quick-access-more">
+        <a href="{% url 'reports:acces_rapide' %}" class="btn-more-reports">
+            <i class="fas fa-external-link-alt"></i>
+            Voir tous les rapports
+        </a>
+    </div>
+    
+    <script>
+        function toggleQuickAccess() {
+            const links = document.getElementById('quick-access-links');
+            const icon = document.getElementById('quick-access-icon');
+            
+            links.classList.toggle('collapsed');
+            
+            if (links.classList.contains('collapsed')) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+            
+            // Sauvegarder l'état
+            localStorage.setItem('quickAccessCollapsed', links.classList.contains('collapsed'));
+        }
+        
+        // Restaurer l'état au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.getElementById('quick-access-links');
+            const icon = document.getElementById('quick-access-icon');
+            const isCollapsed = localStorage.getItem('quickAccessCollapsed') === 'true';
+            
+            if (isCollapsed) {
+                links.classList.add('collapsed');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            }
+        });
+    </script>
+</div>
+{% endif %}

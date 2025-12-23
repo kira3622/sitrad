@@ -40,6 +40,7 @@ class RapportAdmin(admin.ModelAdmin):
             'ratios_m3': reverse('reports:ratios_m3'),
             'clients_journalier': reverse('reports:clients_journalier'),
             'vehicules_journalier': reverse('reports:vehicules_journalier'),
+            'cout_formule': reverse('reports:cout_formule'),
         }
         return super().changelist_view(request, extra_context=extra_context)
 

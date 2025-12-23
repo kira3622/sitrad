@@ -1317,3 +1317,139 @@ def rapport_cout_formule(request):
     }
     
     return render(request, 'reports/cout_formule.html', context)
+
+def acces_rapide_reports(request):
+    """Page d'accès rapide aux rapports avec liens vers tous les rapports disponibles"""
+    
+    # Obtenir les statistiques rapides
+    today = timezone.now().date()
+    current_month = today.replace(day=1)
+    
+    # Commandes du mois
+    total_commandes = Commande.objects.filter(
+        date_commande__gte=current_month
+    ).count()
+    
+    # CA mensuel (calculé à partir des lignes de commande)
+    from django.db.models import F, Sum as SumDB
+    
+    ca_mensuel = 0
+    commandes_mensuelles = Commande.objects.filter(
+        date_commande__gte=current_month,
+        statut='livree'
+    )
+    
+    for commande in commandes_mensuelles:
+        total_commande = commande.lignes.aggregate(
+            total=SumDB(F('quantite') * F('formule__prix_vente_unitaire'))
+        )['total'] or 0
+        ca_mensuel += total_commande
+    
+    # Production mensuelle (à partir des lots de production)
+    production_mensuelle = LotProduction.objects.filter(
+        date_heure_production__gte=current_month
+    ).aggregate(total=Sum('quantite_produite'))['total'] or 0
+    
+    # Alertes stock (filtrage en Python car stock_actuel est une propriété calculée)
+    alertes_stock = 0
+    for matiere in MatierePremiere.objects.all():
+        if matiere.stock_actuel <= matiere.seuil_critique or matiere.stock_actuel == 0:
+            alertes_stock += 1
+    
+    # Rapports disponibles
+    rapports_disponibles = [
+        {
+            'titre': 'Production',
+            'description': 'Analyse des quantités produites, efficacité des formules et performances',
+            'icone': 'fas fa-industry',
+            'url': 'reports:production',
+            'couleur': '#4CAF50',
+            'categorie': 'Production'
+        },
+        {
+            'titre': 'Commandes',
+            'description': 'Suivi des commandes, délais de livraison et analyse clients',
+            'icone': 'fas fa-clipboard-list',
+            'url': 'reports:commandes',
+            'couleur': '#2196F3',
+            'categorie': 'Commercial'
+        },
+        {
+            'titre': 'Commercial',
+            'description': 'Chiffre d\'affaires, fidélité client et répartition géographique',
+            'icone': 'fas fa-chart-line',
+            'url': 'reports:commercial',
+            'couleur': '#FF9800',
+            'categorie': 'Commercial'
+        },
+        {
+            'titre': 'Stock',
+            'description': 'Niveaux de stock, mouvements et alertes de réapprovisionnement',
+            'icone': 'fas fa-boxes',
+            'url': 'reports:stock',
+            'couleur': '#9C27B0',
+            'categorie': 'Logistique'
+        },
+        {
+            'titre': 'Financier',
+            'description': 'Factures, paiements, taux de recouvrement et rentabilité',
+            'icone': 'fas fa-euro-sign',
+            'url': 'reports:financier',
+            'couleur': '#F44336',
+            'categorie': 'Finance'
+        },
+        {
+            'titre': 'Coût Formule Béton',
+            'description': 'Calcul du coût avec moyenne des prix des matières premières',
+            'icone': 'fas fa-calculator',
+            'url': 'reports:cout_formule',
+            'couleur': '#795548',
+            'categorie': 'Analyse'
+        },
+        {
+            'titre': 'Ratios Matières/m³',
+            'description': 'Analyse des ratios de consommation par mètre cube',
+            'icone': 'fas fa-balance-scale',
+            'url': 'reports:ratios_m3',
+            'couleur': '#FF5722',
+            'categorie': 'Analyse'
+        },
+        {
+            'titre': 'Journalier Clients',
+            'description': 'Production journalière par client',
+            'icone': 'fas fa-calendar-day',
+            'url': 'reports:clients_journalier',
+            'couleur': '#607D8B',
+            'categorie': 'Journalier'
+        },
+        {
+            'titre': 'Journalier Véhicules',
+            'description': 'Voyages et volumes par véhicule par jour',
+            'icone': 'fas fa-truck',
+            'url': 'reports:vehicules_journalier',
+            'couleur': '#E91E63',
+            'categorie': 'Journalier'
+        }
+    ]
+    
+    # Grouper par catégorie
+    rapports_par_categorie = {}
+    for rapport in rapports_disponibles:
+        categorie = rapport['categorie']
+        if categorie not in rapports_par_categorie:
+            rapports_par_categorie[categorie] = []
+        rapports_par_categorie[categorie].append(rapport)
+    
+    context = {
+        'title': 'Accès Rapide aux Rapports',
+        'stats': {
+            'total_commandes': total_commandes,
+            'ca_mensuel': ca_mensuel,
+            'production_mensuelle': production_mensuelle,
+            'alertes_stock': alertes_stock
+        },
+        'rapports_par_categorie': rapports_par_categorie,
+        'today': today
+    }
+    
+    return render(request, 'reports/acces_rapide.html', context)

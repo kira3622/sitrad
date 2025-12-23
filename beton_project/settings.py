@@ -97,6 +97,7 @@ TEMPLATES = [
                     'django.contrib.messages.context_processors.messages',
                     'activity.context_processors.recent_activities',
                     'core.context_processors.admin_dashboard_stats',
+                    'reports.context_processors.quick_reports_widget',
                 ],
         },
     },

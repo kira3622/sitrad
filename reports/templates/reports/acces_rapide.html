@@ -1,0 +1,470 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}Accès Rapide - Rapports - Sitrad{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quick-access-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .quick-stats-section {
+        margin-bottom: 30px;
+    }
+    
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: all 0.3s ease;
+        border-left: 5px solid;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card:hover::before {
+        left: 100%;
+    }
+    
+    .stat-card.commandes { border-left-color: #2196F3; }
+    .stat-card.ca { border-left-color: #4CAF50; }
+    .stat-card.production { border-left-color: #FF9800; }
+    .stat-card.alertes { border-left-color: #F44336; }
+    
+    .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.8;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #333;
+    }
+    
+    .stat-label {
+        font-size: 1.1rem;
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .date-info {
+        text-align: center;
+        color: #666;
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+    
+    .reports-categories {
+        margin-top: 40px;
+    }
+    
+    .category-section {
+        margin-bottom: 40px;
+    }
+    
+    .category-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #eee;
+    }
+    
+    .category-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: white;
+    }
+    
+    .category-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .report-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border-left: 5px solid;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .report-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .report-card:hover::before {
+        left: 100%;
+    }
+    
+    .report-card.production { border-left-color: #4CAF50; }
+    .report-card.commercial { border-left-color: #FF9800; }
+    .report-card.logistique { border-left-color: #9C27B0; }
+    .report-card.finance { border-left-color: #F44336; }
+    .report-card.analyse { border-left-color: #795548; }
+    .report-card.journalier { border-left-color: #607D8B; }
+    
+    .report-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .report-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+        color: #333;
+        opacity: 0.8;
+    }
+    
+    .report-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    
+    .report-description {
+        color: #666;
+        margin-bottom: 20px;
+        line-height: 1.5;
+        font-size: 1rem;
+    }
+    
+    .report-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-modern {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
+    }
+    
+    .btn-modern:hover::before {
+        left: 100%;
+    }
+    
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-secondary-modern {
+        background: #f8f9fa;
+        color: #333;
+        border: 1px solid #dee2e6;
+    }
+    
+    .btn-secondary-modern:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+        color: #333;
+    }
+    
+    .welcome-section {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-radius: 15px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+    
+    .welcome-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .quick-access-container {
+            padding: 15px;
+        }
+        
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .reports-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .welcome-title {
+            font-size: 2rem;
+        }
+        
+        .report-actions {
+            flex-direction: column;
+        }
+        
+        .btn-modern {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quick-access-container">
+    <!-- Section de bienvenue -->
+    <div class="welcome-section">
+        <h1 class="welcome-title">
+            <i class="fas fa-chart-bar me-3"></i>
+            Accès Rapide aux Rapports
+        </h1>
+        <p class="welcome-subtitle">
+            Consultez rapidement tous vos rapports et analyses métier
+        </p>
+    </div>
+    
+    <!-- Statistiques rapides -->
+    <div class="quick-stats-section">
+        <div class="stats-cards">
+            <div class="stat-card commandes">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="stat-value">{{ stats.total_commandes|default:"0" }}</div>
+                <div class="stat-label">Commandes ce mois</div>
+            </div>
+            
+            <div class="stat-card ca">
+                <div class="stat-icon">
+                    <i class="fas fa-euro-sign"></i>
+                </div>
+                <div class="stat-value">{{ stats.ca_mensuel|floatformat:0|default:"0" }}</div>
+                <div class="stat-label">CA mensuel (DH)</div>
+            </div>
+            
+            <div class="stat-card production">
+                <div class="stat-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <div class="stat-value">{{ stats.production_mensuelle|floatformat:0|default:"0" }}</div>
+                <div class="stat-label">Production (m³)</div>
+            </div>
+            
+            <div class="stat-card alertes">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value">{{ stats.alertes_stock|default:"0" }}</div>
+                <div class="stat-label">Alertes stock</div>
+            </div>
+        </div>
+        
+        <div class="date-info">
+            <i class="fas fa-calendar me-2"></i>
+            Statistiques du mois en cours ({{ today|date:"F Y" }})
+        </div>
+    </div>
+    
+    <!-- Rapports par catégorie -->
+    <div class="reports-categories">
+        {% for categorie, rapports in rapports_par_categorie.items %}
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon" style="background: {{ rapports.0.couleur }};">
+                    <i class="{{ rapports.0.icone }}"></i>
+                </div>
+                <h2 class="category-title">{{ categorie }}</h2>
+            </div>
+            
+            <div class="reports-grid">
+                {% for rapport in rapports %}
+                <div class="report-card {{ categorie|lower }}">
+                    <div class="report-header">
+                        <div class="report-icon" style="color: {{ rapport.couleur }};">
+                            <i class="{{ rapport.icone }}"></i>
+                        </div>
+                        <h3 class="report-title">{{ rapport.titre }}</h3>
+                    </div>
+                    <p class="report-description">{{ rapport.description }}</p>
+                    <div class="report-actions">
+                        <a href="{% url rapport.url %}" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-eye"></i>
+                            Voir le rapport
+                        </a>
+                        <a href="{% url 'reports:export_pdf' rapport.titre|slugify %}" class="btn-modern btn-secondary-modern">
+                            <i class="fas fa-file-pdf"></i>
+                            Export PDF
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animation au chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.stat-card, .report-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            }, index * 100);
+        });
+    });
+    
+    // Recherche rapide (bonus)
+    function addQuickSearch() {
+        const searchHTML = `
+            <div class="quick-search" style="margin-bottom: 30px; text-align: center;">
+                <div class="search-container" style="max-width: 500px; margin: 0 auto; position: relative;">
+                    <input type="text" id="reportSearch" placeholder="Rechercher un rapport..." 
+                           style="width: 100%; padding: 15px 50px 15px 20px; border: 2px solid #ddd; 
+                                  border-radius: 25px; font-size: 1.1rem; outline: none; 
+                                  transition: border-color 0.3s ease;">
+                    <i class="fas fa-search" style="position: absolute; right: 20px; top: 50%; 
+                                                     transform: translateY(-50%); color: #999; 
+                                                     font-size: 1.2rem;"></i>
+                </div>
+            </div>
+        `;
+        
+        const container = document.querySelector('.reports-categories');
+        container.insertAdjacentHTML('beforebegin', searchHTML);
+        
+        // Fonctionnalité de recherche
+        document.getElementById('reportSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const reportCards = document.querySelectorAll('.report-card');
+            const categories = document.querySelectorAll('.category-section');
+            
+            reportCards.forEach(card => {
+                const title = card.querySelector('.report-title').textContent.toLowerCase();
+                const description = card.querySelector('.report-description').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Masquer les catégories vides
+            categories.forEach(category => {
+                const visibleCards = category.querySelectorAll('.report-card:not([style*="display: none"])');
+                if (visibleCards.length === 0) {
+                    category.style.display = 'none';
+                } else {
+                    category.style.display = 'block';
+                }
+            });
+        });
+    }
+    
+    // Ajouter la recherche après le chargement
+    setTimeout(addQuickSearch, 500);
+</script>
+{% endblock %}
