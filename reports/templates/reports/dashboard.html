@@ -134,6 +134,26 @@
     .commercial .icon { color: #FF9800; }
     .stock .icon { color: #9C27B0; }
     .financier .icon { color: #F44336; }
+    .ratios .icon { color: #FF5722; }
+    .cout-formule .icon { color: #795548; }
+    .clients-journalier .icon { color: #607D8B; }
+    .vehicules-journalier .icon { color: #E91E63; }
+    
+    .report-card.ratios {
+        border-left-color: #FF5722;
+    }
+    
+    .report-card.cout-formule {
+        border-left-color: #795548;
+    }
+    
+    .report-card.clients-journalier {
+        border-left-color: #607D8B;
+    }
+    
+    .report-card.vehicules-journalier {
+        border-left-color: #E91E63;
+    }
     
     .quick-stats {
         background: white;
@@ -275,6 +295,15 @@
             <p>Ex: ciment par m³ fabriqué; théorique et réel par période.</p>
             <div class="report-actions">
                 <a href="{% url 'reports:ratios_m3' %}" class="btn btn-primary">Voir le rapport</a>
+            </div>
+        </div>
+
+        <div class="report-card cout-formule">
+            <div class="icon">🏗️</div>
+            <h3>Coût de Formule Béton</h3>
+            <p>Calcule le coût de chaque formule avec la moyenne des prix unitaires des matières premières.</p>
+            <div class="report-actions">
+                <a href="{% url 'reports:cout_formule' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
 

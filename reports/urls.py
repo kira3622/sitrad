@@ -18,6 +18,7 @@ urlpatterns = [
     path('ratios-m3/', views.rapport_ratios_m3, name='ratios_m3'),
     path('clients-journalier/', views.rapport_journalier_clients, name='clients_journalier'),
     path('vehicules-journalier/', views.rapport_journalier_vehicules, name='vehicules_journalier'),
+    path('cout-formule/', views.rapport_cout_formule, name='cout_formule'),
     
     # Endpoints JSON pour graphiques admin
     path('json/daily-production/', views.json_daily_production, name='json_daily_production'),

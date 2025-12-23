@@ -1,0 +1,378 @@
+{% extends 'base_modern.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Reports - Sitrad{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">📊 {{ title }}</h1>
+            
+            <!-- Formulaire de filtre -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Filtres</h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="form-inline">
+                        <div class="form-group mr-3">
+                            <label for="formule" class="mr-2">Formule béton:</label>
+                            <select name="formule" id="formule" class="form-control">
+                                <option value="">-- Sélectionner une formule --</option>
+                                {% for formule in formules %}
+                                    <option value="{{ formule.id }}" {% if formule_selectionnee and formule_selectionnee.id == formule.id %}selected{% endif %}>
+                                        {{ formule.nom }} - {{ formule.resistance_requise }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group mr-3">
+                            <label for="date_debut" class="mr-2">Date début:</label>
+                            <input type="date" name="date_debut" id="date_debut" class="form-control" value="{{ date_debut|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <div class="form-group mr-3">
+                            <label for="date_fin" class="mr-2">Date fin:</label>
+                            <input type="date" name="date_fin" id="date_fin" class="form-control" value="{{ date_fin|date:'Y-m-d' }}">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Filtrer</button>
+                        <a href="?" class="btn btn-secondary ml-2">Réinitialiser</a>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Statistiques -->
+            {% if formule_selectionnee %}
+            <div class="row">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Formule sélectionnée
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ formule_selectionnee.nom }}
+                                    </div>
+                                    <div class="text-xs text-muted">
+                                        {{ formule_selectionnee.resistance_requise }}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-cube fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Coût total
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ cout_total|floatformat:2 }} MAD
+                                    </div>
+                                    <div class="text-xs text-muted">
+                                        {{ date_debut|date:'d/m/Y' }} - {{ date_fin|date:'d/m/Y' }}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Matières premières
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ cout_details|length }}
+                                    </div>
+                                    <div class="text-xs text-muted">
+                                        dans la formule
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-industry fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Période d'analyse
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ stats.periode_jours }} jours
+                                    </div>
+                                    <div class="text-xs text-muted">
+                                        {{ date_debut|date:'d/m/Y' }} - {{ date_fin|date:'d/m/Y' }}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Graphique de répartition -->
+            {% if formule_selectionnee and cout_details %}
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Répartition du coût par matière première</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-pie pt-4 pb-2">
+                                <canvas id="coutChart"></canvas>
+                            </div>
+                            <div class="mt-4 text-center small">
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-primary"></i> Ciment
+                                </span>
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-success"></i> Granulats
+                                </span>
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-info"></i> Adjuvants
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Coût par matière première</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-bar pt-4 pb-2">
+                                <canvas id="coutBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Tableau des détails -->
+            {% if formule_selectionnee %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Détails du coût par matière première</h6>
+                </div>
+                <div class="card-body">
+                    {% if cout_details %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Matière première</th>
+                                    <th>Quantité</th>
+                                    <th>Prix unitaire moyen</th>
+                                    <th>Coût total</th>
+                                    <th>Pourcentage</th>
+                                    <th>Nb saisies</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detail in cout_details %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ detail.matiere_premiere.nom }}</strong>
+                                        <br><small class="text-muted">{{ detail.matiere_premiere.description|default:"" }}</small>
+                                    </td>
+                                    <td>{{ detail.quantite|floatformat:3 }} {{ detail.matiere_premiere.unite_mesure|default:"" }}</td>
+                                    <td>{{ detail.prix_unitaire_moyen|floatformat:2 }} MAD</td>
+                                    <td>
+                                        <strong class="text-success">{{ detail.cout_total|floatformat:2 }} MAD</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-primary">{{ detail.pourcentage|floatformat:1 }}%</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info">{{ detail.nombre_saisies }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr style="background-color: #f8f9fa;">
+                                    <th colspan="3" class="text-right">TOTAL</th>
+                                    <th><strong class="text-success">{{ cout_total|floatformat:2 }} MAD</strong></th>
+                                    <th><span class="badge badge-success">100%</span></th>
+                                    <th>-</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Aucune donnée de prix disponible pour cette période. 
+                        Vérifiez qu'il existe des saisies d'entrée pour les matières premières de cette formule entre le {{ date_debut|date:'d/m/Y' }} et le {{ date_fin|date:'d/m/Y' }}.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not formule_selectionnee %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Veuillez sélectionner une formule béton et une période pour voir le rapport de coût.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if formule_selectionnee and cout_details %}
+// Graphique en secteurs
+var ctx = document.getElementById('coutChart');
+var myPieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ labels_graphique|safe }},
+        datasets: [{
+            data: {{ data_graphique|safe }},
+            backgroundColor: [
+                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#5a5c69'
+            ],
+            hoverBackgroundColor: [
+                '#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#6c6e7d', '#4a4c59'
+            ],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    var label = data.labels[tooltipItem.index];
+                    var value = data.datasets[0].data[tooltipItem.index];
+                    return label + ': ' + value.toFixed(2) + ' MAD';
+                }
+            }
+        },
+        legend: {
+            display: false
+        },
+        cutoutPercentage: 80,
+    },
+});
+
+// Graphique en barres
+var ctxBar = document.getElementById('coutBarChart');
+var myBarChart = new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+        labels: {{ labels_graphique|safe }},
+        datasets: [{
+            label: "Coût (MAD)",
+            backgroundColor: "#4e73df",
+            hoverBackgroundColor: "#2e59d9",
+            borderColor: "#4e73df",
+            data: {{ data_graphique|safe }},
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        scales: {
+            xAxes: [{
+                time: {
+                    unit: 'month'
+                },
+                gridLines: {
+                    display: false,
+                    drawBorder: false
+                },
+                ticks: {
+                    maxTicksLimit: 6
+                },
+                maxBarThickness: 25,
+            }],
+            yAxes: [{
+                ticks: {
+                    min: 0,
+                    maxTicksLimit: 5,
+                    padding: 10,
+                    callback: function(value, index, values) {
+                        return value.toFixed(0) + ' MAD';
+                    }
+                },
+                gridLines: {
+                    color: "rgb(234, 236, 244)",
+                    zeroLineColor: "rgb(234, 236, 244)",
+                    drawBorder: false,
+                    borderDash: [2],
+                    zeroLineBorderDash: [2]
+                }
+            }],
+        },
+        legend: {
+            display: false
+        },
+        tooltips: {
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                    var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                    return datasetLabel + ': ' + tooltipItem.yLabel.toFixed(2) + ' MAD';
+                }
+            }
+        },
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

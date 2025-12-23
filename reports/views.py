@@ -14,7 +14,7 @@ from .models import Rapport
 from production.models import OrdreProduction, LotProduction
 from orders.models import Commande, LigneCommande
 from customers.models import Client, Chantier
-from stock.models import MouvementStock
+from stock.models import MouvementStock, SaisieEntreeLie
 from inventory.models import MatierePremiere
 from billing.models import Facture, LigneFacture
 from formulas.models import FormuleBeton, CompositionFormule
@@ -1203,3 +1203,117 @@ def json_daily_deliveries(request):
         'data_voyages': data_voyages,
         'data_m3': data_m3,
     })
+
+# ==================== RAPPORT DE COÛT DE FORMULE ====================
+
+def rapport_cout_formule(request):
+    """Rapport de coût de formule béton avec calcul des prix moyens"""
+    
+    # Filtres
+    formule_id = request.GET.get('formule')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if not date_debut:
+        date_debut = (timezone.now() - timedelta(days=90)).date()
+    else:
+        date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+    
+    if not date_fin:
+        date_fin = timezone.now().date()
+    else:
+        date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+    
+    # Liste des formules disponibles
+    formules = FormuleBeton.objects.all()
+    
+    # Si une formule est sélectionnée, calculer le coût
+    cout_details = []
+    cout_total = Decimal('0.00')
+    formule_selectionnee = None
+    
+    if formule_id:
+        formule_selectionnee = get_object_or_404(FormuleBeton, pk=formule_id)
+        
+        # Obtenir les compositions de la formule
+        compositions = CompositionFormule.objects.filter(formule=formule_selectionnee)
+        
+        for composition in compositions:
+            # Calculer le prix moyen HT de la matière première sur la période
+            prix_ht_moyen = SaisieEntreeLie.objects.filter(
+                matiere_premiere=composition.matiere_premiere,
+                date_facture__range=[date_debut, date_fin],
+                prix_achat_ht__isnull=False,
+                quantite__isnull=False,
+                quantite__gt=0
+            ).aggregate(
+                prix_moyen=Avg('prix_achat_ht')
+            )['prix_moyen'] or Decimal('0.00')
+            
+            # Calculer le taux TVA moyen
+            taux_tva_moyen = SaisieEntreeLie.objects.filter(
+                matiere_premiere=composition.matiere_premiere,
+                date_facture__range=[date_debut, date_fin],
+                prix_achat_ht__isnull=False,
+                taux_tva__isnull=False,
+                quantite__isnull=False,
+                quantite__gt=0
+            ).aggregate(
+                taux_moyen=Avg('taux_tva')
+            )['taux_moyen'] or Decimal('20.00')
+            
+            # Calculer le prix TTC
+            prix_moyen = prix_ht_moyen * (1 + taux_tva_moyen / 100)
+            
+            # Calculer le coût pour cette matière première
+            cout_matiere = prix_moyen * composition.quantite
+            cout_total += cout_matiere
+            
+            # Compter le nombre de saisies utilisées
+            nombre_saisies = SaisieEntreeLie.objects.filter(
+                matiere_premiere=composition.matiere_premiere,
+                date_facture__range=[date_debut, date_fin],
+                prix_achat_ht__isnull=False,
+                quantite__isnull=False,
+                quantite__gt=0
+            ).count()
+            
+            cout_details.append({
+                'matiere_premiere': composition.matiere_premiere,
+                'quantite': composition.quantite,
+                'prix_unitaire_moyen': prix_moyen,
+                'cout_total': cout_matiere,
+                'nombre_saisies': nombre_saisies,
+                'pourcentage': (cout_matiere / cout_total * 100) if cout_total > 0 else 0
+            })
+        
+        # Trier par coût décroissant
+        cout_details.sort(key=lambda x: x['cout_total'], reverse=True)
+    
+    # Statistiques globales
+    stats = {
+        'nombre_formules': formules.count(),
+        'periode_jours': (date_fin - date_debut).days,
+        'cout_total': cout_total,
+        'nombre_matieres': len(cout_details),
+        'formule_selectionnee': formule_selectionnee,
+    }
+    
+    # Graphique de répartition du coût
+    labels_graphique = [detail['matiere_premiere'].nom for detail in cout_details]
+    data_graphique = [float(detail['cout_total']) for detail in cout_details]
+    
+    context = {
+        'title': 'Rapport de Coût de Formule Béton',
+        'formules': formules,
+        'formule_selectionnee': formule_selectionnee,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'cout_details': cout_details,
+        'cout_total': cout_total,
+        'stats': stats,
+        'labels_graphique': json.dumps(labels_graphique),
+        'data_graphique': json.dumps(data_graphique),
+    }
+    
+    return render(request, 'reports/cout_formule.html', context)
