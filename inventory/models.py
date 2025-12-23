@@ -49,3 +49,43 @@ class MatierePremiere(models.Model):
 
     def __str__(self):
         return self.nom
+
+
+class FournisseurMatierePremiere(models.Model):
+    nom = models.CharField(max_length=100)
+    contact = models.CharField(max_length=200, blank=True)
+    telephone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    adresse = models.TextField(blank=True)
+    matieres_premieres = models.ManyToManyField(MatierePremiere, through='PrixFournisseurMatiere')
+    est_actif = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Fournisseur Matière Première"
+        verbose_name_plural = "Fournisseurs Matières Premières"
+        ordering = ['nom']
+
+    def __str__(self):
+        return self.nom
+
+
+class PrixFournisseurMatiere(models.Model):
+    fournisseur = models.ForeignKey(FournisseurMatierePremiere, on_delete=models.CASCADE)
+    matiere_premiere = models.ForeignKey(MatierePremiere, on_delete=models.CASCADE)
+    prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)
+    devise = models.CharField(max_length=3, default='EUR')
+    date_debut = models.DateField()
+    date_fin = models.DateField(null=True, blank=True)
+    est_actif = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Prix Fournisseur Matière"
+        verbose_name_plural = "Prix Fournisseurs Matières"
+        unique_together = ['fournisseur', 'matiere_premiere', 'date_debut']
+        ordering = ['fournisseur', 'matiere_premiere', '-date_debut']
+
+    def __str__(self):
+        return f"{self.fournisseur} - {self.matiere_premiere}: {self.prix_unitaire} {self.devise}"

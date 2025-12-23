@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import MouvementStock
+from django.utils.html import format_html
+from .models import MouvementStock, SaisieEntreeLie
 
 # Temporairement désactivé pour débogage
 # @admin.register(MouvementStock)
@@ -12,3 +13,58 @@ from .models import MouvementStock
 
 # Enregistrement basique temporaire
 admin.site.register(MouvementStock)
+
+
+@admin.register(SaisieEntreeLie)
+class SaisieEntreeLieAdmin(admin.ModelAdmin):
+    list_display = ['fournisseur', 'matiere_premiere', 'quantite_display', 'prix_achat_ht', 'montant_ttc_display', 'montant_total_ttc_display', 'numero_facture', 'date_facture', 'date_creation']
+    list_filter = ['fournisseur', 'matiere_premiere', 'date_creation', 'date_facture']
+    search_fields = ['fournisseur__nom', 'numero_facture', 'matiere_premiere__nom']
+    date_hierarchy = 'date_creation'
+    readonly_fields = ['date_creation', 'date_modification', 'montant_ttc_display', 'montant_tva_display', 'montant_total_ttc_display']
+    autocomplete_fields = ['fournisseur', 'matiere_premiere']
+    fieldsets = (
+        ('Informations générales', {
+            'fields': ('fournisseur', 'matiere_premiere', 'quantite', 'numero_facture', 'date_facture')
+        }),
+        ('Détails financiers', {
+            'fields': ('prix_achat_ht', 'taux_tva', 'montant_tva_display', 'montant_ttc_display', 'montant_total_ttc_display')
+        }),
+        ('Notes', {
+            'fields': ('notes',),
+            'classes': ('collapse',)
+        }),
+        ('Informations système', {
+            'fields': ('date_creation', 'date_modification'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    
+    
+    def quantite_display(self, obj):
+        if obj.quantite and obj.matiere_premiere:
+            return f"{obj.quantite} {obj.matiere_premiere.unite_mesure}"
+        elif obj.quantite:
+            return f"{obj.quantite}"
+        else:
+            return "-"
+    quantite_display.short_description = "Quantité"
+    
+    def montant_ttc_display(self, obj):
+        if obj.montant_ttc:
+            return format_html('<span style="font-weight: bold;">{} MAD</span>', obj.montant_ttc)
+        return "-"
+    montant_ttc_display.short_description = "Montant TTC"
+    
+    def montant_tva_display(self, obj):
+        if obj.montant_tva:
+            return format_html('<span>{} MAD</span>', obj.montant_tva)
+        return "-"
+    montant_tva_display.short_description = "Montant TVA"
+    
+    def montant_total_ttc_display(self, obj):
+        if obj.montant_total_ttc:
+            return format_html('<span style="font-weight: bold; color: #28a745;">{} MAD</span>', obj.montant_total_ttc)
+        return "-"
+    montant_total_ttc_display.short_description = "Montant Total TTC"

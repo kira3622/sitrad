@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-p@d@^s-=+^db)j4*#*v0@4u!y5o$v*@#@_#&_lixw#&_(-d*!j')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = False  # Désactivé pour le déploiement en production
 
 # Configuration ALLOWED_HOSTS pour production et développement
 # Autoriser l'hôte de l'émulateur Android (10.0.2.2)
@@ -270,6 +270,28 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+
+# Configuration pour la production / déploiement
+if not DEBUG:
+    # Sécurité HTTPS
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    
+    # Session sécurisée
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # Protection CSRF
+    CSRF_TRUSTED_ORIGINS = [
+        'https://your-domain.com',
+        'https://www.your-domain.com',
+    ]
+    
+    # HSTS (à activer seulement si vous êtes sûr d'utiliser HTTPS)
+    # SECURE_HSTS_SECONDS = 31536000  # 1 an
+    # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # SECURE_HSTS_PRELOAD = True
 
 # Import des paramètres de production si nécessaire
 try:
