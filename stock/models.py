@@ -25,11 +25,11 @@ class SaisieEntreeLie(models.Model):
     """Modèle pour lier les entrées de stock avec les fournisseurs"""
     fournisseur = models.ForeignKey(FournisseurMatierePremiere, on_delete=models.CASCADE, verbose_name="Fournisseur")
     matiere_premiere = models.ForeignKey(MatierePremiere, on_delete=models.CASCADE, verbose_name="Matière première", null=True, blank=True)
-    quantite = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Quantité", null=True, blank=True)
+    quantite = models.DecimalField(max_digits=10, decimal_places=4, verbose_name="Quantité", null=True, blank=True)
     mouvement_stock = models.OneToOneField(MouvementStock, on_delete=models.CASCADE, verbose_name="Mouvement de stock", null=True, blank=True)
     numero_facture = models.CharField(max_length=50, blank=True, verbose_name="Numéro de facture")
     date_facture = models.DateField(null=True, blank=True, verbose_name="Date de facture")
-    prix_achat_ht = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Prix d'achat HT")
+    prix_achat_ht = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, verbose_name="Prix d'achat HT")
     taux_tva = models.DecimalField(max_digits=5, decimal_places=2, default=20.0, verbose_name="Taux TVA (%)")
     notes = models.TextField(blank=True, verbose_name="Notes")
     date_creation = models.DateTimeField(auto_now_add=True)
@@ -71,21 +71,27 @@ class SaisieEntreeLie(models.Model):
 
     @property
     def montant_ttc(self):
-        """Calcule le montant TTC du prix d'achat"""
+        """Calcule le prix unitaire TTC"""
         if self.prix_achat_ht and self.taux_tva:
-            return self.prix_achat_ht * (1 + self.taux_tva / 100)
+            from decimal import Decimal
+            result = self.prix_achat_ht * (1 + self.taux_tva / 100)
+            return Decimal(str(result)).quantize(Decimal('0.0001'))
         return None
 
     @property
     def montant_tva(self):
         """Calcule le montant de la TVA"""
         if self.prix_achat_ht and self.taux_tva:
-            return self.prix_achat_ht * (self.taux_tva / 100)
+            from decimal import Decimal
+            result = self.prix_achat_ht * (self.taux_tva / 100)
+            return Decimal(str(result)).quantize(Decimal('0.0001'))
         return None
     
     @property
     def montant_total_ttc(self):
         """Calcule le montant total TTC (quantité × prix unitaire TTC)"""
         if self.quantite and self.montant_ttc:
-            return self.quantite * self.montant_ttc
+            from decimal import Decimal
+            result = self.quantite * self.montant_ttc
+            return Decimal(str(result)).quantize(Decimal('0.0001'))
         return None

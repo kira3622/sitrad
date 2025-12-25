@@ -17,7 +17,7 @@ admin.site.register(MouvementStock)
 
 @admin.register(SaisieEntreeLie)
 class SaisieEntreeLieAdmin(admin.ModelAdmin):
-    list_display = ['fournisseur', 'matiere_premiere', 'quantite_display', 'prix_achat_ht', 'montant_ttc_display', 'montant_total_ttc_display', 'numero_facture', 'date_facture', 'date_creation']
+    list_display = ['fournisseur', 'matiere_premiere', 'quantite_display', 'prix_achat_ht_display', 'montant_ttc_display', 'montant_total_ttc_display', 'numero_facture', 'date_facture', 'date_creation']
     list_filter = ['fournisseur', 'matiere_premiere', 'date_creation', 'date_facture']
     search_fields = ['fournisseur__nom', 'numero_facture', 'matiere_premiere__nom']
     date_hierarchy = 'date_creation'
@@ -51,20 +51,26 @@ class SaisieEntreeLieAdmin(admin.ModelAdmin):
             return "-"
     quantite_display.short_description = "Quantité"
     
+    def prix_achat_ht_display(self, obj):
+        if obj.prix_achat_ht:
+            return format_html('<span>{} MAD</span>', '{:.4f}'.format(obj.prix_achat_ht))
+        return "-"
+    prix_achat_ht_display.short_description = "Prix d'achat HT"
+    
     def montant_ttc_display(self, obj):
         if obj.montant_ttc:
-            return format_html('<span style="font-weight: bold;">{} MAD</span>', obj.montant_ttc)
+            return format_html('<span style="font-weight: bold;">{} MAD</span>', '{:.4f}'.format(obj.montant_ttc))
         return "-"
     montant_ttc_display.short_description = "Montant TTC"
     
     def montant_tva_display(self, obj):
         if obj.montant_tva:
-            return format_html('<span>{} MAD</span>', obj.montant_tva)
+            return format_html('<span>{} MAD</span>', '{:.4f}'.format(obj.montant_tva))
         return "-"
     montant_tva_display.short_description = "Montant TVA"
     
     def montant_total_ttc_display(self, obj):
         if obj.montant_total_ttc:
-            return format_html('<span style="font-weight: bold; color: #28a745;">{} MAD</span>', obj.montant_total_ttc)
+            return format_html('<span style="font-weight: bold; color: #28a745;">{} MAD</span>', '{:.4f}'.format(obj.montant_total_ttc))
         return "-"
     montant_total_ttc_display.short_description = "Montant Total TTC"
