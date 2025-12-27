@@ -18,11 +18,11 @@ admin.site.register(MouvementStock)
 @admin.register(SaisieEntreeLie)
 class SaisieEntreeLieAdmin(admin.ModelAdmin):
     list_display = ['fournisseur', 'matiere_premiere', 'quantite_display', 'prix_achat_ht_display', 'montant_ttc_display', 'montant_total_ttc_display', 'numero_facture', 'date_facture', 'date_creation']
-    list_filter = ['fournisseur', 'matiere_premiere', 'date_creation', 'date_facture']
-    search_fields = ['fournisseur__nom', 'numero_facture', 'matiere_premiere__nom']
+    list_filter = ['matiere_premiere', 'date_creation', 'date_facture']
+    search_fields = ['fournisseur', 'numero_facture', 'matiere_premiere__nom']
     date_hierarchy = 'date_creation'
     readonly_fields = ['date_creation', 'date_modification', 'montant_ttc_display', 'montant_tva_display', 'montant_total_ttc_display']
-    autocomplete_fields = ['fournisseur', 'matiere_premiere']
+    autocomplete_fields = ['matiere_premiere']
     fieldsets = (
         ('Informations générales', {
             'fields': ('fournisseur', 'matiere_premiere', 'quantite', 'numero_facture', 'date_facture')

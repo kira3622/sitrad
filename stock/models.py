@@ -1,5 +1,5 @@
 from django.db import models
-from inventory.models import MatierePremiere, FournisseurMatierePremiere
+from inventory.models import MatierePremiere
 
 class MouvementStock(models.Model):
     TYPE_MOUVEMENT_CHOICES = [
@@ -23,7 +23,7 @@ class MouvementStock(models.Model):
 
 class SaisieEntreeLie(models.Model):
     """Modèle pour lier les entrées de stock avec les fournisseurs"""
-    fournisseur = models.ForeignKey(FournisseurMatierePremiere, on_delete=models.CASCADE, verbose_name="Fournisseur")
+    fournisseur = models.CharField(max_length=100, verbose_name="Fournisseur")
     matiere_premiere = models.ForeignKey(MatierePremiere, on_delete=models.CASCADE, verbose_name="Matière première", null=True, blank=True)
     quantite = models.DecimalField(max_digits=10, decimal_places=4, verbose_name="Quantité", null=True, blank=True)
     mouvement_stock = models.OneToOneField(MouvementStock, on_delete=models.CASCADE, verbose_name="Mouvement de stock", null=True, blank=True)
@@ -42,9 +42,9 @@ class SaisieEntreeLie(models.Model):
 
     def __str__(self):
         if self.matiere_premiere and self.quantite:
-            return f"Entrée de {self.quantite} {self.matiere_premiere.unite_mesure} de {self.matiere_premiere.nom} - {self.fournisseur.nom}"
+            return f"Entrée de {self.quantite} {self.matiere_premiere.unite_mesure} de {self.matiere_premiere.nom} - {self.fournisseur}"
         elif self.fournisseur:
-            return f"Entrée de {self.fournisseur.nom}"
+            return f"Entrée de {self.fournisseur}"
         else:
             return f"Entrée #{self.id}"
 

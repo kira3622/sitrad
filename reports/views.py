@@ -963,21 +963,48 @@ def rapport_journalier_clients(request):
     # Production réelle via lots
     lots = LotProduction.objects.filter(
         date_heure_production__date=jour
-    ).select_related('ordre_production__commande__client')
+    ).select_related('ordre_production__commande__client', 'ordre_production__formule')
 
     if lots.exists():
         agr = lots.values(
             'ordre_production__commande__client__id',
-            'ordre_production__commande__client__nom'
+            'ordre_production__commande__client__nom',
+            'ordre_production__formule__id',
+            'ordre_production__formule__nom',
+            'ordre_production__formule__resistance_requise'
         ).annotate(
             total_m3=Sum('quantite_produite'),
             nb=Count('id')
         ).order_by('-total_m3')
+        
+        # Regrouper par client et formuler les types de formules utilisées
+        clients_data = {}
         for item in agr:
+            client_id = item['ordre_production__commande__client__id']
+            client_nom = item['ordre_production__commande__client__nom']
+            formule_nom = item['ordre_production__formule__nom']
+            formule_resistance = item['ordre_production__formule__resistance_requise']
+            total_m3 = item['total_m3'] or Decimal('0')
+            nb = item['nb']
+            
+            if client_id not in clients_data:
+                clients_data[client_id] = {
+                    'client_nom': client_nom,
+                    'total_m3': Decimal('0'),
+                    'nb': 0,
+                    'formules': set()
+                }
+            
+            clients_data[client_id]['total_m3'] += total_m3
+            clients_data[client_id]['nb'] += nb
+            clients_data[client_id]['formules'].add(f"{formule_nom} ({formule_resistance})")
+        
+        for client_id, data in clients_data.items():
             production_par_client.append({
-                'client_nom': item['ordre_production__commande__client__nom'],
-                'total_m3': item['total_m3'] or Decimal('0'),
-                'nb': item['nb']
+                'client_nom': data['client_nom'],
+                'total_m3': data['total_m3'],
+                'nb': data['nb'],
+                'formules': ', '.join(sorted(data['formules']))
             })
     else:
         # Fallback: ordres terminés du jour (proxy de production réelle)
@@ -985,19 +1012,46 @@ def rapport_journalier_clients(request):
         ordres = OrdreProduction.objects.filter(
             date_production=jour,
             statut='termine'
-        ).select_related('commande__client')
+        ).select_related('commande__client', 'formule')
         agr = ordres.values(
             'commande__client__id',
-            'commande__client__nom'
+            'commande__client__nom',
+            'formule__id',
+            'formule__nom',
+            'formule__resistance_requise'
         ).annotate(
             total_m3=Sum('quantite_produire'),
             nb=Count('id')
         ).order_by('-total_m3')
+        
+        # Regrouper par client et formuler les types de formules utilisées
+        clients_data = {}
         for item in agr:
+            client_id = item['commande__client__id']
+            client_nom = item['commande__client__nom']
+            formule_nom = item['formule__nom']
+            formule_resistance = item['formule__resistance_requise']
+            total_m3 = item['total_m3'] or Decimal('0')
+            nb = item['nb']
+            
+            if client_id not in clients_data:
+                clients_data[client_id] = {
+                    'client_nom': client_nom,
+                    'total_m3': Decimal('0'),
+                    'nb': 0,
+                    'formules': set()
+                }
+            
+            clients_data[client_id]['total_m3'] += total_m3
+            clients_data[client_id]['nb'] += nb
+            clients_data[client_id]['formules'].add(f"{formule_nom} ({formule_resistance})")
+        
+        for client_id, data in clients_data.items():
             production_par_client.append({
-                'client_nom': item['commande__client__nom'],
-                'total_m3': item['total_m3'] or Decimal('0'),
-                'nb': item['nb']
+                'client_nom': data['client_nom'],
+                'total_m3': data['total_m3'],
+                'nb': data['nb'],
+                'formules': ', '.join(sorted(data['formules']))
             })
 
     total_global = sum([p['total_m3'] for p in production_par_client]) if production_par_client else Decimal('0')

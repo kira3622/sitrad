@@ -22,6 +22,7 @@
       <thead>
         <tr>
           <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Client</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Types de Formule</th>
           <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Production (m³)</th>
           <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Nombre</th>
         </tr>
@@ -30,6 +31,13 @@
         {% for item in production_par_client %}
           <tr>
             <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ item.client_nom }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0; font-size: 0.9em; color: #666;">
+              {% if item.formules %}
+                {{ item.formules }}
+              {% else %}
+                <em>Aucune formule</em>
+              {% endif %}
+            </td>
             <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ item.total_m3|floatformat:2 }}</td>
             <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ item.nb }}</td>
           </tr>
@@ -38,6 +46,7 @@
       <tfoot>
         <tr>
           <th style="text-align:left; padding:8px; border-top:1px solid #ddd;">Total</th>
+          <th style="padding:8px; border-top:1px solid #ddd;"></th>
           <th style="text-align:right; padding:8px; border-top:1px solid #ddd;">{{ total_global|floatformat:2 }} m³</th>
           <th></th>
         </tr>
