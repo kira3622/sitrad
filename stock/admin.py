@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import MouvementStock, SaisieEntreeLie
+from .models import MouvementStock, SaisieEntreeLie, Fournisseur
 
 # Temporairement désactivé pour débogage
 # @admin.register(MouvementStock)
@@ -15,6 +15,27 @@ from .models import MouvementStock, SaisieEntreeLie
 admin.site.register(MouvementStock)
 
 
+@admin.register(Fournisseur)
+class FournisseurAdmin(admin.ModelAdmin):
+    list_display = ['nom', 'contact', 'telephone', 'email', 'actif', 'date_creation']
+    list_filter = ['actif', 'date_creation']
+    search_fields = ['nom', 'contact', 'telephone', 'email']
+    list_editable = ['actif']
+    readonly_fields = ['date_creation', 'date_modification']
+    fieldsets = (
+        ('Informations générales', {
+            'fields': ('nom', 'contact', 'actif')
+        }),
+        ('Contact', {
+            'fields': ('telephone', 'email', 'adresse')
+        }),
+        ('Informations système', {
+            'fields': ('date_creation', 'date_modification'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
 @admin.register(SaisieEntreeLie)
 class SaisieEntreeLieAdmin(admin.ModelAdmin):
     list_display = ['fournisseur', 'matiere_premiere', 'quantite_display', 'prix_achat_ht_display', 'montant_ttc_display', 'montant_total_ttc_display', 'numero_facture', 'date_facture', 'date_creation']
@@ -22,7 +43,7 @@ class SaisieEntreeLieAdmin(admin.ModelAdmin):
     search_fields = ['fournisseur', 'numero_facture', 'matiere_premiere__nom']
     date_hierarchy = 'date_creation'
     readonly_fields = ['date_creation', 'date_modification', 'montant_ttc_display', 'montant_tva_display', 'montant_total_ttc_display']
-    autocomplete_fields = ['matiere_premiere']
+    autocomplete_fields = ['matiere_premiere', 'fournisseur']
     fieldsets = (
         ('Informations générales', {
             'fields': ('fournisseur', 'matiere_premiere', 'quantite', 'numero_facture', 'date_facture')
