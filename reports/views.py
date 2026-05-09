@@ -848,19 +848,25 @@ def rapport_consommation_matieres(request):
         matiere_id_item = item['matiere_premiere__id']
         quantite_consommee = item['total'] or Decimal('0')
         
-        # Calculer le prix HT moyen sur la période
-        prix_ht_moyen = SaisieEntreeLie.objects.filter(
+        # Calculer le prix moyen basé sur les 5 dernières saisies (achats)
+        dernieres_saisies = SaisieEntreeLie.objects.filter(
             matiere_premiere_id=matiere_id_item,
-            date_facture__range=[date_debut, date_fin],
             prix_achat_ht__isnull=False
-        ).aggregate(avg_price=Avg('prix_achat_ht'))['avg_price'] or Decimal('0.00')
+        ).order_by('-date_facture', '-id')[:5]
         
-        # Calculer le taux TVA moyen
-        taux_tva_moyen = SaisieEntreeLie.objects.filter(
-            matiere_premiere_id=matiere_id_item,
-            date_facture__range=[date_debut, date_fin],
-            taux_tva__isnull=False
-        ).aggregate(avg_tva=Avg('taux_tva'))['avg_tva'] or Decimal('20.00')
+        # Extraire les IDs pour faire une agrégation sur ce sous-ensemble
+        saisie_ids = list(dernieres_saisies.values_list('id', flat=True))
+        
+        if saisie_ids:
+            stats_saisies = SaisieEntreeLie.objects.filter(id__in=saisie_ids).aggregate(
+                avg_price=Avg('prix_achat_ht'),
+                avg_tva=Avg('taux_tva')
+            )
+            prix_ht_moyen = stats_saisies['avg_price'] or Decimal('0.00')
+            taux_tva_moyen = stats_saisies['avg_tva'] or Decimal('20.00')
+        else:
+            prix_ht_moyen = Decimal('0.00')
+            taux_tva_moyen = Decimal('20.00')
         
         prix_ttc_moyen = prix_ht_moyen * (1 + taux_tva_moyen / 100)
         cout_total_matiere = prix_ttc_moyen * quantite_consommee
@@ -1381,28 +1387,24 @@ def rapport_cout_formule(request):
         compositions = CompositionFormule.objects.filter(formule=formule_selectionnee)
         
         for composition in compositions:
-            # Calculer le prix moyen HT de la matière première sur la période
-            prix_ht_moyen = SaisieEntreeLie.objects.filter(
+            # Calculer le prix moyen basé sur les 5 dernières saisies (achats)
+            dernieres_saisies = SaisieEntreeLie.objects.filter(
                 matiere_premiere=composition.matiere_premiere,
-                date_facture__range=[date_debut, date_fin],
-                prix_achat_ht__isnull=False,
-                quantite__isnull=False,
-                quantite__gt=0
-            ).aggregate(
-                prix_moyen=Avg('prix_achat_ht')
-            )['prix_moyen'] or Decimal('0.00')
+                prix_achat_ht__isnull=False
+            ).order_by('-date_facture', '-id')[:5]
             
-            # Calculer le taux TVA moyen
-            taux_tva_moyen = SaisieEntreeLie.objects.filter(
-                matiere_premiere=composition.matiere_premiere,
-                date_facture__range=[date_debut, date_fin],
-                prix_achat_ht__isnull=False,
-                taux_tva__isnull=False,
-                quantite__isnull=False,
-                quantite__gt=0
-            ).aggregate(
-                taux_moyen=Avg('taux_tva')
-            )['taux_moyen'] or Decimal('20.00')
+            saisie_ids = list(dernieres_saisies.values_list('id', flat=True))
+            
+            if saisie_ids:
+                stats_saisies = SaisieEntreeLie.objects.filter(id__in=saisie_ids).aggregate(
+                    avg_price=Avg('prix_achat_ht'),
+                    avg_tva=Avg('taux_tva')
+                )
+                prix_ht_moyen = stats_saisies['avg_price'] or Decimal('0.00')
+                taux_tva_moyen = stats_saisies['avg_tva'] or Decimal('20.00')
+            else:
+                prix_ht_moyen = Decimal('0.00')
+                taux_tva_moyen = Decimal('20.00')
             
             # Calculer le prix TTC
             prix_moyen = prix_ht_moyen * (1 + taux_tva_moyen / 100)
