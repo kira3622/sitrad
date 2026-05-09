@@ -50,6 +50,10 @@
       <div style="font-weight:600; font-size:20px;">{{ total_sorties_global }}</div>
     </div>
     <div class="kpi-item">
+      <div>Coût Total (TTC)</div>
+      <div style="font-weight:600; font-size:20px; color: #2c3e50;">{{ cout_total_global_ttc|floatformat:2 }} MAD</div>
+    </div>
+    <div class="kpi-item">
       <div>Période</div>
       <div>{{ date_debut }} — {{ date_fin }}</div>
     </div>
@@ -62,8 +66,10 @@
         <thead>
           <tr>
             <th>Matière</th>
-            <th>Total</th>
+            <th>Quantité Total</th>
             <th>Unité</th>
+            <th>Prix Moyen TTC</th>
+            <th>Coût Total TTC</th>
             <th>Mouvements</th>
           </tr>
         </thead>
@@ -73,12 +79,26 @@
             <td>{{ row.matiere_premiere__nom }}</td>
             <td>{{ row.total }}</td>
             <td>{{ row.matiere_premiere__unite_mesure }}</td>
+            <td style="color:#7f8c8d;">{{ row.prix_moyen_ttc|floatformat:2 }} MAD</td>
+            <td style="font-weight:600; color:#2c3e50;">{{ row.cout_total_ttc|floatformat:2 }} MAD</td>
             <td>{{ row.nb }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="4">Aucune sortie sur la période.</td></tr>
+          <tr><td colspan="6">Aucune sortie sur la période.</td></tr>
           {% endfor %}
         </tbody>
+        {% if sorties_par_matiere %}
+        <tfoot>
+          <tr style="background: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1;">
+            <td>TOTAL GÉNÉRAL</td>
+            <td>{{ total_sorties_global|floatformat:2 }}</td>
+            <td>-</td>
+            <td>-</td>
+            <td style="color: #1e293b;">{{ cout_total_global_ttc|floatformat:2 }} MAD</td>
+            <td>-</td>
+          </tr>
+        </tfoot>
+        {% endif %}
       </table>
     </div>
     <div class="chart-card">

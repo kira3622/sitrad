@@ -336,6 +336,58 @@ def rapport_stock(request):
     
     return render(request, 'reports/stock.html', context)
 
+def initialiser_matieres_premieres_par_defaut():
+    """
+    Initialise une liste de matières premières courantes avec des seuils par défaut.
+    """
+    matieres_courantes = [
+        {'nom': 'Ciment CPA 45', 'unite_mesure': 'kg', 'seuil_critique': 500, 'seuil_bas': 2000},
+        {'nom': 'Ciment CPJ 35', 'unite_mesure': 'kg', 'seuil_critique': 500, 'seuil_bas': 2000},
+        {'nom': 'Sable 0/3', 'unite_mesure': 'kg', 'seuil_critique': 2000, 'seuil_bas': 5000},
+        {'nom': 'Gravier 3/8', 'unite_mesure': 'kg', 'seuil_critique': 2000, 'seuil_bas': 5000},
+        {'nom': 'Gravier 8/15', 'unite_mesure': 'kg', 'seuil_critique': 2000, 'seuil_bas': 5000},
+        {'nom': 'Gravier 15/25', 'unite_mesure': 'kg', 'seuil_critique': 2000, 'seuil_bas': 5000},
+        {'nom': 'Adjuvant Sika', 'unite_mesure': 'kg', 'seuil_critique': 50, 'seuil_bas': 200},
+        {'nom': 'Eau', 'unite_mesure': 'L', 'seuil_critique': 0, 'seuil_bas': 0},
+    ]
+    
+    crees = 0
+    mis_a_jour = 0
+    
+    for m in matieres_courantes:
+        obj, created = MatierePremiere.objects.get_or_create(
+            nom=m['nom'],
+            defaults={
+                'unite_mesure': m['unite_mesure'],
+                'seuil_critique': m['seuil_critique'],
+                'seuil_bas': m['seuil_bas']
+            }
+        )
+        if created:
+            crees += 1
+        else:
+            # Mettre à jour les seuils s'ils sont à 0 ou par défaut
+            if obj.seuil_critique == 0 and obj.seuil_bas == 0:
+                obj.seuil_critique = m['seuil_critique']
+                obj.seuil_bas = m['seuil_bas']
+                obj.save()
+                mis_a_jour += 1
+                
+    return crees, mis_a_jour
+
+@staff_member_required
+def initialiser_matieres_view(request):
+    """Vue pour confirmer et lancer l'initialisation des matières premières"""
+    if request.method == 'POST':
+        crees, mis_a_jour = initialiser_matieres_premieres_par_defaut()
+        return render(request, 'reports/initialiser_matieres.html', {
+            'success': True,
+            'crees': crees,
+            'mis_a_jour': mis_a_jour
+        })
+        
+    return render(request, 'reports/initialiser_matieres.html', {'success': False})
+
 # ==================== RAPPORTS FINANCIERS ====================
 
 def rapport_financier(request):
@@ -781,12 +833,47 @@ def rapport_consommation_matieres(request):
     total_sorties_global = mouvements.aggregate(total=Sum('quantite'))['total'] or Decimal('0')
 
     # Sorties par matière première
-    sorties_par_matiere = mouvements.values(
-        'matiere_premiere__nom', 'matiere_premiere__unite_mesure'
+    sorties_par_matiere_raw = mouvements.values(
+        'matiere_premiere__id', 'matiere_premiere__nom', 'matiere_premiere__unite_mesure'
     ).annotate(
         total=Sum('quantite'),
         nb=Count('id')
     ).order_by('-total')
+
+    # Calculer le prix moyen TTC et le coût total pour chaque matière
+    sorties_par_matiere = []
+    cout_total_global_ttc = Decimal('0.00')
+    
+    for item in sorties_par_matiere_raw:
+        matiere_id_item = item['matiere_premiere__id']
+        quantite_consommee = item['total'] or Decimal('0')
+        
+        # Calculer le prix HT moyen sur la période
+        prix_ht_moyen = SaisieEntreeLie.objects.filter(
+            matiere_premiere_id=matiere_id_item,
+            date_facture__range=[date_debut, date_fin],
+            prix_achat_ht__isnull=False
+        ).aggregate(avg_price=Avg('prix_achat_ht'))['avg_price'] or Decimal('0.00')
+        
+        # Calculer le taux TVA moyen
+        taux_tva_moyen = SaisieEntreeLie.objects.filter(
+            matiere_premiere_id=matiere_id_item,
+            date_facture__range=[date_debut, date_fin],
+            taux_tva__isnull=False
+        ).aggregate(avg_tva=Avg('taux_tva'))['avg_tva'] or Decimal('20.00')
+        
+        prix_ttc_moyen = prix_ht_moyen * (1 + taux_tva_moyen / 100)
+        cout_total_matiere = prix_ttc_moyen * quantite_consommee
+        cout_total_global_ttc += cout_total_matiere
+        
+        sorties_par_matiere.append({
+            'matiere_premiere__nom': item['matiere_premiere__nom'],
+            'matiere_premiere__unite_mesure': item['matiere_premiere__unite_mesure'],
+            'total': quantite_consommee,
+            'nb': item['nb'],
+            'prix_moyen_ttc': prix_ttc_moyen,
+            'cout_total_ttc': cout_total_matiere
+        })
 
     # Sorties quotidiennes
     sorties_par_jour = mouvements.annotate(
@@ -804,6 +891,7 @@ def rapport_consommation_matieres(request):
         'date_fin': date_fin,
         'matiere_id': matiere_id,
         'total_sorties_global': total_sorties_global,
+        'cout_total_global_ttc': cout_total_global_ttc,
         'sorties_par_matiere': sorties_par_matiere,
         'sorties_par_jour': sorties_par_jour,
         'matieres': matieres,

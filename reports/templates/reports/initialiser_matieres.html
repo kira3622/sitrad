@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}Initialisation des Matières Premières{% endblock %}
+
+{% block extrahead %}
+<style>
+    .init-container { padding: 20px; max-width: 800px; margin: 0 auto; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
+    .success-msg { color: #2e7d32; background: #e8f5e9; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+    .info-msg { background: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 20px; border-left: 5px solid #2196f3; }
+    .btn-init { background: #795548; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    .btn-init:hover { background: #5d4037; }
+    .btn-back { display: inline-block; margin-top: 20px; color: #666; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="init-container">
+    <h1>Initialisation des Matières Premières</h1>
+    
+    <div class="card">
+        {% if success %}
+            <div class="success-msg">
+                <i class="fas fa-check-circle"></i> 
+                <strong>Initialisation terminée avec succès !</strong>
+            </div>
+            <p>Résultats :</p>
+            <ul>
+                <li><strong>{{ crees }}</strong> matières premières créées.</li>
+                <li><strong>{{ mis_a_jour }}</strong> matières premières mises à jour (seuils configurés).</li>
+            </ul>
+            <a href="{% url 'reports:stock' %}" class="btn-init" style="text-decoration: none; display: inline-block; margin-top: 10px;">Voir le Rapport de Stock</a>
+        {% else %}
+            <div class="info-msg">
+                Cette action va créer les matières premières courantes (Ciment, Sable, Gravier, etc.) si elles n'existent pas, et configurer leurs seuils d'alerte par défaut.
+            </div>
+            <p>Voulez-vous procéder à l'initialisation ?</p>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn-init">Lancer l'initialisation</button>
+            </form>
+        {% endif %}
+    </div>
+    
+    <a href="{% url 'reports:stock' %}" class="btn-back">← Retour au rapport de stock</a>
+</div>
+{% endblock %}
