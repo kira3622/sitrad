@@ -891,6 +891,17 @@ def rapport_consommation_matieres(request):
     # Liste des matières pour le filtre
     matieres = MatierePremiere.objects.all().order_by('nom')
 
+    # Ordres de production sur la période pour le détail
+    ordres_production = OrdreProduction.objects.filter(
+        date_production__range=[date_debut, date_fin]
+    ).select_related('commande__client', 'formule').order_by('-date_production', '-id')
+
+    if matiere_id:
+        # Filtrer les ordres qui utilisent cette matière première via la composition de leur formule
+        ordres_production = ordres_production.filter(
+            formule__composition__matiere_premiere_id=matiere_id
+        ).distinct()
+
     context = {
         'title': 'Consommation Matières Premières',
         'date_debut': date_debut,
@@ -901,6 +912,7 @@ def rapport_consommation_matieres(request):
         'sorties_par_matiere': sorties_par_matiere,
         'sorties_par_jour': sorties_par_jour,
         'matieres': matieres,
+        'ordres_production': ordres_production,
     }
 
     return render(request, 'reports/consommation_matieres.html', context)
