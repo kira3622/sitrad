@@ -72,6 +72,7 @@ class OrdreProduction(models.Model):
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE)
     formule = models.ForeignKey(FormuleBeton, on_delete=models.CASCADE)
     quantite_produire = models.DecimalField(max_digits=10, decimal_places=2)
+    prix_vente_unitaire = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Prix de vente unitaire par m³ pour cet ordre")
     date_production = models.DateField()
     heure_production = models.TimeField(null=True, blank=True, help_text="Heure prévue de production")
     chauffeur = models.ForeignKey(Chauffeur, on_delete=models.SET_NULL, null=True, blank=True, related_name='ordres_production')

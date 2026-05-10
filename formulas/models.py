@@ -6,6 +6,7 @@ class FormuleBeton(models.Model):
     description = models.TextField(blank=True)
     resistance_requise = models.CharField(max_length=50)  # e.g., 'C25/30'
     quantite_produite_reference = models.DecimalField(max_digits=10, decimal_places=2, default=1) # Ajout de la quantité de référence
+    prix_vente_unitaire = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix de vente unitaire par m³")
 
     def __str__(self):
         return self.nom

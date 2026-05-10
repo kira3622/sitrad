@@ -10,7 +10,7 @@ class LotProductionInline(admin.TabularInline):
 
 class OrdreProductionAdmin(admin.ModelAdmin):
     list_display = (
-        'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
+        'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'prix_vente_unitaire', 'date_production', 'heure_production',
         'chauffeur', 'vehicule', 'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
         'masse_volumique', 'transporteur', 'pompe_display', 'statut', 'matieres_sorties_calculees', 'actions_sorties'
@@ -21,16 +21,17 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'ciment_type_classe', 'adjuvant_type', 'transporteur', 'pompe__statut', 'pompe__marque'
     )
     search_fields = ('numero_bon', 'commande__client__nom', 'formule__nom', 'chauffeur__nom', 'vehicule__immatriculation', 'pompe__nom', 'pompe__numero_serie')
+    
+    readonly_fields = ('delivery_note_link', 'actions_sorties')
     fields = (
-        'numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
+        'numero_bon', 'commande', 'formule', 'quantite_produire', 'prix_vente_unitaire', 'date_production', 'heure_production',
         'chauffeur', 'vehicule',
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
         'masse_volumique', 'transporteur', 'pompe', 'agent_commercial',
-        'statut', 'actions_sorties', 'delivery_note_link'
+        'statut', 'matieres_sorties_calculees', 'actions_sorties', 'delivery_note_link'
     )
-    # Important: pour qu'un champ non-modèle apparaisse dans "fields", il doit être listé dans readonly_fields
-    readonly_fields = ('delivery_note_link',)
+    
     inlines = [LotProductionInline]
     actions = ['calculer_sorties_batch_action']
     
@@ -101,17 +102,6 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         css = {
             'all': ('admin/css/production_admin.css',)
         }
-    readonly_fields = ('delivery_note_link', 'actions_sorties')
-    fields = (
-        'numero_bon', 'commande', 'formule', 'quantite_produire', 'date_production', 'heure_production',
-        'chauffeur', 'vehicule',
-        'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
-        'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
-        'masse_volumique', 'transporteur', 'pompe', 'agent_commercial',
-        'statut', 'matieres_sorties_calculees', 'actions_sorties', 'delivery_note_link'
-    )
-    inlines = [LotProductionInline]
-    actions = ['calculer_sorties_batch_action']
     
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

@@ -8,7 +8,7 @@ class CompositionFormuleInline(admin.TabularInline):
 @admin.register(FormuleBeton)
 class FormuleBetonAdmin(admin.ModelAdmin):
     inlines = [CompositionFormuleInline]
-    list_display = ('nom', 'resistance_requise')
+    list_display = ('nom', 'resistance_requise', 'prix_vente_unitaire')
     search_fields = ('nom',)
 
 # Optional: Register CompositionFormule if you want to manage it directly
