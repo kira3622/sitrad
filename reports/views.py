@@ -902,6 +902,15 @@ def rapport_consommation_matieres(request):
             formule__composition__matiere_premiere_id=matiere_id
         ).distinct()
 
+    # Calculer le total des ventes et enrichir les ordres avec le prix total
+    total_ventes_global = Decimal('0.00')
+    for ordre in ordres_production:
+        prix_unitaire = ordre.prix_vente_unitaire or Decimal('0.00')
+        ordre.prix_total_ordre = prix_unitaire * (ordre.quantite_produire or Decimal('0.00'))
+        total_ventes_global += ordre.prix_total_ordre
+
+    marge_brute = total_ventes_global - cout_total_global_ttc
+
     context = {
         'title': 'Consommation Matières Premières',
         'date_debut': date_debut,
@@ -909,6 +918,8 @@ def rapport_consommation_matieres(request):
         'matiere_id': matiere_id,
         'total_sorties_global': total_sorties_global,
         'cout_total_global_ttc': cout_total_global_ttc,
+        'total_ventes_global': total_ventes_global,
+        'marge_brute': marge_brute,
         'sorties_par_matiere': sorties_par_matiere,
         'sorties_par_jour': sorties_par_jour,
         'matieres': matieres,

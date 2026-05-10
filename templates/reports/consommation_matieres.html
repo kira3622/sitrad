@@ -50,12 +50,16 @@
       <div style="font-weight:600; font-size:20px;">{{ total_sorties_global }}</div>
     </div>
     <div class="kpi-item">
-      <div>Coût Total (TTC)</div>
-      <div style="font-weight:600; font-size:20px; color: #2c3e50;">{{ cout_total_global_ttc|floatformat:2 }} MAD</div>
+      <div>Coût Matières (TTC)</div>
+      <div style="font-weight:600; font-size:20px; color: #c62828;">{{ cout_total_global_ttc|floatformat:2 }} MAD</div>
     </div>
     <div class="kpi-item">
-      <div>Période</div>
-      <div>{{ date_debut }} — {{ date_fin }}</div>
+      <div>Total Ventes</div>
+      <div style="font-weight:600; font-size:20px; color: #2e7d32;">{{ total_ventes_global|floatformat:2 }} MAD</div>
+    </div>
+    <div class="kpi-item" style="background: {% if marge_brute >= 0 %}#e8f5e9{% else %}#ffebee{% endif %}; border: 1px solid {% if marge_brute >= 0 %}#2e7d32{% else %}#c62828{% endif %};">
+      <div>Marge Brute</div>
+      <div style="font-weight:700; font-size:20px; color: {% if marge_brute >= 0 %}#2e7d32{% else %}#c62828{% endif %};">{{ marge_brute|floatformat:2 }} MAD</div>
     </div>
   </div>
 
@@ -115,7 +119,8 @@
         <th>Client</th>
         <th>Type Béton</th>
         <th>Quantité (m³)</th>
-        <th>Prix Unitaire (MAD)</th>
+        <th>Prix Unit. (MAD)</th>
+        <th>Total Vente (MAD)</th>
         <th>Statut</th>
       </tr>
     </thead>
@@ -126,7 +131,8 @@
         <td>{{ ordre.commande.client.nom }}</td>
         <td>{{ ordre.formule.nom }}</td>
         <td>{{ ordre.quantite_produire }}</td>
-        <td style="font-weight:600;">{{ ordre.prix_vente_unitaire|default:"0.00" }}</td>
+        <td style="color: #64748b;">{{ ordre.prix_vente_unitaire|default:"0.00" }}</td>
+        <td style="font-weight:600; color: #2e7d32;">{{ ordre.prix_total_ordre|floatformat:2 }}</td>
         <td>
           <span class="status-tag" style="padding:2px 8px; border-radius:4px; font-size:12px; background: {% if ordre.statut == 'termine' %}#e8f5e9; color:#2e7d32;{% elif ordre.statut == 'annule' %}#ffebee; color:#c62828;{% else %}#e3f2fd; color:#1565c0;{% endif %}">
             {{ ordre.get_statut_display }}
@@ -134,10 +140,41 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="6">Aucun ordre de production trouvé pour cette période.</td></tr>
+      <tr><td colspan="7">Aucun ordre de production trouvé pour cette période.</td></tr>
       {% endfor %}
     </tbody>
+    {% if ordres_production %}
+    <tfoot>
+      <tr style="background: #f0fdf4; font-weight: bold; border-top: 2px solid #bbf7d0;">
+        <td colspan="3">TOTAL VENTES</td>
+        <td>-</td>
+        <td>-</td>
+        <td style="color: #166534;">{{ total_ventes_global|floatformat:2 }} MAD</td>
+        <td>-</td>
+      </tr>
+    </tfoot>
+    {% endif %}
   </table>
+
+  <div style="margin-top: 30px; max-width: 400px;">
+    <h3>Récapitulatif Financier</h3>
+    <table style="border: 2px solid #cbd5e1;">
+      <tr>
+        <td style="background: #f8fafc;">Total Ventes</td>
+        <td style="text-align: right; font-weight: 600; color: #166534;">+ {{ total_ventes_global|floatformat:2 }} MAD</td>
+      </tr>
+      <tr>
+        <td style="background: #f8fafc;">Coût Matières (TTC)</td>
+        <td style="text-align: right; font-weight: 600; color: #991b1b;">- {{ cout_total_global_ttc|floatformat:2 }} MAD</td>
+      </tr>
+      <tr style="font-size: 1.1em; border-top: 2px solid #cbd5e1;">
+        <td style="background: #f1f5f9; font-weight: 700;">MARGE BRUTE</td>
+        <td style="text-align: right; font-weight: 700; color: {% if marge_brute >= 0 %}#166534{% else %}#991b1b{% endif %}; background: #f1f5f9;">
+          {{ marge_brute|floatformat:2 }} MAD
+        </td>
+      </tr>
+    </table>
+  </div>
 
   <h3 style="margin-top:20px;">Détail quotidien</h3>
   <table>
