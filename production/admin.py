@@ -10,7 +10,7 @@ class LotProductionInline(admin.TabularInline):
 
 class OrdreProductionAdmin(admin.ModelAdmin):
     list_display = (
-        'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'prix_vente_unitaire', 'date_production', 'heure_production',
+        'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'prix_vente_unitaire', 'prix_deplacement_pompe', 'prix_deplacement_camion', 'date_production', 'heure_production',
         'chauffeur', 'vehicule', 'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',
         'masse_volumique', 'transporteur', 'pompe_display', 'statut', 'matieres_sorties_calculees', 'actions_sorties'
@@ -24,7 +24,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
     
     readonly_fields = ('delivery_note_link', 'actions_sorties')
     fields = (
-        'numero_bon', 'commande', 'formule', 'quantite_produire', 'prix_vente_unitaire', 'date_production', 'heure_production',
+        'numero_bon', 'commande', 'formule', 'quantite_produire', 'prix_vente_unitaire', 'prix_deplacement_pompe', 'prix_deplacement_camion', 'date_production', 'heure_production',
         'chauffeur', 'vehicule',
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'rapport_e_c', 'teneur_en_air', 'temperature_beton', 'teneur_en_ciment',

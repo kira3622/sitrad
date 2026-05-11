@@ -120,6 +120,7 @@
         <th>Type Béton</th>
         <th>Quantité (m³)</th>
         <th>Prix Unit. (MAD)</th>
+        <th>Dép. Pompe/Camion</th>
         <th>Total Vente (MAD)</th>
         <th>Statut</th>
       </tr>
@@ -132,6 +133,9 @@
         <td>{{ ordre.formule.nom }}</td>
         <td>{{ ordre.quantite_produire }}</td>
         <td style="color: #64748b;">{{ ordre.prix_vente_unitaire|default:"0.00" }}</td>
+        <td style="color: #64748b; font-size: 0.9em;">
+          {{ ordre.prix_deplacement_pompe|default:"0" }} / {{ ordre.prix_deplacement_camion|default:"0" }}
+        </td>
         <td style="font-weight:600; color: #2e7d32;">{{ ordre.prix_total_ordre|floatformat:2 }}</td>
         <td>
           <span class="status-tag" style="padding:2px 8px; border-radius:4px; font-size:12px; background: {% if ordre.statut == 'termine' %}#e8f5e9; color:#2e7d32;{% elif ordre.statut == 'annule' %}#ffebee; color:#c62828;{% else %}#e3f2fd; color:#1565c0;{% endif %}">

@@ -906,7 +906,11 @@ def rapport_consommation_matieres(request):
     total_ventes_global = Decimal('0.00')
     for ordre in ordres_production:
         prix_unitaire = ordre.prix_vente_unitaire or Decimal('0.00')
-        ordre.prix_total_ordre = prix_unitaire * (ordre.quantite_produire or Decimal('0.00'))
+        prix_pompe = ordre.prix_deplacement_pompe or Decimal('0.00')
+        prix_camion = ordre.prix_deplacement_camion or Decimal('0.00')
+        
+        # Le prix total de l'ordre inclut la vente du béton + les frais de déplacement
+        ordre.prix_total_ordre = (prix_unitaire * (ordre.quantite_produire or Decimal('0.00'))) + prix_pompe + prix_camion
         total_ventes_global += ordre.prix_total_ordre
 
     marge_brute = total_ventes_global - cout_total_global_ttc
