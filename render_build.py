@@ -288,7 +288,12 @@ def main():
     print(f"\n1. DJANGO_SETTINGS_MODULE: {os.environ.get('DJANGO_SETTINGS_MODULE', 'Non défini')}")
     
     # 2. Installation des dépendances
-    if not run_command("pip install -r requirements.txt", "Installation des dépendances"):
+    print("\n2. Installation des dépendances...")
+    # Forcer la version de python-bidi avant d'installer le reste pour éviter l'erreur Rust
+    run_command("pip install --upgrade pip", "Mise à jour de pip")
+    run_command("pip install python-bidi==0.4.2", "Installation forcée de python-bidi (version Python uniquement)")
+    
+    if not run_command("pip install -r requirements.txt", "Installation des dépendances du projet"):
         sys.exit(1)
     
     # 3. Collecte des fichiers statiques

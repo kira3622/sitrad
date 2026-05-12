@@ -1,6 +1,8 @@
+# CRITICAL: DO NOT REMOVE THESE VERSIONS - REQUIRED FOR RENDER BUILD
+python-bidi==0.4.2
+xhtml2pdf==0.2.11
+reportlab==3.6.13
 arabic-reshaper==3.0.0
-# Force a clean rebuild on Render to resolve dependency conflicts and Rust errors
-# Corrected python-bidi and reportlab versions
 
 asgiref==3.9.1
 asn1crypto==1.5.1
@@ -28,9 +30,7 @@ pycparser==2.23
 pyHanko==0.31.0
 pyhanko-certvalidator==0.29.0
 pypdf==6.0.0
-python-bidi==0.4.2
 PyYAML==6.0.2
-reportlab==3.6.13
 requests==2.32.5
 six==1.17.0
 sqlparse==0.5.3
@@ -43,7 +43,6 @@ urllib3==2.5.0
 waitress==3.0.2
 webencodings==0.5.1
 whitenoise==6.10.0
-xhtml2pdf==0.2.11
 
 # Web Push
 pywebpush==1.14.0
