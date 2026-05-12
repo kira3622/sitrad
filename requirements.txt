@@ -1,5 +1,6 @@
 arabic-reshaper==3.0.0
-# Force a new build
+# Force a clean rebuild on Render to resolve dependency conflicts and Rust errors
+# Corrected python-bidi and reportlab versions
 
 asgiref==3.9.1
 asn1crypto==1.5.1
