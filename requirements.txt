@@ -1,4 +1,3 @@
-# CRITICAL: DO NOT REMOVE THESE VERSIONS - REQUIRED FOR RENDER BUILD
 python-bidi==0.4.2
 xhtml2pdf==0.2.11
 reportlab==3.6.13

@@ -289,9 +289,10 @@ def main():
     
     # 2. Installation des dépendances
     print("\n2. Installation des dépendances...")
-    # Forcer la version de python-bidi avant d'installer le reste pour éviter l'erreur Rust
     run_command("pip install --upgrade pip", "Mise à jour de pip")
-    run_command("pip install python-bidi==0.4.2", "Installation forcée de python-bidi (version Python uniquement)")
+    
+    # Installer d'abord les paquets problématiques en version binaire uniquement
+    run_command("pip install --only-binary :all: python-bidi==0.4.2 reportlab==3.6.13", "Installation sécurisée des dépendances PDF")
     
     if not run_command("pip install -r requirements.txt", "Installation des dépendances du projet"):
         sys.exit(1)
