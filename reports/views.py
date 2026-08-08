@@ -902,6 +902,10 @@ def rapport_consommation_matieres(request):
             formule__composition__matiere_premiere_id=matiere_id
         ).distinct()
 
+    total_quantite_production = ordres_production.aggregate(
+        total=Sum('quantite_produire')
+    )['total'] or Decimal('0.00')
+
     # Calculer le total des ventes et enrichir les ordres avec le prix total
     total_ventes_global = Decimal('0.00')
     for ordre in ordres_production:
@@ -928,6 +932,7 @@ def rapport_consommation_matieres(request):
         'sorties_par_jour': sorties_par_jour,
         'matieres': matieres,
         'ordres_production': ordres_production,
+        'total_quantite_production': total_quantite_production,
     }
 
     return render(request, 'reports/consommation_matieres.html', context)

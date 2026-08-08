@@ -144,13 +144,14 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="7">Aucun ordre de production trouvé pour cette période.</td></tr>
+      <tr><td colspan="8">Aucun ordre de production trouvé pour cette période.</td></tr>
       {% endfor %}
     </tbody>
     {% if ordres_production %}
     <tfoot>
       <tr style="background: #f0fdf4; font-weight: bold; border-top: 2px solid #bbf7d0;">
-        <td colspan="3">TOTAL VENTES</td>
+        <td colspan="3">TOTAL</td>
+        <td>{{ total_quantite_production|floatformat:2 }}</td>
         <td>-</td>
         <td>-</td>
         <td style="color: #166534;">{{ total_ventes_global|floatformat:2 }} MAD</td>
