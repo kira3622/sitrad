@@ -919,6 +919,16 @@ def rapport_consommation_matieres(request):
 
     marge_brute = total_ventes_global - cout_total_global_ttc
 
+    if total_quantite_production > 0:
+        marge_par_m3 = marge_brute / total_quantite_production
+    else:
+        marge_par_m3 = Decimal('0.00')
+
+    if total_ventes_global > 0:
+        marge_pourcentage = (marge_brute / total_ventes_global) * 100
+    else:
+        marge_pourcentage = Decimal('0.00')
+
     context = {
         'title': 'Consommation Matières Premières',
         'date_debut': date_debut,
@@ -928,6 +938,8 @@ def rapport_consommation_matieres(request):
         'cout_total_global_ttc': cout_total_global_ttc,
         'total_ventes_global': total_ventes_global,
         'marge_brute': marge_brute,
+        'marge_par_m3': marge_par_m3,
+        'marge_pourcentage': marge_pourcentage,
         'sorties_par_matiere': sorties_par_matiere,
         'sorties_par_jour': sorties_par_jour,
         'matieres': matieres,

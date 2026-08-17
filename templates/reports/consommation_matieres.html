@@ -172,6 +172,14 @@
         <td style="background: #f8fafc;">Coût Matières (TTC)</td>
         <td style="text-align: right; font-weight: 600; color: #991b1b;">- {{ cout_total_global_ttc|floatformat:2 }} MAD</td>
       </tr>
+      <tr>
+        <td style="background: #f8fafc;">Marge par m³</td>
+        <td style="text-align: right; font-weight: 600; color: {% if marge_par_m3 >= 0 %}#0f766e{% else %}#991b1b{% endif %};">{{ marge_par_m3|floatformat:2 }} MAD/m³</td>
+      </tr>
+      <tr>
+        <td style="background: #f8fafc;">Marge en %</td>
+        <td style="text-align: right; font-weight: 600; color: {% if marge_pourcentage >= 0 %}#0f766e{% else %}#991b1b{% endif %};">{{ marge_pourcentage|floatformat:2 }} %</td>
+      </tr>
       <tr style="font-size: 1.1em; border-top: 2px solid #cbd5e1;">
         <td style="background: #f1f5f9; font-weight: 700;">MARGE BRUTE</td>
         <td style="text-align: right; font-weight: 700; color: {% if marge_brute >= 0 %}#166534{% else %}#991b1b{% endif %}; background: #f1f5f9;">
