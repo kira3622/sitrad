@@ -27,6 +27,8 @@ class MouvementStockAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'type_mouvement_badge',
+        'numero_bon_display',
+        'client_display',
         'matiere_premiere',
         'unite_mesure',
         'quantite_display',
@@ -60,6 +62,9 @@ class MouvementStockAdmin(admin.ModelAdmin):
         'unite_mesure',
         'origine',
         'lien_saisie_entree',
+        'numero_bon_display',
+        'client_display',
+        'lien_ordre_production',
         'stock_apres_mouvement',
         'description',
         'date_mouvement',
@@ -80,6 +85,9 @@ class MouvementStockAdmin(admin.ModelAdmin):
         (_('Origine & traçabilité'), {
             'fields': (
                 'origine',
+                'numero_bon_display',
+                'client_display',
+                'lien_ordre_production',
                 'lien_saisie_entree',
                 'description',
             )
@@ -89,6 +97,30 @@ class MouvementStockAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+    def _resolve_references(self, obj):
+        if hasattr(obj, '_ordre_production_cache') and hasattr(obj, '_lot_production_cache'):
+            return obj._ordre_production_cache, obj._lot_production_cache
+        desc = obj.description or ''
+        ordre = None
+        lot = None
+        m_ordre = __import__('re').search(r'ordre de production\s*#?\s*(\d+)', desc, __import__('re').IGNORECASE)
+        if m_ordre:
+            from production.models import OrdreProduction
+            try:
+                ordre = OrdreProduction.objects.select_related('commande__client').get(pk=int(m_ordre.group(1)))
+            except OrdreProduction.DoesNotExist:
+                ordre = None
+        m_lot = __import__('re').search(r'lot\s*(\d+)', desc, __import__('re').IGNORECASE)
+        if m_lot:
+            from production.models import LotProduction
+            try:
+                lot = LotProduction.objects.select_related('ordre_production__commande__client').get(pk=int(m_lot.group(1)))
+            except LotProduction.DoesNotExist:
+                lot = None
+        obj._ordre_production_cache = ordre
+        obj._lot_production_cache = lot
+        return ordre, lot
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -184,6 +216,56 @@ class MouvementStockAdmin(admin.ModelAdmin):
             url, entree.id
         )
     lien_saisie_entree.short_description = _('Saisie liée')
+
+    def numero_bon_display(self, obj):
+        ordre, lot = self._resolve_references(obj)
+        op = ordre or (lot.ordre_production if lot else None)
+        if not op:
+            return format_html('<em style="color:#9ca3af;">—</em>')
+        label = op.numero_bon or _("Ordre #{}").format(op.id)
+        from django.urls import reverse
+        try:
+            url = reverse('admin:production_ordreproduction_change', args=(op.id,))
+        except Exception:
+            return format_html('<strong>{}</strong>', label)
+        return format_html(
+            '<a href="{}" style="font-weight:700;color:#1d4ed8;">{}</a>',
+            url, label
+        )
+    numero_bon_display.short_description = _('N° Bon')
+
+    def client_display(self, obj):
+        ordre, lot = self._resolve_references(obj)
+        op = ordre or (lot.ordre_production if lot else None)
+        client = None
+        if op and op.commande_id and getattr(op.commande, 'client', None):
+            client = op.commande.client
+        if not client:
+            return format_html('<em style="color:#9ca3af;">—</em>')
+        return format_html(
+            '<span style="font-weight:600;">{}</span>',
+            str(client)
+        )
+    client_display.short_description = _('Client')
+
+    def lien_ordre_production(self, obj):
+        ordre, lot = self._resolve_references(obj)
+        op = ordre or (lot.ordre_production if lot else None)
+        if not op:
+            return format_html('<em style="color:#9ca3af;">—</em>')
+        from django.urls import reverse
+        try:
+            url = reverse('admin:production_ordreproduction_change', args=(op.id,))
+        except Exception:
+            return format_html('#{}', op.id)
+        label = _("Ordre #{}{}").format(
+            op.id, f" · Bon {op.numero_bon}" if op.numero_bon else ""
+        )
+        return format_html(
+            '<a href="{}" style="font-weight:600;">{} &raquo;</a>',
+            url, label
+        )
+    lien_ordre_production.short_description = _('Lien ordre de production')
 
     def stock_apres_mouvement(self, obj):
         if not (obj.matiere_premiere_id and obj.date_mouvement and obj.id):
