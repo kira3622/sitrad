@@ -881,6 +881,22 @@ def rapport_consommation_matieres(request):
             'cout_total_ttc': cout_total_matiere
         })
 
+    # Dictionnaire prix TTC moyen par matiere (pour marge par bon)
+    prix_ttc_par_matiere = {}
+    for m in MatierePremiere.objects.all():
+        der_saisies = SaisieEntreeLie.objects.filter(
+            matiere_premiere_id=m.id, prix_achat_ht__isnull=False
+        ).order_by('-date_facture', '-id')[:5]
+        ids = list(der_saisies.values_list('id', flat=True))
+        if ids:
+            s = SaisieEntreeLie.objects.filter(id__in=ids).aggregate(ap=Avg('prix_achat_ht'), at=Avg('taux_tva'))
+            ph = s['ap'] or Decimal('0.00')
+            tva = s['at'] or Decimal('20.00')
+        else:
+            ph = Decimal('0.00')
+            tva = Decimal('20.00')
+        prix_ttc_par_matiere[m.id] = ph * (1 + tva / 100)
+
     # Sorties quotidiennes
     sorties_par_jour = mouvements.annotate(
         jour=TruncDay('date_mouvement')
@@ -894,7 +910,9 @@ def rapport_consommation_matieres(request):
     # Ordres de production sur la période pour le détail
     ordres_production = OrdreProduction.objects.filter(
         date_production__range=[date_debut, date_fin]
-    ).select_related('commande__client', 'formule').order_by('-date_production', '-id')
+    ).select_related('commande__client', 'formule').prefetch_related(
+        'formule__composition__matiere_premiere'
+    ).order_by('-date_production', '-id')
 
     if matiere_id:
         # Filtrer les ordres qui utilisent cette matière première via la composition de leur formule
@@ -906,16 +924,42 @@ def rapport_consommation_matieres(request):
         total=Sum('quantite_produire')
     )['total'] or Decimal('0.00')
 
-    # Calculer le total des ventes et enrichir les ordres avec le prix total
+    # Calculer le total des ventes + marge par bon
     total_ventes_global = Decimal('0.00')
+    total_cout_matieres_par_bons = Decimal('0.00')
+    total_marge_par_bons = Decimal('0.00')
+
     for ordre in ordres_production:
         prix_unitaire = ordre.prix_vente_unitaire or Decimal('0.00')
         prix_pompe = ordre.prix_deplacement_pompe or Decimal('0.00')
         prix_camion = ordre.prix_deplacement_camion or Decimal('0.00')
-        
+        qte = ordre.quantite_produire or Decimal('0.00')
+
         # Le prix total de l'ordre inclut la vente du béton + les frais de déplacement
-        ordre.prix_total_ordre = (prix_unitaire * (ordre.quantite_produire or Decimal('0.00'))) + prix_pompe + prix_camion
+        ordre.prix_total_ordre = (prix_unitaire * qte) + prix_pompe + prix_camion
         total_ventes_global += ordre.prix_total_ordre
+
+        # Coût matières estimé : composition de la formule × prix moyen TTC
+        cout_matieres_ordre = Decimal('0.00')
+        formule = ordre.formule
+        if formule:
+            qte_ref = formule.quantite_produite_reference or Decimal('0')
+            if qte_ref > 0 and qte > 0:
+                for comp in formule.composition.all():
+                    prix_ttc = prix_ttc_par_matiere.get(comp.matiere_premiere_id, Decimal('0.00'))
+                    qte_matiere = (comp.quantite / qte_ref) * qte
+                    cout_matieres_ordre += qte_matiere * prix_ttc
+
+        ordre.cout_matieres_ordre = cout_matieres_ordre
+        total_cout_matieres_par_bons += cout_matieres_ordre
+
+        ordre.marge_ordre = ordre.prix_total_ordre - cout_matieres_ordre
+        total_marge_par_bons += ordre.marge_ordre
+
+        if ordre.prix_total_ordre > 0:
+            ordre.marge_ordre_pourcentage = (ordre.marge_ordre / ordre.prix_total_ordre) * 100
+        else:
+            ordre.marge_ordre_pourcentage = Decimal('0.00')
 
     marge_brute = total_ventes_global - cout_total_global_ttc
 
@@ -926,8 +970,10 @@ def rapport_consommation_matieres(request):
 
     if total_ventes_global > 0:
         marge_pourcentage = (marge_brute / total_ventes_global) * 100
+        total_marge_par_bons_pourcentage = (total_marge_par_bons / total_ventes_global) * 100
     else:
         marge_pourcentage = Decimal('0.00')
+        total_marge_par_bons_pourcentage = Decimal('0.00')
 
     context = {
         'title': 'Consommation Matières Premières',
@@ -945,6 +991,9 @@ def rapport_consommation_matieres(request):
         'matieres': matieres,
         'ordres_production': ordres_production,
         'total_quantite_production': total_quantite_production,
+        'total_cout_matieres_par_bons': total_cout_matieres_par_bons,
+        'total_marge_par_bons': total_marge_par_bons,
+        'total_marge_par_bons_pourcentage': total_marge_par_bons_pourcentage,
     }
 
     return render(request, 'reports/consommation_matieres.html', context)

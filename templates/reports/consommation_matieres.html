@@ -122,6 +122,9 @@
         <th>Prix Unit. (MAD)</th>
         <th>Dép. Pompe/Camion</th>
         <th>Total Vente (MAD)</th>
+        <th>Coût Matières (MAD)</th>
+        <th>Marge (MAD)</th>
+        <th>Marge %</th>
         <th>Statut</th>
       </tr>
     </thead>
@@ -137,6 +140,9 @@
           {{ ordre.prix_deplacement_pompe|default:"0" }} / {{ ordre.prix_deplacement_camion|default:"0" }}
         </td>
         <td style="font-weight:600; color: #2e7d32;">{{ ordre.prix_total_ordre|floatformat:2 }}</td>
+        <td style="color: #7c2d12; font-weight:500;">{{ ordre.cout_matieres_ordre|floatformat:2 }}</td>
+        <td style="font-weight:700; color: {% if ordre.marge_ordre >= 0 %}#166534{% else %}#991b1b{% endif %};">{{ ordre.marge_ordre|floatformat:2 }}</td>
+        <td style="font-weight:600; color: {% if ordre.marge_ordre_pourcentage >= 0 %}#0f766e{% else %}#991b1b{% endif %};">{{ ordre.marge_ordre_pourcentage|floatformat:2 }} %</td>
         <td>
           <span class="status-tag" style="padding:2px 8px; border-radius:4px; font-size:12px; background: {% if ordre.statut == 'termine' %}#e8f5e9; color:#2e7d32;{% elif ordre.statut == 'annule' %}#ffebee; color:#c62828;{% else %}#e3f2fd; color:#1565c0;{% endif %}">
             {{ ordre.get_statut_display }}
@@ -144,7 +150,7 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="8">Aucun ordre de production trouvé pour cette période.</td></tr>
+      <tr><td colspan="11">Aucun ordre de production trouvé pour cette période.</td></tr>
       {% endfor %}
     </tbody>
     {% if ordres_production %}
@@ -155,6 +161,9 @@
         <td>-</td>
         <td>-</td>
         <td style="color: #166534;">{{ total_ventes_global|floatformat:2 }} MAD</td>
+        <td style="color: #7c2d12;">{{ total_cout_matieres_par_bons|floatformat:2 }} MAD</td>
+        <td style="color: {% if total_marge_par_bons >= 0 %}#166534{% else %}#991b1b{% endif %};">{{ total_marge_par_bons|floatformat:2 }} MAD</td>
+        <td style="color: {% if total_marge_par_bons_pourcentage >= 0 %}#0f766e{% else %}#991b1b{% endif %};">{{ total_marge_par_bons_pourcentage|floatformat:2 }} %</td>
         <td>-</td>
       </tr>
     </tfoot>
