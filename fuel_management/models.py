@@ -137,6 +137,17 @@ class Consommation(models.Model):
         validators=[MinValueValidator(Decimal('0.01'))],
         help_text="Quantité consommée en litres"
     )
+    prix_unitaire = models.DecimalField(
+        max_digits=8, decimal_places=3,
+        validators=[MinValueValidator(Decimal('0.001'))],
+        default=Decimal('0.000'),
+        help_text="Prix par litre en DH (par défaut: dernier prix d'approvisionnement)"
+    )
+    montant_total = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        default=Decimal('0.00'),
+        help_text="Montant total en DH"
+    )
     responsable = models.CharField(max_length=100, help_text="Responsable de l'opération")
     heures_fonctionnement = models.DecimalField(
         max_digits=6, decimal_places=2,
@@ -152,6 +163,19 @@ class Consommation(models.Model):
     date_modification = models.DateTimeField(auto_now=True)
     
     def save(self, *args, **kwargs):
+        from decimal import Decimal as _D
+        # S'assurer du type Decimal pour les comparaisons
+        if self.quantite is not None and not isinstance(self.quantite, Decimal):
+            self.quantite = _D(str(self.quantite))
+        if self.prix_unitaire is not None and not isinstance(self.prix_unitaire, Decimal):
+            self.prix_unitaire = _D(str(self.prix_unitaire))
+        # Si prix_unitaire est nul ou 0, reprendre le dernier prix d'approvisionnement
+        if not self.prix_unitaire or self.prix_unitaire <= Decimal('0'):
+            dernier_appro = Approvisionnement.objects.order_by('-date', '-date_creation').first()
+            if dernier_appro and dernier_appro.prix_unitaire > Decimal('0'):
+                self.prix_unitaire = dernier_appro.prix_unitaire
+        # Calcul automatique du montant total
+        self.montant_total = (self.quantite or Decimal('0')) * (self.prix_unitaire or Decimal('0'))
         super().save(*args, **kwargs)
         
         # Mise à jour du stock après sauvegarde

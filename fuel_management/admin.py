@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Sum
+from django.templatetags.static import static
+from django.utils.safestring import mark_safe
 from .models import Fournisseur, TypeEngin, Engin, Approvisionnement, Consommation, Stock, AlerteStock
 
 
@@ -32,23 +34,60 @@ class EnginAdmin(admin.ModelAdmin):
 
 @admin.register(Approvisionnement)
 class ApprovisionnementAdmin(admin.ModelAdmin):
-    list_display = ['date', 'fournisseur', 'quantite', 'prix_unitaire', 'montant_total', 'numero_bon']
+    list_display = ['date', 'fournisseur', 'quantite', 'prix_unitaire', 'montant_total_mad', 'numero_bon']
     list_filter = ['date', 'fournisseur']
     search_fields = ['numero_bon', 'fournisseur__nom']
     date_hierarchy = 'date'
     readonly_fields = ['montant_total']
-    
-    def montant_total(self, obj):
-        return f"{obj.montant_total:.2f} €"
-    montant_total.short_description = "Montant total"
+
+    def montant_total_mad(self, obj):
+        return format_html(
+            '<span style="color: #7c2d12; font-weight: 600;">{:.2f} MAD</span>',
+            obj.montant_total or 0
+        )
+    montant_total_mad.short_description = "Montant Total (MAD)"
+
+    class Media:
+        js = ('admin/js/fuel_management_admin.js',)
 
 
 @admin.register(Consommation)
 class ConsommationAdmin(admin.ModelAdmin):
-    list_display = ['date', 'engin', 'quantite', 'responsable']
+    list_display = ['date', 'engin', 'quantite', 'prix_unitaire', 'montant_total_mad', 'responsable']
     list_filter = ['date', 'engin__type_engin', 'responsable']
     search_fields = ['engin__nom', 'responsable']
     date_hierarchy = 'date'
+    readonly_fields = ['montant_total']
+    fieldsets = (
+        (None, {
+            'fields': ('date', 'engin', 'responsable')
+        }),
+        ('Quantité & Coût', {
+            'fields': ('quantite', 'prix_unitaire', 'montant_total'),
+            'description': 'Montant total = Quantité (L) × Prix unitaire (DH/L). Mis à jour automatiquement à la sauvegarde.'
+        }),
+        ('Informations complémentaires', {
+            'fields': ('heures_fonctionnement', 'kilometrage', 'notes'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def montant_total_mad(self, obj):
+        return format_html(
+            '<span style="color: #7c2d12; font-weight: 600;">{:.2f} MAD</span>',
+            obj.montant_total or 0
+        )
+    montant_total_mad.short_description = "Montant Total (MAD)"
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        dernier_appro = Approvisionnement.objects.order_by('-date', '-date_creation').first()
+        if dernier_appro and dernier_appro.prix_unitaire > 0:
+            initial.setdefault('prix_unitaire', str(dernier_appro.prix_unitaire))
+        return initial
+
+    class Media:
+        js = ('admin/js/fuel_management_admin.js',)
 
 
 @admin.register(Stock)
