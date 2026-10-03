@@ -1017,6 +1017,17 @@ def rapport_consommation_matieres(request):
     if fuel_total_litres > 0:
         fuel_prix_moyen_global = fuel_total_montant / fuel_total_litres
 
+    # --- Marge nette apres deduction du gasoil ---
+    marge_brute_apres_gasoil = marge_brute - fuel_total_montant
+    if total_ventes_global > 0:
+        marge_brute_apres_gasoil_pourcentage = (marge_brute_apres_gasoil / total_ventes_global) * 100
+    else:
+        marge_brute_apres_gasoil_pourcentage = Decimal('0.00')
+    if total_quantite_production > 0:
+        marge_brute_apres_gasoil_par_m3 = marge_brute_apres_gasoil / total_quantite_production
+    else:
+        marge_brute_apres_gasoil_par_m3 = Decimal('0.00')
+
     context = {
         'title': 'Consommation Matières Premières',
         'date_debut': date_debut,
@@ -1040,6 +1051,9 @@ def rapport_consommation_matieres(request):
         'fuel_total_litres': fuel_total_litres,
         'fuel_total_montant': fuel_total_montant,
         'fuel_prix_moyen_global': fuel_prix_moyen_global,
+        'marge_brute_apres_gasoil': marge_brute_apres_gasoil,
+        'marge_brute_apres_gasoil_pourcentage': marge_brute_apres_gasoil_pourcentage,
+        'marge_brute_apres_gasoil_par_m3': marge_brute_apres_gasoil_par_m3,
     }
 
     return render(request, 'reports/consommation_matieres.html', context)
