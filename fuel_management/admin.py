@@ -54,14 +54,14 @@ class ApprovisionnementAdmin(admin.ModelAdmin):
 
 @admin.register(Consommation)
 class ConsommationAdmin(admin.ModelAdmin):
-    list_display = ['date', 'engin', 'quantite', 'prix_unitaire', 'montant_total_mad', 'responsable']
+    list_display = ['date', 'numero_bon', 'engin', 'quantite', 'prix_unitaire', 'montant_total_mad', 'responsable']
     list_filter = ['date', 'engin__type_engin', 'responsable']
-    search_fields = ['engin__nom', 'responsable']
+    search_fields = ['numero_bon', 'engin__nom', 'responsable']
     date_hierarchy = 'date'
     readonly_fields = ['montant_total']
     fieldsets = (
         (None, {
-            'fields': ('date', 'engin', 'responsable')
+            'fields': ('date', 'numero_bon', 'engin', 'responsable')
         }),
         ('Quantité & Coût', {
             'fields': ('quantite', 'prix_unitaire', 'montant_total'),

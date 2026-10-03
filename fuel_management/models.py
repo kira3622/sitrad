@@ -149,6 +149,7 @@ class Consommation(models.Model):
         help_text="Montant total en DH"
     )
     responsable = models.CharField(max_length=100, help_text="Responsable de l'opération")
+    numero_bon = models.CharField(max_length=50, blank=True, help_text="Numéro de bon / bordereau de sortie")
     heures_fonctionnement = models.DecimalField(
         max_digits=6, decimal_places=2,
         null=True, blank=True,
