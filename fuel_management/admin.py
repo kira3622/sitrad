@@ -41,9 +41,10 @@ class ApprovisionnementAdmin(admin.ModelAdmin):
     readonly_fields = ['montant_total']
 
     def montant_total_mad(self, obj):
+        valeur = float(obj.montant_total or 0)
         return format_html(
-            '<span style="color: #7c2d12; font-weight: 600;">{:.2f} MAD</span>',
-            obj.montant_total or 0
+            '<span style="color: #7c2d12; font-weight: 600;">{} MAD</span>',
+            f"{valeur:.2f}"
         )
     montant_total_mad.short_description = "Montant Total (MAD)"
 
@@ -73,9 +74,10 @@ class ConsommationAdmin(admin.ModelAdmin):
     )
 
     def montant_total_mad(self, obj):
+        valeur = float(obj.montant_total or 0)
         return format_html(
-            '<span style="color: #7c2d12; font-weight: 600;">{:.2f} MAD</span>',
-            obj.montant_total or 0
+            '<span style="color: #7c2d12; font-weight: 600;">{} MAD</span>',
+            f"{valeur:.2f}"
         )
     montant_total_mad.short_description = "Montant Total (MAD)"
 
