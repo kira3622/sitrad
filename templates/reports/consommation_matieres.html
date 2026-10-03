@@ -231,6 +231,10 @@
         <td style="text-align: right; font-weight: 600; color: #991b1b;">- {{ cout_total_global_ttc|floatformat:2 }} MAD</td>
       </tr>
       <tr>
+        <td style="background: #fff7ed;">Total Gasoil ({{ fuel_total_litres|floatformat:2 }} L)</td>
+        <td style="text-align: right; font-weight: 700; color: #7c2d12;">- {{ fuel_total_montant|floatformat:2 }} MAD</td>
+      </tr>
+      <tr>
         <td style="background: #f8fafc;">Marge par m³</td>
         <td style="text-align: right; font-weight: 600; color: {% if marge_par_m3 >= 0 %}#0f766e{% else %}#991b1b{% endif %};">{{ marge_par_m3|floatformat:2 }} MAD/m³</td>
       </tr>
