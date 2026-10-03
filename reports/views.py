@@ -19,6 +19,7 @@ from inventory.models import MatierePremiere
 from billing.models import Facture, LigneFacture
 from formulas.models import FormuleBeton, CompositionFormule
 from logistics.models import Vehicule, Livraison, Chauffeur
+from fuel_management.models import Consommation as FuelConsommation
 
 # Vue principale des rapports
 def dashboard_reports(request):
@@ -975,6 +976,47 @@ def rapport_consommation_matieres(request):
         marge_pourcentage = Decimal('0.00')
         total_marge_par_bons_pourcentage = Decimal('0.00')
 
+    # --- Consommation gasoil par engin sur la periode ---
+    fuel_consos = FuelConsommation.objects.filter(
+        date__gte=date_debut,
+        date__lte=date_fin
+    ).select_related('engin', 'engin__type_engin')
+
+    fuel_par_engin_raw = fuel_consos.values(
+        'engin__id', 'engin__nom', 'engin__type_engin__nom', 'engin__immatriculation'
+    ).annotate(
+        total_litres=Sum('quantite'),
+        total_montant=Sum('montant_total'),
+        nb_consos=Count('id')
+    ).order_by('-total_litres')
+
+    fuel_par_engin = []
+    fuel_total_litres = Decimal('0.00')
+    fuel_total_montant = Decimal('0.00')
+    fuel_prix_moyen_global = Decimal('0.00')
+
+    for row in fuel_par_engin_raw:
+        litres = row['total_litres'] or Decimal('0.00')
+        montant = row['total_montant'] or Decimal('0.00')
+        if litres > 0:
+            prix_moyen = montant / litres
+        else:
+            prix_moyen = Decimal('0.00')
+        fuel_par_engin.append({
+            'engin__nom': row['engin__nom'],
+            'engin__type_engin__nom': row['engin__type_engin__nom'],
+            'engin__immatriculation': row['engin__immatriculation'],
+            'total_litres': litres,
+            'prix_moyen': prix_moyen,
+            'total_montant': montant,
+            'nb_consos': row['nb_consos'],
+        })
+        fuel_total_litres += litres
+        fuel_total_montant += montant
+
+    if fuel_total_litres > 0:
+        fuel_prix_moyen_global = fuel_total_montant / fuel_total_litres
+
     context = {
         'title': 'Consommation Matières Premières',
         'date_debut': date_debut,
@@ -994,6 +1036,10 @@ def rapport_consommation_matieres(request):
         'total_cout_matieres_par_bons': total_cout_matieres_par_bons,
         'total_marge_par_bons': total_marge_par_bons,
         'total_marge_par_bons_pourcentage': total_marge_par_bons_pourcentage,
+        'fuel_par_engin': fuel_par_engin,
+        'fuel_total_litres': fuel_total_litres,
+        'fuel_total_montant': fuel_total_montant,
+        'fuel_prix_moyen_global': fuel_prix_moyen_global,
     }
 
     return render(request, 'reports/consommation_matieres.html', context)
