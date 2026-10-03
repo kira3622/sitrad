@@ -1181,8 +1181,10 @@ def rapport_camion(request):
             prix_moyen = Decimal('0.000')
         if m3 > 0:
             litres_par_m3 = f_litres / m3
+            cout_gasoil_par_m3 = f_montant / m3
         else:
             litres_par_m3 = Decimal('0.00')
+            cout_gasoil_par_m3 = Decimal('0.00')
 
         vehicules_stats.append({
             'vehicule': f"{modele} ({immat_v or '?'})",
@@ -1193,6 +1195,7 @@ def rapport_camion(request):
             'total_m3': m3,
             'total_litres': f_litres,
             'litres_par_m3': litres_par_m3,
+            'cout_gasoil_par_m3': cout_gasoil_par_m3,
             'prix_moyen': prix_moyen,
             'total_montant_gasoil': f_montant,
             'nb_consos_gasoil': f_nb,
@@ -1225,6 +1228,7 @@ def rapport_camion(request):
             'total_m3': Decimal('0'),
             'total_litres': f_litres,
             'litres_par_m3': Decimal('0.00'),
+            'cout_gasoil_par_m3': Decimal('0.00'),
             'prix_moyen': prix_moyen,
             'total_montant_gasoil': f_montant,
             'nb_consos_gasoil': f_nb,
@@ -1237,8 +1241,10 @@ def rapport_camion(request):
 
     if total_m3 > 0:
         gasoil_m3_global = total_gasoil_litres / total_m3
+        cout_gasoil_par_m3_global = total_gasoil_montant / total_m3
     else:
         gasoil_m3_global = Decimal('0.00')
+        cout_gasoil_par_m3_global = Decimal('0.00')
     if total_gasoil_litres > 0:
         prix_moyen_global = total_gasoil_montant / total_gasoil_litres
     else:
@@ -1253,6 +1259,7 @@ def rapport_camion(request):
         'total_gasoil_litres': total_gasoil_litres,
         'total_gasoil_montant': total_gasoil_montant,
         'gasoil_m3_global': gasoil_m3_global,
+        'cout_gasoil_par_m3_global': cout_gasoil_par_m3_global,
         'prix_moyen_global': prix_moyen_global,
         'source_volume': source_volume,
     }
