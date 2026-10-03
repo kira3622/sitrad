@@ -41,6 +41,7 @@ class RapportAdmin(admin.ModelAdmin):
             'clients_journalier': reverse('reports:clients_journalier'),
             'vehicules_journalier': reverse('reports:vehicules_journalier'),
             'cout_formule': reverse('reports:cout_formule'),
+            'rapport_camion': reverse('reports:rapport_camion'),
         }
         return super().changelist_view(request, extra_context=extra_context)
 

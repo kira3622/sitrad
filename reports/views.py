@@ -1058,6 +1058,206 @@ def rapport_consommation_matieres(request):
 
     return render(request, 'reports/consommation_matieres.html', context)
 
+
+@staff_member_required
+def rapport_camion(request):
+    """
+    Rapport Camion: Total m³ livrés par véhicule + consommation gasoil (L + MAD) + prix moyen.
+    - m³: lots produits -> fallback ordres termines (via Vehicule FK direct)
+    - gasoil: FuelConsommation -> par Engin -> lie au Vehicule via immatriculation identique
+    - periode: date_debut / date_fin (GET params, 30 derniers jours par defaut)
+    """
+    date_debut_str = request.GET.get('date_debut')
+    date_fin_str   = request.GET.get('date_fin')
+    if date_debut_str:
+        try:
+            date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_debut = (timezone.now() - timedelta(days=30)).date()
+    else:
+        date_debut = (timezone.now() - timedelta(days=30)).date()
+    if date_fin_str:
+        try:
+            date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_fin = timezone.now().date()
+    else:
+        date_fin = timezone.now().date()
+
+    # --- 1. Volumes par Vehicule ---
+    lots = LotProduction.objects.filter(
+        date_heure_production__date__gte=date_debut,
+        date_heure_production__date__lte=date_fin,
+        ordre_production__vehicule__isnull=False
+    )
+    source_volume = 'lots'
+    if lots.exists():
+        volumes_v = lots.values(
+            'ordre_production__vehicule__id',
+            'ordre_production__vehicule__immatriculation',
+            'ordre_production__vehicule__modele',
+            'ordre_production__vehicule__capacite',
+            'ordre_production__vehicule__chauffeur__nom'
+        ).annotate(
+            total_m3=Sum('quantite_produite'),
+            nb_lots=Count('id')
+        )
+    else:
+        source_volume = 'ordres'
+        ordres = OrdreProduction.objects.filter(
+            date_production__gte=date_debut,
+            date_production__lte=date_fin,
+            statut='termine',
+            vehicule__isnull=False
+        )
+        volumes_v = ordres.values(
+            'vehicule__id',
+            'vehicule__immatriculation',
+            'vehicule__modele',
+            'vehicule__capacite',
+            'vehicule__chauffeur__nom'
+        ).annotate(
+            total_m3=Sum('quantite_produire'),
+            nb_lots=Count('id')
+        )
+
+    # --- 2. Gasoil par Engin + build mapping immat -> fuel ---
+    fuel_c = FuelConsommation.objects.filter(
+        date__gte=date_debut,
+        date__lte=date_fin,
+        engin__isnull=False
+    ).select_related('engin')
+    fuel_par_engin = fuel_c.values(
+        'engin__id', 'engin__nom', 'engin__immatriculation'
+    ).annotate(
+        total_litres=Sum('quantite'),
+        total_montant=Sum('montant_total'),
+        nb_consos=Count('id')
+    )
+
+    fuel_par_immat = {}
+    for f in fuel_par_engin:
+        immat = (f['engin__immatriculation'] or '').strip().upper()
+        litres  = f['total_litres'] or Decimal('0')
+        montant = f['total_montant'] or Decimal('0')
+        if not immat:
+            continue
+        if immat not in fuel_par_immat:
+            fuel_par_immat[immat] = {
+                'total_litres': litres,
+                'total_montant': montant,
+                'nb_consos': f['nb_consos'] or 0,
+                'engin_nom': f['engin__nom'],
+            }
+        else:
+            fuel_par_immat[immat]['total_litres']  += litres
+            fuel_par_immat[immat]['total_montant'] += montant
+            fuel_par_immat[immat]['nb_consos']     += f['nb_consos'] or 0
+
+    # --- 3. Fusionner + accumuler totaux ---
+    vehicules_stats = []
+    total_m3 = Decimal('0')
+    total_gasoil_litres = Decimal('0')
+    total_gasoil_montant = Decimal('0')
+
+    # Set: vehicules ayant du volume
+    vehicules_vus = set()
+    for v in volumes_v:
+        vid = v.get('vehicule__id') or v.get('ordre_production__vehicule__id')
+        immat_v = (v.get('vehicule__immatriculation') or v.get('ordre_production__vehicule__immatriculation') or '').strip().upper()
+        modele  = v.get('vehicule__modele') or v.get('ordre_production__vehicule__modele') or '-'
+        chauffeur = v.get('vehicule__chauffeur__nom') or v.get('ordre_production__vehicule__chauffeur__nom')
+        capacite  = v.get('vehicule__capacite') or v.get('ordre_production__vehicule__capacite')
+        m3 = v['total_m3'] or Decimal('0')
+        nb_lots = v['nb_lots'] or 0
+
+        fuel_data = fuel_par_immat.get(immat_v, {})
+        f_litres  = fuel_data.get('total_litres', Decimal('0'))
+        f_montant = fuel_data.get('total_montant', Decimal('0'))
+        f_nb      = fuel_data.get('nb_consos', 0)
+        if f_litres > 0:
+            prix_moyen = f_montant / f_litres
+        else:
+            prix_moyen = Decimal('0.000')
+        if m3 > 0:
+            litres_par_m3 = f_litres / m3
+        else:
+            litres_par_m3 = Decimal('0.00')
+
+        vehicules_stats.append({
+            'vehicule': f"{modele} ({immat_v or '?'})",
+            'immatriculation': immat_v or '-',
+            'chauffeur_nom': chauffeur or '-',
+            'capacite': capacite,
+            'nb_lots': nb_lots,
+            'total_m3': m3,
+            'total_litres': f_litres,
+            'litres_par_m3': litres_par_m3,
+            'prix_moyen': prix_moyen,
+            'total_montant_gasoil': f_montant,
+            'nb_consos_gasoil': f_nb,
+            'engin_lie': fuel_data.get('engin_nom', ''),
+        })
+        vehicules_vus.add(vid)
+        total_m3 += m3
+        total_gasoil_litres += f_litres
+        total_gasoil_montant += f_montant
+
+    # Ajouter les véhicules (Engins/immat) qui ont du gasoil mais pas de m³ cette periode
+    for immat, f_data in fuel_par_immat.items():
+        deja = False
+        for s in vehicules_stats:
+            if s['immatriculation'] == immat:
+                deja = True
+                break
+        if deja:
+            continue
+        f_litres  = f_data['total_litres']
+        f_montant = f_data['total_montant']
+        f_nb      = f_data['nb_consos']
+        prix_moyen = (f_montant / f_litres) if f_litres > 0 else Decimal('0.000')
+        vehicules_stats.append({
+            'vehicule': f_data.get('engin_nom') or f"Engin {immat}",
+            'immatriculation': immat,
+            'chauffeur_nom': '-',
+            'capacite': None,
+            'nb_lots': 0,
+            'total_m3': Decimal('0'),
+            'total_litres': f_litres,
+            'litres_par_m3': Decimal('0.00'),
+            'prix_moyen': prix_moyen,
+            'total_montant_gasoil': f_montant,
+            'nb_consos_gasoil': f_nb,
+            'engin_lie': f_data.get('engin_nom', ''),
+        })
+        total_gasoil_litres += f_litres
+        total_gasoil_montant += f_montant
+
+    vehicules_stats.sort(key=lambda x: x['total_m3'] or Decimal('0'), reverse=True)
+
+    if total_m3 > 0:
+        gasoil_m3_global = total_gasoil_litres / total_m3
+    else:
+        gasoil_m3_global = Decimal('0.00')
+    if total_gasoil_litres > 0:
+        prix_moyen_global = total_gasoil_montant / total_gasoil_litres
+    else:
+        prix_moyen_global = Decimal('0.000')
+
+    context = {
+        'title': 'Rapport Camion - m³ et Consommation Gasoil',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'vehicules_stats': vehicules_stats,
+        'total_m3': total_m3,
+        'total_gasoil_litres': total_gasoil_litres,
+        'total_gasoil_montant': total_gasoil_montant,
+        'gasoil_m3_global': gasoil_m3_global,
+        'prix_moyen_global': prix_moyen_global,
+        'source_volume': source_volume,
+    }
+    return render(request, 'reports/rapport_camion.html', context)
+
 def _get_commandes_data(request):
     # Logique similaire à rapport_commandes mais simplifiée pour PDF
     pass
