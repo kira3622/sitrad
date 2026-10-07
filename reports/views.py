@@ -18,7 +18,7 @@ from stock.models import MouvementStock, SaisieEntreeLie
 from inventory.models import MatierePremiere
 from billing.models import Facture, LigneFacture
 from formulas.models import FormuleBeton, CompositionFormule
-from logistics.models import Vehicule, Livraison, Chauffeur
+from logistics.models import Vehicule, Livraison, Chauffeur, Pompe
 from fuel_management.models import Consommation as FuelConsommation
 
 # Vue principale des rapports
@@ -1121,6 +1121,43 @@ def rapport_camion(request):
             nb_lots=Count('id')
         )
 
+    # --- 1.bis. Volumes par Pompe (OrdreProduction.pompe FK) ---
+    if source_volume == 'lots':
+        lots_pompe = LotProduction.objects.filter(
+            date_heure_production__date__gte=date_debut,
+            date_heure_production__date__lte=date_fin,
+            ordre_production__pompe__isnull=False
+        )
+        volumes_p = lots_pompe.values(
+            'ordre_production__pompe__id',
+            'ordre_production__pompe__nom',
+            'ordre_production__pompe__immatriculation',
+            'ordre_production__pompe__marque',
+            'ordre_production__pompe__modele',
+            'ordre_production__pompe__operateur__nom',
+        ).annotate(
+            total_m3=Sum('quantite_produite'),
+            nb_lots=Count('id')
+        )
+    else:
+        ordres_pompe = OrdreProduction.objects.filter(
+            date_production__gte=date_debut,
+            date_production__lte=date_fin,
+            statut='termine',
+            pompe__isnull=False
+        )
+        volumes_p = ordres_pompe.values(
+            'pompe__id',
+            'pompe__nom',
+            'pompe__immatriculation',
+            'pompe__marque',
+            'pompe__modele',
+            'pompe__operateur__nom',
+        ).annotate(
+            total_m3=Sum('quantite_produire'),
+            nb_lots=Count('id')
+        )
+
     # --- 2. Gasoil par Engin + build mapping immat -> fuel ---
     fuel_c = FuelConsommation.objects.filter(
         date__gte=date_debut,
@@ -1160,8 +1197,8 @@ def rapport_camion(request):
     total_gasoil_litres = Decimal('0')
     total_gasoil_montant = Decimal('0')
 
-    # Set: vehicules ayant du volume
     vehicules_vus = set()
+    # --- 3.a. Fusionner vehicules ---
     for v in volumes_v:
         vid = v.get('vehicule__id') or v.get('ordre_production__vehicule__id')
         immat_v = (v.get('vehicule__immatriculation') or v.get('ordre_production__vehicule__immatriculation') or '').strip().upper()
@@ -1201,7 +1238,58 @@ def rapport_camion(request):
             'nb_consos_gasoil': f_nb,
             'engin_lie': fuel_data.get('engin_nom', ''),
         })
-        vehicules_vus.add(vid)
+        vehicules_vus.add(('V', vid))
+        total_m3 += m3
+        total_gasoil_litres += f_litres
+        total_gasoil_montant += f_montant
+
+    # --- 3.b. Fusionner pompes ---
+    pompes_vues = set()
+    for p in volumes_p:
+        pid = p.get('pompe__id') or p.get('ordre_production__pompe__id')
+        immat_p = (p.get('pompe__immatriculation') or p.get('ordre_production__pompe__immatriculation') or '').strip().upper()
+        nom_p   = p.get('pompe__nom') or p.get('ordre_production__pompe__nom') or 'Pompe'
+        marque  = p.get('pompe__marque') or p.get('ordre_production__pompe__marque') or '-'
+        modele_p = p.get('pompe__modele') or p.get('ordre_production__pompe__modele') or '-'
+        operateur = p.get('pompe__operateur__nom') or p.get('ordre_production__pompe__operateur__nom')
+        m3 = p['total_m3'] or Decimal('0')
+        nb_lots = p['nb_lots'] or 0
+
+        fuel_data = fuel_par_immat.get(immat_p, {})
+        f_litres  = fuel_data.get('total_litres', Decimal('0'))
+        f_montant = fuel_data.get('total_montant', Decimal('0'))
+        f_nb      = fuel_data.get('nb_consos', 0)
+        if f_litres > 0:
+            prix_moyen = f_montant / f_litres
+        else:
+            prix_moyen = Decimal('0.000')
+        if m3 > 0:
+            litres_par_m3 = f_litres / m3
+            cout_gasoil_par_m3 = f_montant / m3
+        else:
+            litres_par_m3 = Decimal('0.00')
+            cout_gasoil_par_m3 = Decimal('0.00')
+
+        libelle = f"🚿 Pompe {nom_p} - {marque} {modele_p}"
+        if immat_p:
+            libelle += f" ({immat_p})"
+
+        vehicules_stats.append({
+            'vehicule': libelle,
+            'immatriculation': immat_p or '-',
+            'chauffeur_nom': operateur or '-',
+            'capacite': None,
+            'nb_lots': nb_lots,
+            'total_m3': m3,
+            'total_litres': f_litres,
+            'litres_par_m3': litres_par_m3,
+            'cout_gasoil_par_m3': cout_gasoil_par_m3,
+            'prix_moyen': prix_moyen,
+            'total_montant_gasoil': f_montant,
+            'nb_consos_gasoil': f_nb,
+            'engin_lie': fuel_data.get('engin_nom', ''),
+        })
+        pompes_vues.add(pid)
         total_m3 += m3
         total_gasoil_litres += f_litres
         total_gasoil_montant += f_montant
