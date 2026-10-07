@@ -10,6 +10,7 @@ class Pompe(models.Model):
     ]
     
     nom = models.CharField(max_length=100, verbose_name="Nom de la pompe")
+    immatriculation = models.CharField(max_length=20, blank=True, verbose_name="Immatriculation")
     numero_serie = models.CharField(max_length=50, unique=True, verbose_name="Numéro de série")
     marque = models.CharField(max_length=100, verbose_name="Marque")
     modele = models.CharField(max_length=100, verbose_name="Modèle")

@@ -19,15 +19,15 @@ class LivraisonAdmin(admin.ModelAdmin):
 
 @admin.register(Pompe)
 class PompeAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'marque', 'modele', 'statut', 'operateur', 'debit_max', 'actif', 'jours_depuis_maintenance_display')
+    list_display = ('nom', 'immatriculation', 'marque', 'modele', 'statut', 'operateur', 'debit_max', 'actif', 'jours_depuis_maintenance_display')
     list_filter = ('statut', 'marque', 'actif', 'date_acquisition')
-    search_fields = ('nom', 'numero_serie', 'marque', 'modele', 'operateur__nom')
+    search_fields = ('nom', 'immatriculation', 'numero_serie', 'marque', 'modele', 'operateur__nom')
     list_editable = ('statut', 'actif')
     readonly_fields = ('jours_depuis_maintenance_display',)
     
     fieldsets = (
         ('Informations générales', {
-            'fields': ('nom', 'numero_serie', 'marque', 'modele', 'statut', 'actif')
+            'fields': ('nom', 'immatriculation', 'numero_serie', 'marque', 'modele', 'statut', 'actif')
         }),
         ('Caractéristiques techniques', {
             'fields': ('debit_max', 'portee_max', 'hauteur_max')
