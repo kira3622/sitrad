@@ -930,6 +930,7 @@ def rapport_consommation_matieres(request):
     total_cout_matieres_par_bons = Decimal('0.00')
     total_marge_par_bons = Decimal('0.00')
 
+    # --- Passe 1 : prix de vente + coût théorique (composition formule) par bon ---
     for ordre in ordres_production:
         prix_unitaire = ordre.prix_vente_unitaire or Decimal('0.00')
         prix_pompe = ordre.prix_deplacement_pompe or Decimal('0.00')
@@ -940,8 +941,8 @@ def rapport_consommation_matieres(request):
         ordre.prix_total_ordre = (prix_unitaire * qte) + prix_pompe + prix_camion
         total_ventes_global += ordre.prix_total_ordre
 
-        # Coût matières estimé : composition de la formule × prix moyen TTC
-        cout_matieres_ordre = Decimal('0.00')
+        # Coût matières théorique : composition de la formule × prix moyen TTC
+        cout_theo = Decimal('0.00')
         formule = ordre.formule
         if formule:
             qte_ref = formule.quantite_produite_reference or Decimal('0')
@@ -949,12 +950,24 @@ def rapport_consommation_matieres(request):
                 for comp in formule.composition.all():
                     prix_ttc = prix_ttc_par_matiere.get(comp.matiere_premiere_id, Decimal('0.00'))
                     qte_matiere = (comp.quantite / qte_ref) * qte
-                    cout_matieres_ordre += qte_matiere * prix_ttc
+                    cout_theo += qte_matiere * prix_ttc
 
-        ordre.cout_matieres_ordre = cout_matieres_ordre
-        total_cout_matieres_par_bons += cout_matieres_ordre
+        ordre.cout_matieres_theorique = cout_theo
 
-        ordre.marge_ordre = ordre.prix_total_ordre - cout_matieres_ordre
+    # --- Passe 2 : répartir le coût RÉEL (cout_total_global_ttc) proportionnellement
+    # au coût théorique de chaque bon -> somme des coûts par bon = coût réel ---
+    total_cout_theorique = sum(o.cout_matieres_theorique for o in ordres_production)
+
+    for ordre in ordres_production:
+        if total_cout_theorique > 0 and cout_total_global_ttc > 0:
+            ordre.cout_matieres_ordre = (
+                ordre.cout_matieres_theorique / total_cout_theorique
+            ) * cout_total_global_ttc
+        else:
+            ordre.cout_matieres_ordre = Decimal('0.00')
+
+        ordre.marge_ordre = ordre.prix_total_ordre - ordre.cout_matieres_ordre
+        total_cout_matieres_par_bons += ordre.cout_matieres_ordre
         total_marge_par_bons += ordre.marge_ordre
 
         if ordre.prix_total_ordre > 0:
