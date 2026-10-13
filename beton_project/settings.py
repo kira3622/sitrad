@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'logistics',
     'orders',
     'production',
+    'encaissement',
     'reports',
     'stock',
     'notifications',
