@@ -22,6 +22,7 @@ urlpatterns = [
     path('vehicules-journalier/', views.rapport_journalier_vehicules, name='vehicules_journalier'),
     path('cout-formule/', views.rapport_cout_formule, name='cout_formule'),
     path('rapport-camion/', views.rapport_camion, name='rapport_camion'),
+    path('rapport-client/', views.rapport_client, name='rapport_client'),
     
     # Endpoints JSON pour graphiques admin
     path('json/daily-production/', views.json_daily_production, name='json_daily_production'),

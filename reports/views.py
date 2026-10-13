@@ -1366,6 +1366,106 @@ def rapport_camion(request):
     }
     return render(request, 'reports/rapport_camion.html', context)
 
+
+@staff_member_required
+def rapport_client(request):
+    """
+    Rapport Client: liste des bons de production par client avec
+    date, N° bon, volume (m³), prix unitaire et montant.
+    - Groupé par client avec sous-totaux (volume + montant)
+    - Filtres: date_debut / date_fin (30 jours par defaut), client optionnel
+    """
+    date_debut_str = request.GET.get('date_debut')
+    date_fin_str = request.GET.get('date_fin')
+    client_id = request.GET.get('client')
+
+    if date_debut_str:
+        try:
+            date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_debut = (timezone.now() - timedelta(days=30)).date()
+    else:
+        date_debut = (timezone.now() - timedelta(days=30)).date()
+
+    if date_fin_str:
+        try:
+            date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_fin = timezone.now().date()
+    else:
+        date_fin = timezone.now().date()
+
+    # Ordres de production sur la periode
+    ordres_qs = OrdreProduction.objects.filter(
+        date_production__range=[date_debut, date_fin]
+    ).select_related('commande', 'commande__client', 'formule').order_by(
+        'commande__client__nom', 'date_production', 'id'
+    )
+
+    if client_id:
+        ordres_qs = ordres_qs.filter(commande__client_id=client_id)
+
+    # Grouper par client
+    clients_data = {}
+    total_volume_global = Decimal('0.00')
+    total_montant_global = Decimal('0.00')
+
+    for ordre in ordres_qs:
+        client = ordre.commande.client if ordre.commande else None
+        client_id_key = client.id if client else 0
+        client_nom = client.nom if client else 'Client inconnu'
+
+        qte = ordre.quantite_produire or Decimal('0.00')
+        pu = ordre.prix_vente_unitaire or Decimal('0.00')
+        montant = qte * pu
+
+        if client_id_key not in clients_data:
+            clients_data[client_id_key] = {
+                'client_nom': client_nom,
+                'ordres': [],
+                'sous_total_volume': Decimal('0.00'),
+                'sous_total_montant': Decimal('0.00'),
+            }
+
+        clients_data[client_id_key]['ordres'].append({
+            'date_production': ordre.date_production,
+            'numero_bon': ordre.numero_bon or f'#{ordre.id}',
+            'formule_nom': ordre.formule.nom if ordre.formule else '-',
+            'quantite_produire': qte,
+            'prix_vente_unitaire': pu,
+            'montant': montant,
+        })
+        clients_data[client_id_key]['sous_total_volume'] += qte
+        clients_data[client_id_key]['sous_total_montant'] += montant
+        total_volume_global += qte
+        total_montant_global += montant
+
+    clients_list = list(clients_data.values())
+
+    if total_volume_global > 0:
+        pu_moyen_global = total_montant_global / total_volume_global
+    else:
+        pu_moyen_global = Decimal('0.00')
+
+    # Liste des clients pour le filtre
+    clients_choices = Client.objects.all().order_by('nom')
+
+    context = {
+        'title': 'Rapport Client',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'client_id': client_id,
+        'clients_choices': clients_choices,
+        'clients_data': clients_list,
+        'total_volume_global': total_volume_global,
+        'total_montant_global': total_montant_global,
+        'pu_moyen_global': pu_moyen_global,
+        'nb_clients': len(clients_list),
+        'nb_ordres': ordres_qs.count(),
+    }
+    return render(request, 'reports/rapport_client.html', context)
+
+
 def _get_commandes_data(request):
     # Logique similaire à rapport_commandes mais simplifiée pour PDF
     pass
