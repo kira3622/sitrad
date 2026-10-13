@@ -1446,7 +1446,9 @@ def rapport_client(request):
 
         qte = ordre.quantite_produire or Decimal('0.00')
         pu = ordre.prix_vente_unitaire or Decimal('0.00')
-        montant = qte * pu
+        prix_dep_pompe = ordre.prix_deplacement_pompe or Decimal('0.00')
+        prix_dep_camion = ordre.prix_deplacement_camion or Decimal('0.00')
+        montant = qte * pu + prix_dep_pompe + prix_dep_camion
 
         # Encaissements liés à ce bon
         enc_list = encaissements_par_ordre.get(ordre.id, [])
@@ -1469,6 +1471,8 @@ def rapport_client(request):
             'formule_nom': ordre.formule.nom if ordre.formule else '-',
             'quantite_produire': qte,
             'prix_vente_unitaire': pu,
+            'prix_deplacement_pompe': prix_dep_pompe,
+            'prix_deplacement_camion': prix_dep_camion,
             'montant': montant,
             'encaissements': enc_list,
             'total_encaisse_bon': total_encaisse_bon,
@@ -1505,6 +1509,8 @@ def rapport_client(request):
             'formule_nom': '-',
             'quantite_produire': Decimal('0.00'),
             'prix_vente_unitaire': Decimal('0.00'),
+            'prix_deplacement_pompe': Decimal('0.00'),
+            'prix_deplacement_camion': Decimal('0.00'),
             'montant': Decimal('0.00'),
             'encaissements': enc_glob_list,
             'total_encaisse_bon': total_encaisse_glob,

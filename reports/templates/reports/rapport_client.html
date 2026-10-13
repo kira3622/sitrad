@@ -67,6 +67,8 @@
               <th style="text-align:left; padding: 10px; border: 1px solid #e2e8f0;">N° Bon</th>
               <th style="text-align:left; padding: 10px; border: 1px solid #e2e8f0;">Type Béton</th>
               <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">Volume (m³)</th>
+              <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">Dépl. Pompe (MAD)</th>
+              <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">Dépl. Camion (MAD)</th>
               <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">PU (MAD)</th>
               <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">Montant (MAD)</th>
               <th style="text-align:left; padding: 10px; border: 1px solid #e2e8f0;">Encaissement(s)</th>
@@ -80,6 +82,8 @@
                 <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #007cba;">{{ o.numero_bon }}</td>
                 <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #475569;">{{ o.formule_nom }}</td>
                 <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; color: #1e40af; font-weight: 600;">{{ o.quantite_produire|floatformat:2 }}</td>
+                <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; color: #9333ea;">{{ o.prix_deplacement_pompe|floatformat:2 }}</td>
+                <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; color: #9333ea;">{{ o.prix_deplacement_camion|floatformat:2 }}</td>
                 <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; color: #7f8c8d;">{{ o.prix_vente_unitaire|floatformat:2 }}</td>
                 <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #166534;">{{ o.montant|floatformat:2 }}</td>
                 <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #5b21b6; font-size: 13px;">
@@ -102,6 +106,8 @@
               <td colspan="3" style="padding: 10px; text-align: right;">Sous-total {{ client.client_nom }}</td>
               <td style="padding: 10px; text-align: right; color: #1e40af;">{{ client.sous_total_volume|floatformat:2 }} m³</td>
               <td style="padding: 10px; text-align: right; color: #7f8c8d;">-</td>
+              <td style="padding: 10px; text-align: right; color: #7f8c8d;">-</td>
+              <td style="padding: 10px; text-align: right; color: #7f8c8d;">-</td>
               <td style="padding: 10px; text-align: right; color: #166534;">{{ client.sous_total_montant|floatformat:2 }} MAD</td>
               <td style="padding: 10px; text-align: right; color: #5b21b6;">{{ client.sous_total_encaisse|floatformat:2 }} MAD</td>
             </tr>
@@ -116,6 +122,8 @@
           <tr style="background: #052e16; color: #fff; font-size: 1.1em; font-weight: 800; border-top: 3px solid #15803d;">
             <td colspan="3" style="padding: 12px; text-align: right;">TOTAL GÉNÉRAL</td>
             <td style="padding: 12px; text-align: right; color: #bfdbfe;">{{ total_volume_global|floatformat:2 }} m³</td>
+            <td style="padding: 12px; text-align: right; color: #e2e8f0;">-</td>
+            <td style="padding: 12px; text-align: right; color: #e2e8f0;">-</td>
             <td style="padding: 12px; text-align: right; color: #e2e8f0;">-</td>
             <td style="padding: 12px; text-align: right; color: #86efac;">{{ total_montant_global|floatformat:2 }} MAD</td>
             <td style="padding: 12px; text-align: right; color: #c4b5fd;">{{ total_encaisse_global|floatformat:2 }} MAD</td>
