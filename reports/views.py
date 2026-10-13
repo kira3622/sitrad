@@ -20,6 +20,7 @@ from billing.models import Facture, LigneFacture
 from formulas.models import FormuleBeton, CompositionFormule
 from logistics.models import Vehicule, Livraison, Chauffeur, Pompe
 from fuel_management.models import Consommation as FuelConsommation
+from encaissement.models import Encaissement
 
 # Vue principale des rapports
 def dashboard_reports(request):
@@ -1405,10 +1406,38 @@ def rapport_client(request):
     if client_id:
         ordres_qs = ordres_qs.filter(commande__client_id=client_id)
 
+    # --- Encaissements sur la même période ---
+    encaissements_qs = Encaissement.objects.filter(
+        date_encaissement__range=[date_debut, date_fin]
+    ).select_related('ordre_production', 'client')
+
+    if client_id:
+        encaissements_qs = encaissements_qs.filter(client_id=client_id)
+
+    # Mapping ordre_production_id -> liste des encaissements liés
+    encaissements_par_ordre = {}
+    # Mapping client_id -> liste des encaissements globaux (non liés à un bon)
+    encaissements_globaux_par_client = {}
+
+    for enc in encaissements_qs:
+        enc_data = {
+            'reference': enc.reference,
+            'montant': enc.montant or Decimal('0.00'),
+            'date_encaissement': enc.date_encaissement,
+            'mode_reglement': enc.get_mode_reglement_display(),
+        }
+        op_id = enc.ordre_production_id
+        if op_id:
+            encaissements_par_ordre.setdefault(op_id, []).append(enc_data)
+        else:
+            cid = enc.client_id or 0
+            encaissements_globaux_par_client.setdefault(cid, []).append(enc_data)
+
     # Grouper par client
     clients_data = {}
     total_volume_global = Decimal('0.00')
     total_montant_global = Decimal('0.00')
+    total_encaisse_global = Decimal('0.00')
 
     for ordre in ordres_qs:
         client = ordre.commande.client if ordre.commande else None
@@ -1419,12 +1448,19 @@ def rapport_client(request):
         pu = ordre.prix_vente_unitaire or Decimal('0.00')
         montant = qte * pu
 
+        # Encaissements liés à ce bon
+        enc_list = encaissements_par_ordre.get(ordre.id, [])
+        total_encaisse_bon = sum(
+            (e['montant'] for e in enc_list), Decimal('0.00')
+        )
+
         if client_id_key not in clients_data:
             clients_data[client_id_key] = {
                 'client_nom': client_nom,
                 'ordres': [],
                 'sous_total_volume': Decimal('0.00'),
                 'sous_total_montant': Decimal('0.00'),
+                'sous_total_encaisse': Decimal('0.00'),
             }
 
         clients_data[client_id_key]['ordres'].append({
@@ -1434,11 +1470,48 @@ def rapport_client(request):
             'quantite_produire': qte,
             'prix_vente_unitaire': pu,
             'montant': montant,
+            'encaissements': enc_list,
+            'total_encaisse_bon': total_encaisse_bon,
+            'is_global': False,
         })
         clients_data[client_id_key]['sous_total_volume'] += qte
         clients_data[client_id_key]['sous_total_montant'] += montant
+        clients_data[client_id_key]['sous_total_encaisse'] += total_encaisse_bon
         total_volume_global += qte
         total_montant_global += montant
+        total_encaisse_global += total_encaisse_bon
+
+    # --- Ajouter les encaissements globaux (non liés à un bon) par client ---
+    for cid, enc_glob_list in encaissements_globaux_par_client.items():
+        client = Client.objects.filter(id=cid).first()
+        client_nom = client.nom if client else 'Client inconnu'
+        total_encaisse_glob = sum(
+            (e['montant'] for e in enc_glob_list), Decimal('0.00')
+        )
+        date_glob = enc_glob_list[0]['date_encaissement'] if enc_glob_list else None
+
+        if cid not in clients_data:
+            clients_data[cid] = {
+                'client_nom': client_nom,
+                'ordres': [],
+                'sous_total_volume': Decimal('0.00'),
+                'sous_total_montant': Decimal('0.00'),
+                'sous_total_encaisse': Decimal('0.00'),
+            }
+
+        clients_data[cid]['ordres'].append({
+            'date_production': date_glob,
+            'numero_bon': 'Encaissement global',
+            'formule_nom': '-',
+            'quantite_produire': Decimal('0.00'),
+            'prix_vente_unitaire': Decimal('0.00'),
+            'montant': Decimal('0.00'),
+            'encaissements': enc_glob_list,
+            'total_encaisse_bon': total_encaisse_glob,
+            'is_global': True,
+        })
+        clients_data[cid]['sous_total_encaisse'] += total_encaisse_glob
+        total_encaisse_global += total_encaisse_glob
 
     clients_list = list(clients_data.values())
 
@@ -1459,6 +1532,7 @@ def rapport_client(request):
         'clients_data': clients_list,
         'total_volume_global': total_volume_global,
         'total_montant_global': total_montant_global,
+        'total_encaisse_global': total_encaisse_global,
         'pu_moyen_global': pu_moyen_global,
         'nb_clients': len(clients_list),
         'nb_ordres': ordres_qs.count(),

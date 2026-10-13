@@ -48,6 +48,10 @@
       <div style="color: #7c2d12; font-size: 13px;">PU Moyen</div>
       <div style="font-weight: 700; font-size: 22px; color: #7c2d12;">{{ pu_moyen_global|floatformat:2 }} MAD/m³</div>
     </div>
+    <div class="kpi-item" style="background: #f5f3ff; border: 1px solid #c4b5fd; padding: 12px; border-radius: 4px;">
+      <div style="color: #5b21b6; font-size: 13px;">Total Encaissé</div>
+      <div style="font-weight: 700; font-size: 22px; color: #5b21b6;">{{ total_encaisse_global|floatformat:2 }} MAD</div>
+    </div>
   </div>
 
   {% if clients_data and clients_data|length > 0 %}
@@ -65,6 +69,8 @@
               <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">Volume (m³)</th>
               <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">PU (MAD)</th>
               <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">Montant (MAD)</th>
+              <th style="text-align:left; padding: 10px; border: 1px solid #e2e8f0;">Encaissement(s)</th>
+              <th style="text-align:right; padding: 10px; border: 1px solid #e2e8f0;">Total Encaissé (MAD)</th>
             </tr>
           </thead>
           <tbody>
@@ -76,6 +82,18 @@
                 <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; color: #1e40af; font-weight: 600;">{{ o.quantite_produire|floatformat:2 }}</td>
                 <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; color: #7f8c8d;">{{ o.prix_vente_unitaire|floatformat:2 }}</td>
                 <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #166534;">{{ o.montant|floatformat:2 }}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #5b21b6; font-size: 13px;">
+                  {% if o.encaissements %}
+                    {% for e in o.encaissements %}
+                      <div><strong>{{ e.reference }}</strong> ({{ e.mode_reglement }}) - {{ e.montant|floatformat:2 }} MAD</div>
+                    {% endfor %}
+                  {% else %}
+                    <span style="color: #94a3b8;">—</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 10px; text-align:right; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #5b21b6;">
+                  {% if o.total_encaisse_bon > 0 %}{{ o.total_encaisse_bon|floatformat:2 }}{% else %}0,00{% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
@@ -85,6 +103,7 @@
               <td style="padding: 10px; text-align: right; color: #1e40af;">{{ client.sous_total_volume|floatformat:2 }} m³</td>
               <td style="padding: 10px; text-align: right; color: #7f8c8d;">-</td>
               <td style="padding: 10px; text-align: right; color: #166534;">{{ client.sous_total_montant|floatformat:2 }} MAD</td>
+              <td style="padding: 10px; text-align: right; color: #5b21b6;">{{ client.sous_total_encaisse|floatformat:2 }} MAD</td>
             </tr>
           </tfoot>
         </table>
@@ -99,10 +118,125 @@
             <td style="padding: 12px; text-align: right; color: #bfdbfe;">{{ total_volume_global|floatformat:2 }} m³</td>
             <td style="padding: 12px; text-align: right; color: #e2e8f0;">-</td>
             <td style="padding: 12px; text-align: right; color: #86efac;">{{ total_montant_global|floatformat:2 }} MAD</td>
+            <td style="padding: 12px; text-align: right; color: #c4b5fd;">{{ total_encaisse_global|floatformat:2 }} MAD</td>
           </tr>
         </tfoot>
       </table>
     </div>
+
+    <!-- Graphique secteur 3D : Total bons de production vs Total encaissements -->
+    <div style="margin-top: 32px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+      <h3 style="margin: 0 0 16px 0; color: #0f172a; border-left: 4px solid #7c3aed; padding-left: 10px;">
+        Répartition : Bons de production vs Encaissements
+      </h3>
+      <div id="pieChart3d" style="width: 100%; height: 420px;"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+    (function () {
+      var chartDom = document.getElementById('pieChart3d');
+      if (!chartDom || typeof echarts === 'undefined') return;
+
+      var totalBons = {{ total_montant_global|floatformat:2 }};
+      var totalEncaisse = {{ total_encaisse_global|floatformat:2 }};
+      var total = totalBons + totalEncaisse;
+
+      var pctBons = total > 0 ? (totalBons / total * 100) : 0;
+      var pctEncaisse = total > 0 ? (totalEncaisse / total * 100) : 0;
+
+      var myChart = echarts.init(chartDom);
+
+      // Effet 3D : deux secteurs superposés (côté sombre + dessus clair)
+      var data = [
+        { name: 'Total Bons de production', value: totalBons, itemStyle: { color: '#16a34a' } },
+        { name: 'Total Encaissements', value: totalEncaisse, itemStyle: { color: '#7c3aed' } }
+      ];
+
+      var series3d = [];
+      var seriesIdx = 0;
+
+      // Couche "côté" (effet de profondeur) - décalée vers le bas
+      data.forEach(function (item) {
+        series3d.push({
+          name: 'side_' + item.name,
+          type: 'pie',
+          radius: ['45%', '70%'],
+          center: ['50%', '58%'],
+          startAngle: 90,
+          label: { show: false },
+          labelLine: { show: false },
+          data: [{
+            name: item.name,
+            value: item.value,
+            itemStyle: {
+              color: item.itemStyle.color,
+              opacity: 0.55,
+              shadowBlur: 20,
+              shadowColor: 'rgba(0,0,0,0.3)'
+            }
+          }],
+          silent: true
+        });
+      });
+
+      // Couche "dessus" (le vrai secteur)
+      series3d.push({
+        name: 'top',
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['50%', '50%'],
+        startAngle: 90,
+        avoidLabelOverlap: true,
+        itemStyle: {
+          borderColor: '#fff',
+          borderWidth: 3
+        },
+        label: {
+          show: true,
+          formatter: function (params) {
+            var val = Number(params.value).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return params.name + '\n' + val + ' MAD\n(' + params.percent + '%)';
+          },
+          fontSize: 13,
+          fontWeight: 600,
+          color: '#1f2937'
+        },
+        labelLine: {
+          show: true,
+          length: 15,
+          length2: 20
+        },
+        emphasis: {
+          scale: true,
+          scaleSize: 10
+        },
+        data: data
+      });
+
+      var option = {
+        tooltip: {
+          trigger: 'item',
+          formatter: function (params) {
+            var val = Number(params.value).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return params.name + '<br/>' + val + ' MAD<br/>(' + params.percent + '%)';
+          }
+        },
+        legend: {
+          orient: 'horizontal',
+          bottom: 0,
+          itemWidth: 18,
+          itemHeight: 18,
+          textStyle: { fontSize: 13, fontWeight: 600 }
+        },
+        series: series3d
+      };
+
+      myChart.setOption(option);
+
+      window.addEventListener('resize', function () { myChart.resize(); });
+    })();
+    </script>
   {% else %}
     <div style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 16px; border-radius: 4px; margin: 20px 0;">
       Aucun bon de production trouvé pour cette période.
