@@ -1,11 +1,16 @@
 from django.contrib import admin
-from .models import Encaissement
+from django.urls import path
+from django.http import JsonResponse
 from django.utils.html import format_html
-from decimal import Decimal
+from .models import Encaissement
+from .forms import EncaissementForm
+from production.models import OrdreProduction
 
 
 @admin.register(Encaissement)
 class EncaissementAdmin(admin.ModelAdmin):
+    form = EncaissementForm
+
     list_display = (
         'reference',
         'client',
@@ -27,7 +32,7 @@ class EncaissementAdmin(admin.ModelAdmin):
         'ordre_production__numero_bon',
         'notes',
     )
-    autocomplete_fields = ('client', 'ordre_production')
+    autocomplete_fields = ('client',)
     readonly_fields = ('reference', 'date_creation', 'date_modification')
     date_hierarchy = 'date_encaissement'
 
@@ -46,6 +51,9 @@ class EncaissementAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+    class Media:
+        js = ('admin/js/encaissement_admin.js',)
 
     def numero_bon_display(self, obj):
         if obj.ordre_production and obj.ordre_production.numero_bon:
@@ -67,3 +75,30 @@ class EncaissementAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related('client', 'ordre_production')
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'bons-par-client/<int:client_id>/',
+                self.admin_site.admin_view(self.bons_par_client_view),
+                name='encaissement_bons_par_client',
+            ),
+        ]
+        return custom_urls + urls
+
+    def bons_par_client_view(self, request, client_id):
+        """Retourne la liste des bons de livraison (OrdreProduction) d'un client, triés par numéro de bon."""
+        bons = OrdreProduction.objects.filter(
+            commande__client_id=client_id
+        ).order_by('numero_bon').select_related('formule')
+
+        data = [
+            {
+                'id': bon.id,
+                'numero_bon': bon.numero_bon or f'#{bon.id}',
+                'label': f"{bon.numero_bon or '#'+str(bon.id)} - {bon.formule.nom if bon.formule else '-'} ({bon.quantite_produire} m³)",
+            }
+            for bon in bons
+        ]
+        return JsonResponse({'bons': data})
