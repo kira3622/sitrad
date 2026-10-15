@@ -1,4 +1,6 @@
+import json
 import logging
+import time
 
 import requests
 from django.conf import settings
@@ -6,7 +8,8 @@ from django.db.models import Count, Sum
 
 logger = logging.getLogger(__name__)
 
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/{model}"
+STREAM_URL = GEMINI_BASE + ":streamGenerateContent?alt=sse"
 
 SYSTEM_PROMPT = (
     "Tu es l'assistant IA de SITRAD, une centrale à béton. "
@@ -89,13 +92,53 @@ def _convert_history(messages):
     return contents
 
 
-def _post_gemini(url, api_key, payload, timeout):
-    return requests.post(
-        url,
-        headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-        json=payload,
-        timeout=timeout,
+def _headers(api_key):
+    return {"x-goog-api-key": api_key, "Content-Type": "application/json"}
+
+
+def _extract_sse_text(lines):
+    """Agrège le texte des réponses SSE de Gemini (en ignorant les 'thoughts')."""
+    parts = []
+    for line in lines:
+        if isinstance(line, (bytes, bytearray)):
+            line = line.decode("utf-8", "ignore")
+        line = (line or "").strip()
+        if not line.startswith("data: "):
+            continue
+        chunk = line[6:].strip()
+        if not chunk or chunk == "[DONE]":
+            continue
+        try:
+            data = json.loads(chunk)
+        except ValueError:
+            continue
+        for cand in data.get("candidates") or []:
+            content = cand.get("content") or {}
+            for part in content.get("parts") or []:
+                if part.get("text") and not part.get("thought"):
+                    parts.append(part["text"])
+    return "".join(parts).strip()
+
+
+def _call_streaming(model, api_key, payload, timeout):
+    """Appelle Gemini en streaming (SSE) pour éviter les timeouts de lecture.
+
+    Renvoie (texte, status_code, corps_d_erreur).
+    """
+    url = STREAM_URL.format(model=model)
+    resp = requests.post(
+        url, headers=_headers(api_key), json=payload, stream=True,
+        timeout=(10, timeout),
     )
+    if resp.status_code != 200:
+        body = resp.text[:400]
+        resp.close()
+        return None, resp.status_code, body
+    try:
+        text = _extract_sse_text(resp.iter_lines())
+    finally:
+        resp.close()
+    return text, 200, ""
 
 
 def call_gemini(contents, business_context=""):
@@ -105,7 +148,6 @@ def call_gemini(contents, business_context=""):
         return None, "Clé API Gemini non configurée (GEMINI_API_KEY)."
 
     model = getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash")
-    url = GEMINI_URL.format(model=model)
     timeout = getattr(settings, "GEMINI_TIMEOUT", 90)
     thinking_level = str(getattr(settings, "GEMINI_THINKING_LEVEL", "low")).strip().lower()
     if thinking_level not in ("minimal", "low", "medium", "high"):
@@ -115,43 +157,40 @@ def call_gemini(contents, business_context=""):
     if business_context:
         system_text = f"{SYSTEM_PROMPT}\n\n{business_context}"
 
-    generation_config = {
-        "temperature": 0.7,
-        "maxOutputTokens": 1500,
-        # Réduit le temps de "réflexion" du modèle pour éviter les timeouts.
-        "thinkingConfig": {"thinkingLevel": thinking_level},
-    }
     payload = {
         "systemInstruction": {"parts": [{"text": system_text}]},
         "contents": contents,
-        "generationConfig": generation_config,
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 1500,
+            # Réduit le temps de "réflexion" (valeurs : minimal/low/medium/high, minuscules).
+            "thinkingConfig": {"thinkingLevel": thinking_level},
+        },
     }
 
+    started = time.monotonic()
+    logger.info("Gemini appel : model=%s thinking=%s", model, thinking_level)
     try:
-        resp = _post_gemini(url, api_key, payload, timeout)
-        # Si le modèle ne supporte pas thinkingConfig, on réessaie sans.
-        if resp.status_code == 400 and "thinking" in resp.text.lower():
-            logger.warning("thinkingConfig refusé, nouvel essai sans : %s", resp.text[:300])
-            generation_config.pop("thinkingConfig", None)
-            resp = _post_gemini(url, api_key, payload, timeout)
+        text, status_code, body = _call_streaming(model, api_key, payload, timeout)
+        # Si le paramètre de réflexion est refusé, on réessaie sans.
+        if status_code == 400 and "thinking" in body.lower():
+            logger.warning("thinkingConfig refusé, essai sans : %s", body)
+            payload["generationConfig"].pop("thinkingConfig", None)
+            text, status_code, body = _call_streaming(model, api_key, payload, timeout)
     except requests.RequestException as exc:
-        logger.error("Erreur réseau Gemini : %s", exc)
-        return None, "Le service IA met trop de temps à répondre. Réessayez."
+        elapsed = time.monotonic() - started
+        logger.error("Erreur réseau Gemini après %.1fs : %s", elapsed, exc)
+        return None, "Le service IA met trop de temps à répondre. Réessayez dans un instant."
 
-    if resp.status_code != 200:
-        logger.error("Gemini HTTP %s : %s", resp.status_code, resp.text[:500])
-        return None, f"Erreur du service IA (HTTP {resp.status_code})."
+    elapsed = time.monotonic() - started
+    logger.info("Gemini répondu en %.1fs (HTTP %s)", elapsed, status_code)
 
-    try:
-        data = resp.json()
-        parts = data["candidates"][0]["content"]["parts"]
-        text = "".join(p.get("text", "") for p in parts if p.get("text")).strip()
-    except (KeyError, IndexError, ValueError) as exc:
-        logger.error("Réponse Gemini inattendue : %s", exc)
-        return None, "Réponse IA illisible."
+    if status_code != 200:
+        logger.error("Gemini HTTP %s : %s", status_code, body)
+        return None, f"Erreur du service IA (HTTP {status_code}) : {body[:200]}"
 
     if not text:
-        return None, "L'IA n'a pas renvoyé de texte."
+        return None, "L'IA n'a pas renvoyé de texte (réponse vide)."
     return text, None
 
 
