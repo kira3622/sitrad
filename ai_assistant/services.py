@@ -105,17 +105,55 @@ def build_business_context():
 
     try:
         from production.models import OrdreProduction
-        top = (
+        from encaissement.models import Encaissement
+
+        par_client = (
             OrdreProduction.objects.values("commande__client__nom")
-            .annotate(nb=Count("id")).order_by("-nb")[:5]
+            .annotate(nb=Count("id"), volume=Sum("quantite_produire"))
+            .order_by("-volume")
         )
-        items = ", ".join(
-            f"{t['commande__client__nom'] or 'Inconnu'} ({t['nb']})" for t in top
-        )
-        if items:
-            lines.append(f"- Top clients par nombre de bons : {items}")
+
+        enc_par_client = {}
+        for e in Encaissement.objects.values("client__nom").annotate(total=Sum("montant")):
+            if e["client__nom"]:
+                enc_par_client[e["client__nom"]] = e["total"]
+
+        lignes_clients = []
+        for c in par_client[:20]:
+            nom = c["commande__client__nom"] or "Inconnu"
+            vol = float(c["volume"] or 0)
+            nb = c["nb"]
+            bons = OrdreProduction.objects.filter(commande__client__nom=nom)
+            montant = sum(
+                float((b.quantite_produire or 0) * (b.prix_vente_unitaire or 0))
+                + float(b.prix_deplacement_pompe or 0)
+                + float(b.prix_deplacement_camion or 0)
+                for b in bons
+            )
+            encaisse = float(enc_par_client.get(nom, 0) or 0)
+            solde = montant - encaisse
+            lignes_clients.append(
+                f"{nom} : volume {_money(vol)} m³, {nb} bons, "
+                f"montant {_money(montant)} MAD, encaissé {_money(encaisse)} MAD, "
+                f"reste à recouvrer {_money(solde)} MAD"
+            )
+
+        if lignes_clients:
+            lines.append("- Détail par client (top 20 par volume) :")
+            lines.extend(f"    * {l}" for l in lignes_clients)
+
+        noms = [c["commande__client__nom"] for c in par_client if c["commande__client__nom"]]
+        if noms:
+            lines.append(f"- Clients ayant des bons de production : {', '.join(noms)}")
+
+        from customers.models import Client
+        tous = list(Client.objects.values_list("nom", flat=True))
+        if tous:
+            lines.append(
+                f"- Tous les clients enregistrés ({len(tous)}) : {', '.join(tous)}"
+            )
     except Exception as exc:
-        logger.warning("Contexte top clients indisponible : %s", exc)
+        logger.warning("Contexte detail clients indisponible : %s", exc)
 
     if not lines:
         return ""
