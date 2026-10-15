@@ -5,7 +5,7 @@ services:
     env: python
     plan: free
     buildCommand: "python render_build.py"
-    startCommand: "python manage.py migrate --noinput && python create_superuser.py && gunicorn beton_project.wsgi:application"
+    startCommand: "python manage.py migrate --noinput && python create_superuser.py && gunicorn -c gunicorn.conf.py beton_project.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

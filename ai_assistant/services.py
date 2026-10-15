@@ -89,6 +89,15 @@ def _convert_history(messages):
     return contents
 
 
+def _post_gemini(url, api_key, payload, timeout):
+    return requests.post(
+        url,
+        headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+        json=payload,
+        timeout=timeout,
+    )
+
+
 def call_gemini(contents, business_context=""):
     """Appelle l'API Google Gemini et renvoie (texte, erreur)."""
     api_key = getattr(settings, "GEMINI_API_KEY", "") or ""
@@ -97,27 +106,35 @@ def call_gemini(contents, business_context=""):
 
     model = getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash")
     url = GEMINI_URL.format(model=model)
+    timeout = getattr(settings, "GEMINI_TIMEOUT", 90)
+    thinking_level = getattr(settings, "GEMINI_THINKING_LEVEL", "LOW")
 
     system_text = SYSTEM_PROMPT
     if business_context:
         system_text = f"{SYSTEM_PROMPT}\n\n{business_context}"
 
+    generation_config = {
+        "temperature": 0.7,
+        "maxOutputTokens": 1500,
+        # Réduit le temps de "réflexion" du modèle pour éviter les timeouts.
+        "thinkingConfig": {"thinkingLevel": thinking_level},
+    }
     payload = {
         "systemInstruction": {"parts": [{"text": system_text}]},
         "contents": contents,
-        "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2048},
+        "generationConfig": generation_config,
     }
 
     try:
-        resp = requests.post(
-            url,
-            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-            json=payload,
-            timeout=60,
-        )
+        resp = _post_gemini(url, api_key, payload, timeout)
+        # Si le modèle ne supporte pas thinkingConfig, on réessaie sans.
+        if resp.status_code == 400 and "thinking" in resp.text.lower():
+            logger.warning("thinkingConfig refusé, nouvel essai sans : %s", resp.text[:300])
+            generation_config.pop("thinkingConfig", None)
+            resp = _post_gemini(url, api_key, payload, timeout)
     except requests.RequestException as exc:
         logger.error("Erreur réseau Gemini : %s", exc)
-        return None, "Impossible de contacter le service IA."
+        return None, "Le service IA met trop de temps à répondre. Réessayez."
 
     if resp.status_code != 200:
         logger.error("Gemini HTTP %s : %s", resp.status_code, resp.text[:500])
@@ -126,7 +143,7 @@ def call_gemini(contents, business_context=""):
     try:
         data = resp.json()
         parts = data["candidates"][0]["content"]["parts"]
-        text = "".join(p.get("text", "") for p in parts).strip()
+        text = "".join(p.get("text", "") for p in parts if p.get("text")).strip()
     except (KeyError, IndexError, ValueError) as exc:
         logger.error("Réponse Gemini inattendue : %s", exc)
         return None, "Réponse IA illisible."
@@ -134,6 +151,7 @@ def call_gemini(contents, business_context=""):
     if not text:
         return None, "L'IA n'a pas renvoyé de texte."
     return text, None
+
 
 
 def generate_assistant_reply(conversation, user_text):

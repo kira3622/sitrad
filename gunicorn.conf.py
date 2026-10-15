@@ -6,7 +6,7 @@ worker_class = 'sync'  # Classe de worker (sync, eventlet, gevent, tornado)
 worker_connections = 1000  # Nombre maximum de connexions par worker
 max_requests = 1000  # Nombre maximum de requêtes avant le redémarrage du worker
 max_requests_jitter = 50  # Jitter pour éviter le redémarrage simultané
-timeout = 30  # Temps d'attente maximum pour une requête
+timeout = 120  # Temps d'attente maximum pour une requête (assistant IA inclus)
 keepalive = 2  # Temps de keepalive
 
 # Configuration du binding

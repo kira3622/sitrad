@@ -1,1 +1,1 @@
-web: gunicorn beton_project.wsgi:application
+web: gunicorn -c gunicorn.conf.py beton_project.wsgi:application
