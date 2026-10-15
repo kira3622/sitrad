@@ -95,7 +95,7 @@ def call_gemini(contents, business_context=""):
     if not api_key:
         return None, "Clé API Gemini non configurée (GEMINI_API_KEY)."
 
-    model = getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash")
+    model = getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash")
     url = GEMINI_URL.format(model=model)
 
     system_text = SYSTEM_PROMPT
