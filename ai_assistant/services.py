@@ -4,7 +4,8 @@ import time
 
 import requests
 from django.conf import settings
-from django.db.models import Count, Sum
+from django.db.models import Count, Max, Min, Sum
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,11 @@ SYSTEM_PROMPT = (
     "Tu aides les gestionnaires, commerciaux et opérateurs en proposant des idées, "
     "des analyses et des recommandations concrètes (production, ventes, encaissements, "
     "stock, coûts, organisation). Réponds toujours en français, de façon claire et structurée. "
-    "Lorsque des données de l'entreprise sont fournies, appuie ton analyse sur ces chiffres."
+    "Lorsque des données de l'entreprise sont fournies, appuie ton analyse sur ces chiffres. "
+    "La date du jour te sera fournie : utilise-la comme référence absolue et ne considère jamais "
+    "une date passée ou égale comme future. "
+    "Ne prétends jamais disposer d'une information absente des données fournies : "
+    "si un chiffre n'y figure pas, dis-le explicitement au lieu d'inventer une valeur."
 )
 
 
@@ -30,6 +35,12 @@ def _money(value):
 def build_business_context():
     """Construit un instantané des données réelles de l'entreprise pour alimenter l'IA."""
     lines = []
+
+    aujourd_hui = timezone.localdate()
+    lines.append(
+        "- Date du jour (référence absolue pour tes calculs) : "
+        f"{aujourd_hui.strftime('%d/%m/%Y')} ({aujourd_hui.isoformat()})"
+    )
 
     try:
         from customers.models import Client
@@ -52,6 +63,33 @@ def build_business_context():
             f"{_money(qs.aggregate(v=Sum('quantite_produire')).get('v'))} m³"
         )
         lines.append(f"- Montant total des bons : {_money(total_montant)} MAD")
+
+        bornes = qs.aggregate(dmin=Min("date_production"), dmax=Max("date_production"))
+        if bornes["dmin"] and bornes["dmax"]:
+            lines.append(
+                "- Période couverte par les productions : du "
+                f"{bornes['dmin'].strftime('%d/%m/%Y')} au {bornes['dmax'].strftime('%d/%m/%Y')}"
+            )
+
+        par_jour = (
+            qs.values("date_production")
+            .annotate(nb=Count("id"), volume=Sum("quantite_produire"))
+            .order_by("-date_production")[:15]
+        )
+        detail = " | ".join(
+            f"{r['date_production'].strftime('%d/%m/%Y')} : "
+            f"{_money(r['volume'])} m³ ({r['nb']} bons)"
+            for r in par_jour if r["date_production"]
+        )
+        if detail:
+            lines.append(f"- Production par jour (15 derniers jours produits) : {detail}")
+
+        aujourd_hui_qs = qs.filter(date_production=aujourd_hui)
+        lines.append(
+            f"- Production du jour ({aujourd_hui.strftime('%d/%m/%Y')}) : "
+            f"{_money(aujourd_hui_qs.aggregate(v=Sum('quantite_produire')).get('v'))} m³ "
+            f"sur {aujourd_hui_qs.count()} bons"
+        )
     except Exception as exc:
         logger.warning("Contexte production indisponible : %s", exc)
 
