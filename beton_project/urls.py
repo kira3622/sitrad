@@ -38,6 +38,7 @@ urlpatterns = [
     path('production/', include('production.urls')),
     path('customers/', include('customers.urls')),
     path('fuel/', include('fuel_management.urls')),
+    path('ai-assistant/', include('ai_assistant.urls')),
     
     # API REST
     path('api/v1/', include('api.urls')),

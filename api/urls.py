@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import (
 
 from . import views
 from notifications.views import NotificationViewSet, WebPushSubscriptionViewSet
+from ai_assistant.views import AIChatView
 
 # Configuration du router pour les ViewSets
 router = DefaultRouter()
@@ -42,6 +43,9 @@ urlpatterns = [
     path('test-notifications/', views.test_notifications_endpoint, name='test_notifications'),
     path('webpush/public-key/', views.webpush_public_key, name='webpush_public_key'),
     path('webpush/test-send/', views.webpush_test_send, name='webpush_test_send'),
+
+    # Assistant IA (chat)
+    path('ai/chat/', AIChatView.as_view(), name='ai_chat'),
     
     # Routes automatiques des ViewSets (incluant notifications)
     path('', include(router.urls)),

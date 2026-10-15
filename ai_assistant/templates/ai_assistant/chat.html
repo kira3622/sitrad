@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Assistant IA{% endblock %}
+
+{% block content %}
+<div class="content" style="margin:20px;max-width:900px;">
+  <h1>Assistant IA - Idées &amp; analyses</h1>
+
+  <label style="display:inline-flex;gap:8px;align-items:center;margin:12px 0;">
+    <input type="checkbox" id="useData" checked>
+    Utiliser les données de l'entreprise (clients, bons, encaissements…)
+  </label>
+
+  <div id="chatBox" style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;height:480px;overflow-y:auto;background:#fff;"></div>
+
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <input id="userInput" type="text" placeholder="Posez une question ou demandez des idées…"
+           style="flex:1;padding:10px;border:1px solid #cbd5e1;border-radius:6px;">
+    <button id="sendBtn" class="button" style="padding:10px 18px;background:#007cba;color:#fff;border:0;border-radius:6px;cursor:pointer;">Envoyer</button>
+  </div>
+  <div id="status" style="color:#64748b;font-size:13px;margin-top:8px;"></div>
+  <form style="display:none;">{% csrf_token %}</form>
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('chatBox');
+  var input = document.getElementById('userInput');
+  var btn = document.getElementById('sendBtn');
+  var status = document.getElementById('status');
+  var useData = document.getElementById('useData');
+  var csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  var conversationId = null;
+
+  function addMsg(text, who) {
+    var d = document.createElement('div');
+    var bg = who === 'user' ? '#eff6ff' : '#f0fdf4';
+    var color = who === 'user' ? '#1e40af' : '#166534';
+    d.style.cssText = 'background:' + bg + ';color:' + color + ';padding:10px 12px;border-radius:8px;margin:8px 0;white-space:pre-wrap;';
+    d.textContent = text;
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function send() {
+    var text = input.value.trim();
+    if (!text) return;
+    addMsg(text, 'user');
+    input.value = '';
+    btn.disabled = true;
+    status.textContent = "L'IA réfléchit…";
+    fetch("{% url 'ai_assistant:chat_send' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+      body: JSON.stringify({ message: text, conversation_id: conversationId, avec_donnees: useData.checked })
+    })
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+    .then(function (res) {
+      if (res.ok) {
+        conversationId = res.j.conversation_id;
+        addMsg(res.j.reply, 'ai');
+        status.textContent = '';
+      } else {
+        status.textContent = res.j.error || 'Erreur.';
+      }
+    })
+    .catch(function () { status.textContent = 'Erreur de communication.'; })
+    .finally(function () { btn.disabled = false; input.focus(); });
+  }
+
+  btn.addEventListener('click', send);
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
+
+  addMsg("Bonjour ! Je suis votre assistant IA. Demandez-moi des idées ou des analyses (ex. « Donne-moi des idées pour réduire mes coûts », « Analyse mes encaissements »).", 'ai');
+})();
+</script>
+{% endblock %}

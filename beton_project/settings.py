@@ -42,6 +42,11 @@ if ALLOWED_HOSTS_ENV:
     ALLOWED_HOSTS.extend([host.strip() for host in ALLOWED_HOSTS_ENV.split(',')])
 
 
+# --- Assistant IA (Google Gemini) ---
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -68,6 +73,7 @@ INSTALLED_APPS = [
     'reports',
     'stock',
     'notifications',
+    'ai_assistant',
     'api',
 ]
 
