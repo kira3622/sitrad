@@ -107,7 +107,9 @@ def call_gemini(contents, business_context=""):
     model = getattr(settings, "GEMINI_MODEL", "gemini-3.8-flash")
     url = GEMINI_URL.format(model=model)
     timeout = getattr(settings, "GEMINI_TIMEOUT", 90)
-    thinking_level = getattr(settings, "GEMINI_THINKING_LEVEL", "LOW")
+    thinking_level = str(getattr(settings, "GEMINI_THINKING_LEVEL", "low")).strip().lower()
+    if thinking_level not in ("minimal", "low", "medium", "high"):
+        thinking_level = "low"
 
     system_text = SYSTEM_PROMPT
     if business_context:

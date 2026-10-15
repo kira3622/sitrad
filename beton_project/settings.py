@@ -46,7 +46,7 @@ if ALLOWED_HOSTS_ENV:
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.8-flash')
 GEMINI_TIMEOUT = int(os.environ.get('GEMINI_TIMEOUT', '90'))
-GEMINI_THINKING_LEVEL = os.environ.get('GEMINI_THINKING_LEVEL', 'LOW')
+GEMINI_THINKING_LEVEL = os.environ.get('GEMINI_THINKING_LEVEL', 'low')
 
 
 # Application definition
