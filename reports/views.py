@@ -1719,6 +1719,7 @@ def rapport_entrees_matieres(request):
     groupes = OrderedDict()
     total_quantite = Decimal('0.00')
     total_montant = Decimal('0.00')
+    total_montant_ttc = Decimal('0.00')
     nb_entrees = 0
 
     for mouvement in entrees_qs:
@@ -1727,13 +1728,17 @@ def rapport_entrees_matieres(request):
 
         quantite = mouvement.quantite or Decimal('0.00')
         prix_ht = Decimal('0.00')
+        taux_tva = Decimal('0.00')
         fournisseur = ''
         numero_facture = ''
         if saisie:
             prix_ht = saisie.prix_achat_ht or Decimal('0.00')
+            taux_tva = saisie.taux_tva or Decimal('0.00')
             fournisseur = saisie.fournisseur.nom if saisie.fournisseur else ''
             numero_facture = saisie.numero_facture or ''
         montant = quantite * prix_ht
+        prix_ttc = prix_ht * (1 + taux_tva / 100)
+        montant_ttc = quantite * prix_ttc
 
         if matiere.nom not in groupes:
             groupes[matiere.nom] = {
@@ -1741,6 +1746,7 @@ def rapport_entrees_matieres(request):
                 'lignes': [],
                 'total_quantite': Decimal('0.00'),
                 'total_montant': Decimal('0.00'),
+                'total_montant_ttc': Decimal('0.00'),
             }
 
         groupes[matiere.nom]['lignes'].append({
@@ -1750,13 +1756,17 @@ def rapport_entrees_matieres(request):
             'numero_facture': numero_facture,
             'prix_ht': prix_ht,
             'montant': montant,
+            'prix_ttc': prix_ttc,
+            'montant_ttc': montant_ttc,
             'description': mouvement.description,
         })
         groupes[matiere.nom]['total_quantite'] += quantite
         groupes[matiere.nom]['total_montant'] += montant
+        groupes[matiere.nom]['total_montant_ttc'] += montant_ttc
 
         total_quantite += quantite
         total_montant += montant
+        total_montant_ttc += montant_ttc
         nb_entrees += 1
 
     groupes_list = sorted(groupes.values(), key=lambda g: g['matiere'].nom)
@@ -1772,6 +1782,7 @@ def rapport_entrees_matieres(request):
         'nb_matieres': len(groupes_list),
         'total_quantite': total_quantite,
         'total_montant': total_montant,
+        'total_montant_ttc': total_montant_ttc,
     }
 
     return render(request, 'reports/entrees_matieres.html', context)
