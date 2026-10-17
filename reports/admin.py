@@ -36,6 +36,7 @@ class RapportAdmin(admin.ModelAdmin):
             'commercial': reverse('reports:commercial'),
             'stock': reverse('reports:stock'),
             'consommation_matieres': reverse('reports:consommation_matieres'),
+            'entrees_matieres': reverse('reports:entrees_matieres'),
             'financier': reverse('reports:financier'),
             'ratios_m3': reverse('reports:ratios_m3'),
             'clients_journalier': reverse('reports:clients_journalier'),

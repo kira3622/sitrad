@@ -1677,6 +1677,106 @@ def rapport_mouvements_par_jour(request):
     return render(request, 'reports/mouvements_par_jour.html', context)
 
 
+@staff_member_required
+def rapport_entrees_matieres(request):
+    """Rapport des entrées de matières premières (agrégats) triées par matière, avec dates."""
+    from collections import OrderedDict
+
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    matiere_id = request.GET.get('matiere_premiere')
+
+    # Dates par défaut : 30 derniers jours
+    if not date_fin:
+        date_fin = timezone.now().date()
+    else:
+        date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+
+    if not date_debut:
+        date_debut = date_fin - timedelta(days=30)
+    else:
+        date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+
+    entrees_qs = MouvementStock.objects.filter(
+        type_mouvement='entree',
+        date_mouvement__date__gte=date_debut,
+        date_mouvement__date__lte=date_fin,
+    ).select_related('matiere_premiere').order_by('matiere_premiere__nom', 'date_mouvement')
+
+    if matiere_id:
+        entrees_qs = entrees_qs.filter(matiere_premiere_id=matiere_id)
+
+    # Saisies liées (fournisseur, facture, prix d'achat) indexées par mouvement
+    ids = [m.id for m in entrees_qs]
+    saisies = {
+        s.mouvement_stock_id: s
+        for s in SaisieEntreeLie.objects.filter(
+            mouvement_stock_id__in=ids
+        ).select_related('fournisseur')
+    }
+
+    # Regroupement par matière première (trié par nom de matière)
+    groupes = OrderedDict()
+    total_quantite = Decimal('0.00')
+    total_montant = Decimal('0.00')
+    nb_entrees = 0
+
+    for mouvement in entrees_qs:
+        matiere = mouvement.matiere_premiere
+        saisie = saisies.get(mouvement.id)
+
+        quantite = mouvement.quantite or Decimal('0.00')
+        prix_ht = Decimal('0.00')
+        fournisseur = ''
+        numero_facture = ''
+        if saisie:
+            prix_ht = saisie.prix_achat_ht or Decimal('0.00')
+            fournisseur = saisie.fournisseur.nom if saisie.fournisseur else ''
+            numero_facture = saisie.numero_facture or ''
+        montant = quantite * prix_ht
+
+        if matiere.nom not in groupes:
+            groupes[matiere.nom] = {
+                'matiere': matiere,
+                'lignes': [],
+                'total_quantite': Decimal('0.00'),
+                'total_montant': Decimal('0.00'),
+            }
+
+        groupes[matiere.nom]['lignes'].append({
+            'date': mouvement.date_mouvement,
+            'quantite': quantite,
+            'fournisseur': fournisseur,
+            'numero_facture': numero_facture,
+            'prix_ht': prix_ht,
+            'montant': montant,
+            'description': mouvement.description,
+        })
+        groupes[matiere.nom]['total_quantite'] += quantite
+        groupes[matiere.nom]['total_montant'] += montant
+
+        total_quantite += quantite
+        total_montant += montant
+        nb_entrees += 1
+
+    groupes_list = sorted(groupes.values(), key=lambda g: g['matiere'].nom)
+
+    context = {
+        'title': 'Rapport des Entrées Matières Premières',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'matiere_id': matiere_id,
+        'matieres': MatierePremiere.objects.all().order_by('nom'),
+        'groupes': groupes_list,
+        'nb_entrees': nb_entrees,
+        'nb_matieres': len(groupes_list),
+        'total_quantite': total_quantite,
+        'total_montant': total_montant,
+    }
+
+    return render(request, 'reports/entrees_matieres.html', context)
+
+
 def rapport_journalier_clients(request):
     """
     Rapport journalier: somme de la production par client sur un jour donné.

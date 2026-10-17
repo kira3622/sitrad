@@ -16,6 +16,7 @@ urlpatterns = [
     path('initialiser-matieres/', views.initialiser_matieres_view, name='initialiser_matieres'),
     path('consommation-matieres/', views.rapport_consommation_matieres, name='consommation_matieres'),
     path('mouvements-par-jour/', views.rapport_mouvements_par_jour, name='mouvements_par_jour'),
+    path('entrees-matieres/', views.rapport_entrees_matieres, name='entrees_matieres'),
     path('financier/', views.rapport_financier, name='financier'),
     path('ratios-m3/', views.rapport_ratios_m3, name='ratios_m3'),
     path('clients-journalier/', views.rapport_journalier_clients, name='clients_journalier'),
