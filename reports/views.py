@@ -1686,6 +1686,11 @@ def rapport_entrees_matieres(request):
     date_fin = request.GET.get('date_fin')
     matiere_id = request.GET.get('matiere_premiere')
 
+    # Mode de tri : par matière première (défaut) ou par fournisseur
+    tri = request.GET.get('tri', 'matiere')
+    if tri not in ('matiere', 'fournisseur'):
+        tri = 'matiere'
+
     # Dates par défaut : 30 derniers jours
     if not date_fin:
         date_fin = timezone.now().date()
@@ -1701,7 +1706,7 @@ def rapport_entrees_matieres(request):
         type_mouvement='entree',
         date_mouvement__date__gte=date_debut,
         date_mouvement__date__lte=date_fin,
-    ).select_related('matiere_premiere').order_by('matiere_premiere__nom', 'date_mouvement')
+    ).select_related('matiere_premiere').order_by('date_mouvement')
 
     if matiere_id:
         entrees_qs = entrees_qs.filter(matiere_premiere_id=matiere_id)
@@ -1715,7 +1720,7 @@ def rapport_entrees_matieres(request):
         ).select_related('fournisseur')
     }
 
-    # Regroupement par matière première (trié par nom de matière)
+    # Regroupement par matière première ou par fournisseur (selon le mode de tri)
     groupes = OrderedDict()
     total_quantite = Decimal('0.00')
     total_montant = Decimal('0.00')
@@ -1740,17 +1745,22 @@ def rapport_entrees_matieres(request):
         prix_ttc = prix_ht * (1 + taux_tva / 100)
         montant_ttc = quantite * prix_ttc
 
-        if matiere.nom not in groupes:
-            groupes[matiere.nom] = {
-                'matiere': matiere,
+        cle = (fournisseur or 'Sans fournisseur') if tri == 'fournisseur' else matiere.nom
+
+        if cle not in groupes:
+            groupes[cle] = {
+                'titre': cle,
+                'unite': matiere.unite_mesure,
                 'lignes': [],
                 'total_quantite': Decimal('0.00'),
                 'total_montant': Decimal('0.00'),
                 'total_montant_ttc': Decimal('0.00'),
             }
 
-        groupes[matiere.nom]['lignes'].append({
+        groupes[cle]['lignes'].append({
             'date': mouvement.date_mouvement,
+            'matiere_nom': matiere.nom,
+            'unite': matiere.unite_mesure,
             'quantite': quantite,
             'fournisseur': fournisseur,
             'numero_facture': numero_facture,
@@ -1760,22 +1770,23 @@ def rapport_entrees_matieres(request):
             'montant_ttc': montant_ttc,
             'description': mouvement.description,
         })
-        groupes[matiere.nom]['total_quantite'] += quantite
-        groupes[matiere.nom]['total_montant'] += montant
-        groupes[matiere.nom]['total_montant_ttc'] += montant_ttc
+        groupes[cle]['total_quantite'] += quantite
+        groupes[cle]['total_montant'] += montant
+        groupes[cle]['total_montant_ttc'] += montant_ttc
 
         total_quantite += quantite
         total_montant += montant
         total_montant_ttc += montant_ttc
         nb_entrees += 1
 
-    groupes_list = sorted(groupes.values(), key=lambda g: g['matiere'].nom)
+    groupes_list = sorted(groupes.values(), key=lambda g: g['titre'])
 
     context = {
         'title': 'Rapport des Entrées Matières Premières',
         'date_debut': date_debut,
         'date_fin': date_fin,
         'matiere_id': matiere_id,
+        'tri': tri,
         'matieres': MatierePremiere.objects.all().order_by('nom'),
         'groupes': groupes_list,
         'nb_entrees': nb_entrees,
