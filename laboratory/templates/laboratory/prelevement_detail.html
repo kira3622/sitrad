@@ -1,0 +1,149 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Fiche laboratoire{% endblock %}
+
+{% block content %}
+<div class="content" style="margin: 20px;">
+  <h1>🔬 Fiche de suivi laboratoire</h1>
+  <p>
+    <a href="{% url 'laboratory:dashboard' %}">← Retour au tableau de bord</a> |
+    <a href="{% url 'laboratory:pv_pdf' prelevement.id %}" target="_blank">📄 PV d'essai (PDF)</a> |
+    <a href="{% url 'admin:laboratory_prelevement_change' prelevement.id %}">Modifier (admin)</a>
+  </p>
+
+  <h2 style="margin-top:24px; padding-bottom:6px; border-bottom:2px solid #6366f1;">Prélèvement</h2>
+  <table class="listing" style="width:100%; border-collapse:collapse;">
+    <tbody>
+      <tr>
+        <th style="text-align:left; padding:8px; width:240px;">N° de bon de livraison</th>
+        <td style="padding:8px;">{{ prelevement.numero_bl|default:"—" }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Centrale à béton</th>
+        <td style="padding:8px;">{{ prelevement.centrale|default:"—" }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Date et heure de prélèvement</th>
+        <td style="padding:8px;">{{ prelevement.date_prelevement|date:"d/m/Y H:i" }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Client / Chantier</th>
+        <td style="padding:8px;">{{ prelevement.client.nom|default:"—" }}{% if prelevement.chantier %} — {{ prelevement.chantier.nom }}{% endif %}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Formule</th>
+        <td style="padding:8px;">{{ prelevement.formule.nom|default:"—" }}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Élément coulé</th>
+        <td style="padding:8px;">{{ prelevement.get_element_coule_display }}{% if prelevement.element_coule_detail %} — {{ prelevement.element_coule_detail }}{% endif %}</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Affaissement (Abrams)</th>
+        <td style="padding:8px;">{{ prelevement.affaissement_mm|default:"—" }} mm</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Température béton / ambiante</th>
+        <td style="padding:8px;">{{ prelevement.temperature_beton|default:"—" }} °C / {{ prelevement.temperature_ambiante|default:"—" }} °C</td>
+      </tr>
+      <tr>
+        <th style="text-align:left; padding:8px;">Classe de résistance (fck)</th>
+        <td style="padding:8px;">
+          {{ prelevement.classe_resistance|default:"—" }}
+          {% if prelevement.fck_mpa %} (fck = {{ prelevement.fck_mpa }} MPa){% endif %}
+        </td>
+      </tr>
+      {% if prelevement.observations %}
+      <tr>
+        <th style="text-align:left; padding:8px;">Observations</th>
+        <td style="padding:8px;">{{ prelevement.observations }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:28px; padding-bottom:6px; border-bottom:2px solid #10b981;">Éprouvettes &amp; résultats d'écrasement</h2>
+  <table class="listing" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Code</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Forme</th>
+        <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Âge</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Échéance</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Statut</th>
+        <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Poids (kg)</th>
+        <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Force (kN)</th>
+        <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Résistance (MPa)</th>
+        <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Masse vol. (kg/m³)</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Rupture</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Conformité</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ep in eprouvettes %}
+        <tr>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.code|default:ep.id }}</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.get_forme_display }}</td>
+          <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ ep.age_jours }} j</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.date_echeance|date:"d/m/Y" }}</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+            <span style="color:{{ ep.statut_couleur }}; font-weight:bold;">{{ ep.statut_label }}</span>
+          </td>
+          {% with ec=ep.ecrasement_resultat %}
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ ec.poids_kg|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ ec.force_rupture_kn|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0; font-weight:bold;">{{ ec.resistance_mpa|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ ec.masse_volumique_kg_m3|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ec.get_type_rupture_display|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+              {% if ec %}
+                {% if ec.conforme %}
+                  <span style="color:#065f46; font-weight:bold;">Conforme</span>
+                {% else %}
+                  <span style="color:#991b1b; font-weight:bold;">Non conforme</span>
+                {% endif %}
+              {% else %}
+                <a href="{% url 'admin:laboratory_essaiecrasement_add' %}?eprouvette={{ ep.id }}">Saisir</a>
+              {% endif %}
+            </td>
+          {% endwith %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="11" style="padding:12px;">Aucune éprouvette pour ce prélèvement.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if courbe.ages %}
+  <h2 style="margin-top:28px; padding-bottom:6px; border-bottom:2px solid #10b981;">📈 Montée en résistance</h2>
+  <div id="chartResistance" style="width:100%; height:340px; background:#fff; border:1px solid #e5e7eb; border-radius:6px;"></div>
+  {{ courbe|json_script:"courbe-data" }}
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script>
+  (function () {
+    const data = JSON.parse(document.getElementById('courbe-data').textContent);
+    const el = document.getElementById('chartResistance');
+    if (!el || typeof echarts === 'undefined') return;
+    const chart = echarts.init(el);
+    chart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 60, right: 30, top: 40, bottom: 40 },
+      xAxis: { type: 'category', name: 'Âge', data: data.ages },
+      yAxis: { type: 'value', name: 'Résistance (MPa)' },
+      series: [{
+        name: 'Résistance',
+        type: 'line',
+        smooth: true,
+        data: data.moyennes,
+        areaStyle: { opacity: 0.15 },
+        itemStyle: { color: '#10b981' },
+        lineStyle: { width: 3 },
+        {% if fck %}markLine: { data: [{ yAxis: {{ fck|stringformat:"s" }}, name: 'fck' }] },{% endif %}
+      }],
+    });
+    window.addEventListener('resize', () => chart.resize());
+  })();
+  </script>
+  {% endif %}
+</div>
+{% endblock %}

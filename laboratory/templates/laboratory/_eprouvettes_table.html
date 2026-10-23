@@ -1,0 +1,37 @@
+{% comment %}Tableau réutilisable des éprouvettes (alertes du tableau de bord).{% endcomment %}
+{% if lignes %}
+  <table class="listing" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Code éprouvette</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">N° BL / Prélèvement</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Client</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Forme</th>
+        <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Âge</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Échéance</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Statut</th>
+        <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ep in lignes %}
+        <tr>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.code|default:ep.id }}</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.prelevement.numero_bl|default:"—" }}</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.prelevement.client.nom|default:"—" }}</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.get_forme_display }}</td>
+          <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ ep.age_jours }} j</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ ep.date_echeance|date:"d/m/Y" }}</td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+            <span style="color:{{ ep.statut_couleur }}; font-weight:bold;">{{ ep.statut_label }}</span>
+          </td>
+          <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+            <a href="{% url 'admin:laboratory_essaiecrasement_add' %}?eprouvette={{ ep.id }}">Saisir résultat</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="padding:10px; color:#6b7280;"><em>{{ vide }}</em></p>
+{% endif %}

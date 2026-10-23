@@ -36,6 +36,7 @@ urlpatterns = [
     path('billing/', include('billing.urls')),
     path('cost-calculation/', include('cost_calculation.urls')),
     path('production/', include('production.urls')),
+    path('laboratory/', include('laboratory.urls')),
     path('customers/', include('customers.urls')),
     path('fuel/', include('fuel_management.urls')),
     path('ai-assistant/', include('ai_assistant.urls')),

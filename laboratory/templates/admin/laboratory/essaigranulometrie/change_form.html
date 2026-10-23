@@ -1,0 +1,63 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block after_related_objects %}
+  {{ block.super }}
+  {% if courbe_granulometrie %}
+    <fieldset class="module aligned" style="margin-top:20px;">
+      <h2>Courbe granulométrique</h2>
+      <div style="padding:10px;">
+        <div id="chartGranulometrie" style="width:100%; height:360px; background:#fff; border:1px solid #e5e7eb; border-radius:6px;"></div>
+        <p style="color:#6b7280; font-size:.85em; margin-top:6px;">
+          Pourcentage de tamisat cumulé en fonction de l'ouverture des tamis (échelle logarithmique).
+        </p>
+      </div>
+    </fieldset>
+    {{ courbe_granulometrie|json_script:"granulo-data" }}
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+    (function () {
+      const data = JSON.parse(document.getElementById('granulo-data').textContent);
+      const el = document.getElementById('chartGranulometrie');
+      if (!el || typeof echarts === 'undefined' || !data.tamis.length) return;
+      const paires = data.tamis
+        .map((t, i) => [t, data.tamisat[i]])
+        .sort((a, b) => a[0] - b[0]);
+      const chart = echarts.init(el);
+      chart.setOption({
+        tooltip: {
+          trigger: 'axis',
+          formatter: function (params) {
+            const p = params[0];
+            return p.value[0] + ' mm — ' + p.value[1].toFixed(2) + ' % tamisat';
+          }
+        },
+        grid: { left: 60, right: 30, top: 40, bottom: 50 },
+        xAxis: {
+          type: 'log',
+          name: 'Ouverture tamis (mm)',
+          nameLocation: 'middle',
+          nameGap: 30,
+          minorTick: { show: true },
+        },
+        yAxis: {
+          type: 'value',
+          name: '% tamisat cumulé',
+          min: 0,
+          max: 100,
+        },
+        series: [{
+          name: 'Tamisat cumulé',
+          type: 'line',
+          smooth: true,
+          symbolSize: 7,
+          data: paires,
+          itemStyle: { color: '#4f46e5' },
+          lineStyle: { width: 3 },
+        }],
+      });
+      window.addEventListener('resize', () => chart.resize());
+    })();
+    </script>
+  {% endif %}
+{% endblock %}

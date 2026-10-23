@@ -188,9 +188,18 @@
                 <i class="fas fa-comments"></i> Discuter avec l'IA
             </a>
         </div>
+        <div class="quick-report-card">
+            <div class="quick-report-icon">
+                <i class="fas fa-flask"></i>
+            </div>
+            <h3>Suivi de Laboratoire</h3>
+            <p>Prélèvements, éprouvettes, écrasements et essais granulats</p>
+            <a href="{% url 'laboratory:dashboard' %}" class="quick-report-btn">
+                <i class="fas fa-vials"></i> Tableau de bord Labo
+            </a>
+        </div>
     </div>
 </div>
-
 <div class="dashboard-stats">
     <div class="stat-card">
         <div class="stat-value">{{ total_clients|default:"0" }}</div>

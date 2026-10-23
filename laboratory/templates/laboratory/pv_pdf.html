@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4; margin: 1.4cm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #1f2937; }
+  h1 { font-size: 16pt; margin: 0 0 4pt 0; }
+  h2 { font-size: 11pt; margin: 14pt 0 6pt 0; color: #065f46; border-bottom: 1pt solid #10b981; padding-bottom: 3pt; }
+  .entete { border-bottom: 2pt solid #111827; padding-bottom: 8pt; margin-bottom: 10pt; }
+  .entete td { vertical-align: top; }
+  .petit { font-size: 8pt; color: #6b7280; }
+  table.info { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
+  table.info th { text-align: left; width: 32%; padding: 4pt 6pt; background: #f3f4f6; border: 0.5pt solid #d1d5db; font-size: 9pt; }
+  table.info td { padding: 4pt 6pt; border: 0.5pt solid #d1d5db; font-size: 9pt; }
+  table.resultats { width: 100%; border-collapse: collapse; margin-top: 4pt; }
+  table.resultats th { background: #065f46; color: #ffffff; padding: 5pt 4pt; border: 0.5pt solid #374151; font-size: 8pt; text-align: center; }
+  table.resultats td { padding: 4pt; border: 0.5pt solid #d1d5db; font-size: 8.5pt; text-align: center; }
+  .ok { color: #065f46; font-weight: bold; }
+  .ko { color: #991b1b; font-weight: bold; }
+  .conclusion { margin-top: 10pt; padding: 8pt; border: 1pt solid #111827; }
+  .signatures { margin-top: 24pt; width: 100%; }
+  .signatures td { width: 50%; font-size: 9pt; padding-top: 30pt; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="entete">
+  <table style="width:100%;">
+    <tr>
+      <td style="width:60%;">
+        <h1>PROCÈS-VERBAL D'ESSAI — BÉTON</h1>
+        <div class="petit">Résistance à la compression (NF EN 12390-3) — Contrôle de conformité</div>
+      </td>
+      <td style="width:40%; text-align:right;">
+        <div><strong>Centrale :</strong> {{ prelevement.centrale|default:"Sitrad Web" }}</div>
+        <div class="petit">Édité le {{ date_edition|date:"d/m/Y à H:i" }}</div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<h2>1. Identification du prélèvement</h2>
+<table class="info">
+  <tr>
+    <th>N° de bon de livraison (BL)</th>
+    <td>{{ prelevement.numero_bl|default:"—" }}</td>
+    <th>Date et heure de prélèvement</th>
+    <td>{{ prelevement.date_prelevement|date:"d/m/Y H:i" }}</td>
+  </tr>
+  <tr>
+    <th>Client</th>
+    <td>{{ prelevement.client.nom|default:"—" }}</td>
+    <th>Chantier</th>
+    <td>{{ prelevement.chantier.nom|default:"—" }}</td>
+  </tr>
+  <tr>
+    <th>Formule / Résistance requise</th>
+    <td>{{ prelevement.formule.nom|default:"—" }}</td>
+    <th>Élément coulé</th>
+    <td>{{ prelevement.get_element_coule_display }}{% if prelevement.element_coule_detail %} — {{ prelevement.element_coule_detail }}{% endif %}</td>
+  </tr>
+  <tr>
+    <th>Classe de résistance (fck)</th>
+    <td>{{ prelevement.classe_resistance|default:"—" }}{% if fck %} (fck = {{ fck }} MPa){% endif %}</td>
+    <th>Affaissement (cône d'Abrams)</th>
+    <td>{{ prelevement.affaissement_mm|default:"—" }} mm</td>
+  </tr>
+  <tr>
+    <th>Température du béton</th>
+    <td>{{ prelevement.temperature_beton|default:"—" }} °C</td>
+    <th>Température ambiante</th>
+    <td>{{ prelevement.temperature_ambiante|default:"—" }} °C</td>
+  </tr>
+</table>
+
+<h2>2. Résultats d'écrasement</h2>
+<table class="resultats">
+  <thead>
+    <tr>
+      <th>Code éprouvette</th>
+      <th>Forme</th>
+      <th>Âge</th>
+      <th>Échéance</th>
+      <th>Poids (kg)</th>
+      <th>Section (mm²)</th>
+      <th>Force (kN)</th>
+      <th>Résistance (MPa)</th>
+      <th>Masse vol. (kg/m³)</th>
+      <th>Rupture</th>
+      <th>Conformité</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for l in lignes %}
+      <tr>
+        <td>{{ l.code }}</td>
+        <td>{{ l.forme }}</td>
+        <td>{{ l.age }} j</td>
+        <td>{{ l.echeance|date:"d/m/Y" }}</td>
+        <td>{{ l.poids|default:"—" }}</td>
+        <td>{{ l.section|default:"—" }}</td>
+        <td>{{ l.force|default:"—" }}</td>
+        <td><strong>{{ l.resistance|default:"—" }}</strong></td>
+        <td>{{ l.masse_vol|default:"—" }}</td>
+        <td>{{ l.rupture|default:"—" }}</td>
+        <td>
+          {% if l.conforme is None %}—{% elif l.conforme %}<span class="ok">Conforme</span>{% else %}<span class="ko">Non conforme</span>{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="11">Aucune éprouvette enregistrée pour ce prélèvement.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>3. Conclusion</h2>
+<div class="conclusion">
+  {% if fck %}
+    Résistance caractéristique contractuelle requise : <strong>fck = {{ fck }} MPa</strong>.
+    Le contrôle porte sur les éprouvettes écrasées listées ci-dessus. La conformité est vérifiée pour chaque
+    éprouvette dont la résistance mesurée est supérieure ou égale à fck.
+  {% else %}
+    Classe de résistance contractuelle non renseignée : la conformité ne peut pas être évaluée automatiquement.
+  {% endif %}
+  {% if prelevement.observations %}
+    <br /><br /><strong>Observations :</strong> {{ prelevement.observations }}
+  {% endif %}
+</div>
+
+<table class="signatures">
+  <tr>
+    <td>Le responsable laboratoire<br /><br />_______________________</td>
+    <td>Le chef de chantier / client<br /><br />_______________________</td>
+  </tr>
+</table>
+
+</body>
+</html>
