@@ -187,6 +187,22 @@ class AccesRapport(models.Model):
         ordering = ['categorie', 'ordre', 'titre']
         verbose_name = "Rapport autorisable"
         verbose_name_plural = "Rapports autorisables"
+        permissions = [
+            ("voir_rapport_production", "Peut voir le rapport Production"),
+            ("voir_rapport_commandes", "Peut voir le rapport Commandes"),
+            ("voir_rapport_commercial", "Peut voir le rapport Commercial"),
+            ("voir_rapport_rapport_client", "Peut voir le rapport Client"),
+            ("voir_rapport_stock", "Peut voir le rapport Stock"),
+            ("voir_rapport_mouvements_par_jour", "Peut voir le rapport Mouvements par jour"),
+            ("voir_rapport_rapport_camion", "Peut voir le rapport Camion"),
+            ("voir_rapport_consommation_matieres", "Peut voir le rapport Consommation Matières Premières"),
+            ("voir_rapport_entrees_matieres", "Peut voir le rapport Entrées Agrégats"),
+            ("voir_rapport_financier", "Peut voir le rapport Financier"),
+            ("voir_rapport_ratios_m3", "Peut voir le rapport Ratios matières par m³"),
+            ("voir_rapport_cout_formule", "Peut voir le rapport Coût de Formule Béton"),
+            ("voir_rapport_clients_journalier", "Peut voir le rapport Journalier Clients"),
+            ("voir_rapport_vehicules_journalier", "Peut voir le rapport Journalier Véhicules"),
+        ]
 
     def __str__(self):
         return self.titre
