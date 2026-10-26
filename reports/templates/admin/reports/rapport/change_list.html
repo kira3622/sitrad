@@ -90,6 +90,7 @@
     </a>
     
     <div class="reports-grid">
+        {% if 'production' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.production }}">
                 <span class="report-icon">🏭</span>
@@ -97,7 +98,9 @@
                 <small>Ordres, formules, efficacité</small>
             </a>
         </div>
+        {% endif %}
         
+        {% if 'commandes' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.commandes }}">
                 <span class="report-icon">📋</span>
@@ -105,7 +108,9 @@
                 <small>Statuts, délais, volumes</small>
             </a>
         </div>
+        {% endif %}
         
+        {% if 'commercial' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.commercial }}">
                 <span class="report-icon">💼</span>
@@ -113,7 +118,9 @@
                 <small>CA, clients, tendances</small>
             </a>
         </div>
+        {% endif %}
         
+        {% if 'stock' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.stock }}">
                 <span class="report-icon">📦</span>
@@ -121,7 +128,9 @@
                 <small>Niveaux, mouvements, alertes</small>
             </a>
         </div>
+        {% endif %}
         
+        {% if 'consommation_matieres' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.consommation_matieres }}">
                 <span class="report-icon">🧪</span>
@@ -129,7 +138,9 @@
                 <small>Quantités consommées par matière</small>
             </a>
         </div>
+        {% endif %}
 
+        {% if 'entrees_matieres' in codes_rapports %}
         <div class="report-card" style="background: rgba(16, 185, 129, 0.25);">
             <a href="{{ reports_links.entrees_matieres }}">
                 <span class="report-icon">⛏️</span>
@@ -137,7 +148,9 @@
                 <small>Entrées matières premières par date, triées par matière</small>
             </a>
         </div>
+        {% endif %}
         
+        {% if 'financier' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.financier }}">
                 <span class="report-icon">💰</span>
@@ -145,7 +158,9 @@
                 <small>Facturation, paiements, trésorerie</small>
             </a>
         </div>
+        {% endif %}
 
+        {% if 'clients_journalier' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.clients_journalier }}">
                 <span class="report-icon">🗓️</span>
@@ -153,7 +168,9 @@
                 <small>Somme production par client (jour)</small>
             </a>
         </div>
+        {% endif %}
         
+        {% if 'ratios_m3' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.ratios_m3 }}">
                 <span class="report-icon">⚖️</span>
@@ -161,7 +178,9 @@
                 <small>Ex: ciment par m³ fabriqué</small>
             </a>
         </div>
+        {% endif %}
 
+        {% if 'vehicules_journalier' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.vehicules_journalier }}">
                 <span class="report-icon">🚚</span>
@@ -169,7 +188,9 @@
                 <small>Voyages et volume livré par véhicule (jour)</small>
             </a>
         </div>
+        {% endif %}
         
+        {% if 'cout_formule' in codes_rapports %}
         <div class="report-card">
             <a href="{{ reports_links.cout_formule }}">
                 <span class="report-icon">🧮</span>
@@ -177,7 +198,9 @@
                 <small>Calcul coût avec moyenne prix matières</small>
             </a>
         </div>
+        {% endif %}
 
+        {% if 'rapport_camion' in codes_rapports %}
         <div class="report-card" style="background: rgba(255, 165, 0, 0.25);">
             <a href="{{ reports_links.rapport_camion }}">
                 <span class="report-icon">🚛</span>
@@ -185,7 +208,9 @@
                 <small>Total m³ + consommation gasoil (L + MAD)</small>
             </a>
         </div>
+        {% endif %}
 
+        {% if 'rapport_client' in codes_rapports %}
         <div class="report-card" style="background: rgba(0, 123, 255, 0.25);">
             <a href="{{ reports_links.rapport_client }}">
                 <span class="report-icon">🧑‍💼</span>
@@ -193,6 +218,7 @@
                 <small>Bons, volumes, PU et montants par client</small>
             </a>
         </div>
+        {% endif %}
     </div>
 </div>
 

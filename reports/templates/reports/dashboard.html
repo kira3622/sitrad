@@ -232,6 +232,7 @@
     </div>
     
     <div class="reports-grid">
+        {% if 'production' in codes_rapports %}
         <div class="modern-card">
             <div class="modern-card-header">
                 <i class="fas fa-industry me-2"></i>Rapports de Production
@@ -248,7 +249,9 @@
                 </div>
             </div>
         </div>
+        {% endif %}
         
+        {% if 'commandes' in codes_rapports %}
         <div class="report-card commandes">
             <div class="icon">📋</div>
             <h3>Rapports de Commandes</h3>
@@ -258,7 +261,9 @@
                 <a href="{% url 'reports:export_pdf' 'commandes' %}" class="btn btn-secondary">Export PDF</a>
             </div>
         </div>
+        {% endif %}
         
+        {% if 'commercial' in codes_rapports %}
         <div class="report-card commercial">
             <div class="icon">💼</div>
             <h3>Rapports Commerciaux</h3>
@@ -268,7 +273,9 @@
                 <a href="{% url 'reports:export_pdf' 'commercial' %}" class="btn btn-secondary">Export PDF</a>
             </div>
         </div>
+        {% endif %}
         
+        {% if 'stock' in codes_rapports %}
         <div class="report-card stock">
             <div class="icon">📦</div>
             <h3>Rapports de Stock</h3>
@@ -278,7 +285,9 @@
                 <a href="{% url 'reports:export_pdf' 'stock' %}" class="btn btn-secondary">Export PDF</a>
             </div>
         </div>
+        {% endif %}
 
+        {% if 'financier' in codes_rapports %}
         <div class="report-card financier">
             <div class="icon">💰</div>
             <h3>Rapports Financiers</h3>
@@ -288,7 +297,9 @@
                 <a href="{% url 'reports:export_pdf' 'financier' %}" class="btn btn-secondary">Export PDF</a>
             </div>
         </div>
+        {% endif %}
 
+        {% if 'ratios_m3' in codes_rapports %}
         <div class="report-card ratios">
             <div class="icon">⚖️</div>
             <h3>Ratios matières par m³</h3>
@@ -297,7 +308,9 @@
                 <a href="{% url 'reports:ratios_m3' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
+        {% endif %}
 
+        {% if 'cout_formule' in codes_rapports %}
         <div class="report-card cout-formule">
             <div class="icon">🏗️</div>
             <h3>Coût de Formule Béton</h3>
@@ -306,7 +319,9 @@
                 <a href="{% url 'reports:cout_formule' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
+        {% endif %}
 
+        {% if 'clients_journalier' in codes_rapports %}
         <div class="report-card clients-journalier">
             <div class="icon">🗓️</div>
             <h3>Journalier Clients</h3>
@@ -315,7 +330,9 @@
                 <a href="{% url 'reports:clients_journalier' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
+        {% endif %}
 
+        {% if 'vehicules_journalier' in codes_rapports %}
         <div class="report-card vehicules-journalier">
             <div class="icon">🚚</div>
             <h3>Journalier Véhicules</h3>
@@ -324,6 +341,7 @@
                 <a href="{% url 'reports:vehicules_journalier' %}" class="btn btn-primary">Voir le rapport</a>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

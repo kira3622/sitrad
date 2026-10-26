@@ -1,9 +1,14 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from decimal import Decimal
-from .models import Rapport, ConfigurationSeuilsStock, RapportCoutFormule, DetailCoutFormule
+from .models import (
+    Rapport, ConfigurationSeuilsStock, RapportCoutFormule, DetailCoutFormule,
+    AccesRapport, ProfilRapports,
+)
 
 @admin.register(Rapport)
 class RapportAdmin(admin.ModelAdmin):
@@ -223,3 +228,39 @@ class RapportCoutFormuleAdmin(admin.ModelAdmin):
         # Si c'est une nouvelle instance, calculer le coût automatiquement
         if not change:
             obj.calculer_cout_total()
+
+
+@admin.register(AccesRapport)
+class AccesRapportAdmin(admin.ModelAdmin):
+    """Catalogue des rapports proposés dans les accès utilisateur."""
+
+    list_display = ('titre', 'code', 'categorie', 'url_name', 'ordre', 'actif')
+    list_editable = ('ordre', 'actif')
+    list_filter = ('categorie', 'actif')
+    search_fields = ('titre', 'code')
+    ordering = ('categorie', 'ordre')
+
+
+class ProfilRapportsInline(admin.StackedInline):
+    """Sélection des rapports visibles par l'utilisateur, sur sa fiche admin."""
+
+    model = ProfilRapports
+    extra = 1
+    max_num = 1
+    can_delete = False
+    filter_horizontal = ('rapports',)
+    fields = ('acces_total', 'rapports')
+    verbose_name = "Accès aux rapports"
+    verbose_name_plural = "Accès aux rapports"
+
+
+class UserAvecRapportsAdmin(BaseUserAdmin):
+    """Fiche utilisateur standard enrichie de la sélection des rapports autorisés."""
+
+    inlines = list(BaseUserAdmin.inlines) + [ProfilRapportsInline]
+
+
+Utilisateur = get_user_model()
+admin.site.unregister(Utilisateur)
+admin.site.register(Utilisateur, UserAvecRapportsAdmin)
+

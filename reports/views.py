@@ -11,6 +11,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 # Import des modèles
 from .models import Rapport
+from .acces import codes_rapports_autorises, rapport_requis, a_acces_rapport
 from production.models import OrdreProduction, LotProduction
 from orders.models import Commande, LigneCommande
 from customers.models import Client, Chantier
@@ -32,6 +33,7 @@ def dashboard_reports(request):
 
 # ==================== RAPPORTS DE PRODUCTION ====================
 
+@rapport_requis('production')
 def rapport_production(request):
     """Rapport de production avec quantités, formules et efficacité"""
     # Filtres de date
@@ -114,6 +116,7 @@ def rapport_production(request):
 
 # ==================== RAPPORTS DE COMMANDES ====================
 
+@rapport_requis('commandes')
 def rapport_commandes(request):
     """Rapport des commandes avec statuts, délais et clients"""
     # Filtres
@@ -189,6 +192,7 @@ def rapport_commandes(request):
 
 # ==================== RAPPORTS COMMERCIAUX & CLIENTS ====================
 
+@rapport_requis('commercial')
 def rapport_commercial(request):
     """Rapport commercial avec CA, fidélité et géographie"""
     # Filtres
@@ -265,6 +269,7 @@ def rapport_commercial(request):
 
 # ==================== RAPPORTS DE STOCK ====================
 
+@rapport_requis('stock')
 def rapport_stock(request):
     """Rapport de stock avec niveaux, mouvements et alertes (seuils par matière)"""
     # Stock actuel de toutes les matières premières avec leurs seuils individuels
@@ -392,6 +397,7 @@ def initialiser_matieres_view(request):
 
 # ==================== RAPPORTS FINANCIERS ====================
 
+@rapport_requis('financier')
 def rapport_financier(request):
     """Rapport financier avec factures, paiements et rentabilité"""
     # Filtres
@@ -575,6 +581,10 @@ def rapport_financier(request):
 
 def export_rapport_pdf(request, type_rapport):
     """Export d'un rapport en PDF"""
+    if not a_acces_rapport(request.user, type_rapport):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("Vous n'avez pas accès à ce rapport.")
+
     try:
         from xhtml2pdf import pisa
     except ImportError:
@@ -693,6 +703,7 @@ def _get_production_data(request):
 
 # ==================== RAPPORTS MATIÈRES PAR M³ ====================
 
+@rapport_requis('ratios_m3')
 def rapport_ratios_m3(request):
     """Rapport des ratios de chaque matière première par mètre cube produit.
 
@@ -801,6 +812,7 @@ def rapport_ratios_m3(request):
 
 # ==================== RAPPORTS CONSOMMATION MATIÈRES ====================
 
+@rapport_requis('consommation_matieres')
 def rapport_consommation_matieres(request):
     """Rapport de consommation des matières premières sur une période.
     - Filtre par dates et matière optionnelle
@@ -1074,6 +1086,7 @@ def rapport_consommation_matieres(request):
 
 
 @staff_member_required
+@rapport_requis('rapport_camion')
 def rapport_camion(request):
     """
     Rapport Camion: Total m³ livrés par véhicule + consommation gasoil (L + MAD) + prix moyen.
@@ -1369,6 +1382,7 @@ def rapport_camion(request):
 
 
 @staff_member_required
+@rapport_requis('rapport_client')
 def rapport_client(request):
     """
     Rapport Client: liste des bons de production par client avec
@@ -1563,6 +1577,7 @@ def _get_financier_data(request):
     pass
 
 
+@rapport_requis('mouvements_par_jour')
 def rapport_mouvements_par_jour(request):
     """
     Vue pour le rapport détaillé des mouvements par matière première par jour
@@ -1678,6 +1693,7 @@ def rapport_mouvements_par_jour(request):
 
 
 @staff_member_required
+@rapport_requis('entrees_matieres')
 def rapport_entrees_matieres(request):
     """Rapport des entrées de matières premières (agrégats) triées par matière, avec dates."""
     from collections import OrderedDict
@@ -1799,6 +1815,7 @@ def rapport_entrees_matieres(request):
     return render(request, 'reports/entrees_matieres.html', context)
 
 
+@rapport_requis('clients_journalier')
 def rapport_journalier_clients(request):
     """
     Rapport journalier: somme de la production par client sur un jour donné.
@@ -1924,6 +1941,7 @@ def rapport_journalier_clients(request):
     return render(request, 'reports/clients_journalier.html', context)
 
 
+@rapport_requis('vehicules_journalier')
 def rapport_journalier_vehicules(request):
     """
     Rapport journalier par véhicule: somme des voyages (livraisons livrées) et total des livraisons (m³) pour un jour donné.
@@ -2117,6 +2135,7 @@ def json_daily_deliveries(request):
 
 # ==================== RAPPORT DE COÛT DE FORMULE ====================
 
+@rapport_requis('cout_formule')
 def rapport_cout_formule(request):
     """Rapport de coût de formule béton avec calcul des prix moyens"""
     
@@ -2339,6 +2358,14 @@ def acces_rapide_reports(request):
         }
     ]
     
+    # Ne conserver que les rapports autorisés pour l'utilisateur
+    # (le code d'accès correspond au nom d'URL, ex: 'reports:production' -> 'production')
+    codes_autorises = codes_rapports_autorises(request.user)
+    rapports_disponibles = [
+        rapport for rapport in rapports_disponibles
+        if rapport['url'].split(':')[-1] in codes_autorises
+    ]
+
     # Grouper par catégorie
     rapports_par_categorie = {}
     for rapport in rapports_disponibles:

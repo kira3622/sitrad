@@ -173,36 +173,48 @@
                 <i class="fas fa-tachometer-alt"></i>Tableau de bord
             </a>
         </li>
+        {% if 'cout_formule' in codes_rapports %}
         <li>
             <a href="{% url 'reports:cout_formule' %}" class="report-link">
                 <i class="fas fa-calculator"></i>Coût Formule Béton
             </a>
         </li>
+        {% endif %}
+        {% if 'production' in codes_rapports %}
         <li>
             <a href="{% url 'reports:production' %}" class="report-link">
                 <i class="fas fa-industry"></i>Rapports Production
             </a>
         </li>
+        {% endif %}
+        {% if 'consommation_matieres' in codes_rapports %}
         <li>
             <a href="{% url 'reports:consommation_matieres' %}" class="report-link">
                 <i class="fas fa-chart-line"></i>Consommations
             </a>
         </li>
+        {% endif %}
+        {% if 'stock' in codes_rapports %}
         <li>
             <a href="{% url 'reports:stock' %}" class="report-link">
                 <i class="fas fa-boxes"></i>État des Stocks
             </a>
         </li>
+        {% endif %}
+        {% if 'financier' in codes_rapports %}
         <li>
             <a href="{% url 'reports:financier' %}" class="report-link">
                 <i class="fas fa-euro-sign"></i>Rapports Financiers
             </a>
         </li>
+        {% endif %}
+        {% if 'cout_formule' in codes_rapports %}
         <li>
             <a href="{% url 'reports:cout_formule' %}" class="report-link">
                 <i class="fas fa-money-bill-wave"></i>Coût des Formules
             </a>
         </li>
+        {% endif %}
     </ul>
 </div>
 

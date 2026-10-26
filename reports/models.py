@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from decimal import Decimal
 from django.db.models import Avg
@@ -170,3 +171,46 @@ class DetailCoutFormule(models.Model):
     
     def __str__(self):
         return f"{self.matiere_premiere.nom} - {self.cout_total} MAD"
+
+
+class AccesRapport(models.Model):
+    """Catalogue des rapports pouvant être autorisés utilisateur par utilisateur."""
+
+    code = models.SlugField(max_length=50, unique=True, verbose_name="Code")
+    titre = models.CharField(max_length=120, verbose_name="Titre")
+    categorie = models.CharField(max_length=50, blank=True, verbose_name="Catégorie")
+    url_name = models.CharField(max_length=100, blank=True, verbose_name="Nom d'URL")
+    ordre = models.PositiveSmallIntegerField(default=0, verbose_name="Ordre d'affichage")
+    actif = models.BooleanField(default=True, verbose_name="Actif")
+
+    class Meta:
+        ordering = ['categorie', 'ordre', 'titre']
+        verbose_name = "Rapport autorisable"
+        verbose_name_plural = "Rapports autorisables"
+
+    def __str__(self):
+        return self.titre
+
+
+class ProfilRapports(models.Model):
+    """Rapports auxquels un utilisateur donné a accès."""
+
+    utilisateur = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='profil_rapports', verbose_name="Utilisateur",
+    )
+    rapports = models.ManyToManyField(
+        AccesRapport, blank=True, related_name='utilisateurs', verbose_name="Rapports autorisés",
+    )
+    acces_total = models.BooleanField(
+        default=False, verbose_name="Accès à tous les rapports",
+        help_text="Cochez pour autoriser tous les rapports, y compris les nouveaux.",
+    )
+
+    class Meta:
+        verbose_name = "Accès aux rapports"
+        verbose_name_plural = "Accès aux rapports"
+
+    def __str__(self):
+        return f"Accès aux rapports de {self.utilisateur}"
+
