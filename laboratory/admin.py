@@ -218,12 +218,12 @@ class EssaiGranulometrieAdmin(admin.ModelAdmin):
 
 @admin.register(EssaiEquivalentSable)
 class EssaiEquivalentSableAdmin(admin.ModelAdmin):
-    list_display = ('reference', 'date_essai', 'materiau', 'hauteur_sable_mm', 'hauteur_floculat_mm', 'valeur_es')
-    list_filter = ('materiau', 'date_essai')
+    list_display = ('reference', 'date_essai', 'materiau', 'type_matiere', 'fournisseur', 'hauteur_sable_mm', 'hauteur_floculat_mm', 'valeur_es')
+    list_filter = ('materiau', 'type_matiere', 'fournisseur', 'date_essai')
     search_fields = ('reference',)
     date_hierarchy = 'date_essai'
     readonly_fields = ('valeur_es',)
-    autocomplete_fields = ('matiere_premiere',)
+    autocomplete_fields = ('matiere_premiere', 'fournisseur')
 
 
 @admin.register(EssaiBleuMethylene)

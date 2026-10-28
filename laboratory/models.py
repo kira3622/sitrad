@@ -437,6 +437,9 @@ class EssaiEquivalentSable(models.Model):
     materiau = models.CharField(max_length=20, choices=MATERIAU_CHOICES, default='sable')
     matiere_premiere = models.ForeignKey('inventory.MatierePremiere', on_delete=models.SET_NULL, null=True, blank=True,
                                          related_name='essais_equivalent_sable')
+    type_matiere = models.CharField(max_length=20, choices=TYPE_MATIERE_CHOICES, default='normal', verbose_name="Type")
+    fournisseur = models.ForeignKey('stock.Fournisseur', on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='essais_equivalent_sable', verbose_name="Fournisseur")
     hauteur_sable_mm = models.DecimalField(max_digits=6, decimal_places=1, verbose_name="Hauteur sable (h1, mm)")
     hauteur_floculat_mm = models.DecimalField(max_digits=6, decimal_places=1, verbose_name="Hauteur floculat (h2, mm)")
     valeur_es = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, verbose_name="Équivalent de sable ES (%)")
