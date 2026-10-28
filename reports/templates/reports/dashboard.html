@@ -342,6 +342,17 @@
             </div>
         </div>
         {% endif %}
+
+        {% if 'laboratoire' in codes_rapports %}
+        <div class="report-card laboratoire">
+            <div class="icon">🧪</div>
+            <h3>Rapport de Laboratoire</h3>
+            <p>Prélèvements béton, essais d'écrasement (MPa et conformité fck), granulométrie, équivalent de sable, bleu de méthylène et teneur en eau.</p>
+            <div class="report-actions">
+                <a href="{% url 'reports:laboratoire' %}" class="btn btn-primary">Voir le rapport</a>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

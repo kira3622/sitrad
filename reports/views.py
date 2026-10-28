@@ -5,7 +5,7 @@ from django.db.models import Sum, Count, Avg, Q, Max
 from django.db.models.functions import TruncMonth, TruncDay
 from django.utils import timezone
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 import json
 from django.contrib.admin.views.decorators import staff_member_required
 
@@ -2355,6 +2355,14 @@ def acces_rapide_reports(request):
             'url': 'reports:vehicules_journalier',
             'couleur': '#E91E63',
             'categorie': 'Journalier'
+        },
+        {
+            'titre': 'Rapport de Laboratoire',
+            'description': 'Prélèvements, écrasements, granulométrie, équivalent de sable, bleu de méthylène, teneur en eau',
+            'icone': 'fas fa-flask',
+            'url': 'reports:laboratoire',
+            'couleur': '#A855F7',
+            'categorie': 'Laboratoire'
         }
     ]
     
@@ -2387,3 +2395,115 @@ def acces_rapide_reports(request):
     }
     
     return render(request, 'reports/acces_rapide.html', context)
+
+
+@rapport_requis('laboratoire')
+def rapport_laboratoire(request):
+    """Rapport de laboratoire : synthèse de tous les essais (béton et granulats)."""
+    from laboratory.models import (
+        Prelevement, Eprouvette, EssaiEcrasement, EssaiGranulometrie,
+        EssaiEquivalentSable, EssaiBleuMethylene, EssaiTeneurEnEau,
+    )
+
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+
+    if not date_fin:
+        date_fin = timezone.now().date()
+    else:
+        date_fin = datetime.strptime(date_fin, '%Y-%m-%d').date()
+
+    if not date_debut:
+        date_debut = date_fin - timedelta(days=30)
+    else:
+        date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
+
+    prelevements = Prelevement.objects.filter(
+        date_prelevement__date__gte=date_debut,
+        date_prelevement__date__lte=date_fin,
+    ).select_related('ordre_production').order_by('-date_prelevement')
+
+    ecrasements = EssaiEcrasement.objects.filter(
+        date_essai__date__gte=date_debut,
+        date_essai__date__lte=date_fin,
+    ).select_related(
+        'eprouvette', 'eprouvette__prelevement', 'eprouvette__prelevement__ordre_production'
+    ).order_by('-date_essai')
+
+    granulometries = EssaiGranulometrie.objects.filter(
+        date_essai__gte=date_debut,
+        date_essai__lte=date_fin,
+    ).select_related('matiere_premiere').order_by('-date_essai')
+
+    es_essais = EssaiEquivalentSable.objects.filter(
+        date_essai__gte=date_debut,
+        date_essai__lte=date_fin,
+    ).select_related('matiere_premiere', 'fournisseur').order_by('-date_essai')
+
+    bleu_essais = EssaiBleuMethylene.objects.filter(
+        date_essai__gte=date_debut,
+        date_essai__lte=date_fin,
+    ).select_related('matiere_premiere', 'fournisseur').order_by('-date_essai')
+
+    eau_essais = EssaiTeneurEnEau.objects.filter(
+        date_essai__gte=date_debut,
+        date_essai__lte=date_fin,
+    ).select_related('matiere_premiere').order_by('-date_essai')
+
+    # Bilan de conformité des écrasements par rapport au fck contractuel
+    zones = {}
+    nb_conformes = 0
+    nb_non_conformes = 0
+    for essai in ecrasements:
+        if essai.conforme is True:
+            nb_conformes += 1
+        elif essai.conforme is False:
+            nb_non_conformes += 1
+
+        classe = essai.eprouvette.prelevement.classe_resistance or 'Non définie'
+        zone = zones.setdefault(classe, {
+            'classe': classe,
+            'fck': essai.eprouvette.prelevement.fck_mpa,
+            'valeurs': [],
+            'nb': 0,
+            'nb_conformes': 0,
+        })
+        if essai.resistance_mpa is not None:
+            zone['valeurs'].append(Decimal(essai.resistance_mpa))
+        zone['nb'] += 1
+        if essai.conforme is True:
+            zone['nb_conformes'] += 1
+
+    for zone in zones.values():
+        if zone['valeurs']:
+            zone['moyenne'] = (sum(zone['valeurs']) / Decimal(len(zone['valeurs']))).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            zone['minimum'] = min(zone['valeurs'])
+            zone['maximum'] = max(zone['valeurs'])
+        else:
+            zone['moyenne'] = zone['minimum'] = zone['maximum'] = None
+
+    context = {
+        'title': 'Rapport de Laboratoire',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'prelevements': prelevements,
+        'ecrasements': ecrasements,
+        'granulometries': granulometries,
+        'es_essais': es_essais,
+        'bleu_essais': bleu_essais,
+        'eau_essais': eau_essais,
+        'zones': sorted(zones.values(), key=lambda z: z['classe']),
+        'nb_prelevements': prelevements.count(),
+        'nb_eprouvettes': Eprouvette.objects.filter(prelevement__in=prelevements).count(),
+        'nb_ecrasements': ecrasements.count(),
+        'nb_conformes': nb_conformes,
+        'nb_non_conformes': nb_non_conformes,
+        'nb_granulometries': granulometries.count(),
+        'nb_es': es_essais.count(),
+        'nb_bleu': bleu_essais.count(),
+        'nb_eau': eau_essais.count(),
+    }
+
+    return render(request, 'reports/laboratoire.html', context)

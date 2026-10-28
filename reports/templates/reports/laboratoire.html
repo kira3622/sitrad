@@ -1,0 +1,326 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Rapport de Laboratoire{% endblock %}
+
+{% block content %}
+<div class="content" style="margin: 20px;">
+
+  <h1>🧪 Rapport de Laboratoire</h1>
+  <p style="color: #666;">Synthèse de tous les essais réalisés : prélèvements béton, écrasements, granulométrie,
+    équivalent de sable, bleu de méthylène et teneur en eau.</p>
+
+  <form method="get" style="margin: 16px 0; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+    <label>
+      Du :<br>
+      <input type="date" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}" />
+    </label>
+    <label>
+      Au :<br>
+      <input type="date" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}" />
+    </label>
+    <button type="submit" class="button" style="padding: 6px 12px;">Mettre à jour</button>
+    <button type="button" class="button" style="padding: 6px 12px;" onclick="window.print();">🖨️ Imprimer</button>
+  </form>
+
+  <p>
+    Période : <strong>{{ date_debut|date:"d/m/Y" }}</strong> au <strong>{{ date_fin|date:"d/m/Y" }}</strong>
+  </p>
+
+  {# ---------- Synthèse ---------- #}
+  <div style="display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap;">
+    <div style="background: #eff6ff; border: 1px solid #93c5fd; padding: 12px 16px; border-radius: 4px;">
+      <div style="font-size: 0.85em; color: #1e40af;">Prélèvements</div>
+      <div style="font-size: 1.4em; font-weight: bold; color: #1e40af;">{{ nb_prelevements }}</div>
+    </div>
+    <div style="background: #f5f3ff; border: 1px solid #c4b5fd; padding: 12px 16px; border-radius: 4px;">
+      <div style="font-size: 0.85em; color: #5b21b6;">Éprouvettes</div>
+      <div style="font-size: 1.4em; font-weight: bold; color: #5b21b6;">{{ nb_eprouvettes }}</div>
+    </div>
+    <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 12px 16px; border-radius: 4px;">
+      <div style="font-size: 0.85em; color: #166534;">Écrasements conformes</div>
+      <div style="font-size: 1.4em; font-weight: bold; color: #166534;">{{ nb_conformes }}</div>
+    </div>
+    <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 12px 16px; border-radius: 4px;">
+      <div style="font-size: 0.85em; color: #991b1b;">Écrasements non conformes</div>
+      <div style="font-size: 1.4em; font-weight: bold; color: #991b1b;">{{ nb_non_conformes }}</div>
+    </div>
+    <div style="background: #fff7ed; border: 1px solid #fdba74; padding: 12px 16px; border-radius: 4px;">
+      <div style="font-size: 0.85em; color: #9a3412;">Autres essais</div>
+      <div style="font-size: 1.4em; font-weight: bold; color: #9a3412;">
+        {{ nb_granulometries|add:nb_es|add:nb_bleu|add:nb_eau }}
+      </div>
+    </div>
+  </div>
+
+  {# ---------- 1. Prélèvements ---------- #}
+  <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #3b82f6;">
+    1. Prélèvements sur chantier <small style="font-weight: normal; color: #666;">({{ nb_prelevements }})</small>
+  </h2>
+  {% if prelevements %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Date</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">N° BL</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Centrale</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Élément coulé</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Classe</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Affaissement (mm)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">T° béton (°C)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Éprouvettes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in prelevements %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ p.date_prelevement|date:"d/m/Y H:i" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ p.numero_bl|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ p.centrale|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+              {{ p.get_element_coule_display }}{% if p.element_coule_detail %} — {{ p.element_coule_detail }}{% endif %}
+            </td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ p.classe_resistance|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ p.affaissement_mm|floatformat:1|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ p.temperature_beton|floatformat:1|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ p.eprouvettes.count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="color: #666;">Aucun prélèvement sur la période.</p>
+  {% endif %}
+
+  {# ---------- 2. Écrasements ---------- #}
+  <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #16a34a;">
+    2. Essais d'écrasement (résistance à la compression) <small style="font-weight: normal; color: #666;">({{ nb_ecrasements }})</small>
+  </h2>
+  {% if ecrasements %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Date</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Éprouvette</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">N° BL</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Force (kN)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Section (mm²)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Résistance (MPa)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Masse vol. (kg/m³)</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Rupture</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">fck</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Conformité</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in ecrasements %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ e.date_essai|date:"d/m/Y" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ e.eprouvette.code|default:e.eprouvette.get_forme_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ e.eprouvette.prelevement.numero_bl|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ e.force_rupture_kn|floatformat:2 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ e.surface_mm2|floatformat:2|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;"><strong>{{ e.resistance_mpa|floatformat:2|default:"—" }}</strong></td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ e.masse_volumique_kg_m3|floatformat:2|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ e.get_type_rupture_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ e.eprouvette.prelevement.classe_resistance|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">
+              {% if e.conforme is True %}
+                <span style="color:#166534; font-weight:bold;">Conforme</span>
+              {% elif e.conforme is False %}
+                <span style="color:#991b1b; font-weight:bold;">Non conforme</span>
+                {% if e.ecart_fck %}<small style="color:#991b1b;">({{ e.ecart_fck|floatformat:2 }} %)</small>{% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {# Bilan par classe de résistance #}
+    {% if zones %}
+      <h3 style="margin-top: 20px;">Bilan par classe de résistance</h3>
+      <table class="listing" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Classe</th>
+            <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">fck (MPa)</th>
+            <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Nb essais</th>
+            <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Moyenne (MPa)</th>
+            <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Min (MPa)</th>
+            <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Max (MPa)</th>
+            <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Conformes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for z in zones %}
+            <tr>
+              <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ z.classe }}</td>
+              <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ z.fck|floatformat:0|default:"—" }}</td>
+              <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ z.nb }}</td>
+              <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ z.moyenne|floatformat:2|default:"—" }}</td>
+              <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ z.minimum|floatformat:2|default:"—" }}</td>
+              <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ z.maximum|floatformat:2|default:"—" }}</td>
+              <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ z.nb_conformes }} / {{ z.nb }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  {% else %}
+    <p style="color: #666;">Aucun essai d'écrasement sur la période.</p>
+  {% endif %}
+
+  {# ---------- 3. Granulométrie ---------- #}
+  <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #a855f7;">
+    3. Analyse granulométrique <small style="font-weight: normal; color: #666;">({{ nb_granulometries }})</small>
+  </h2>
+  {% if granulometries %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Date</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Référence</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matériau</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matière première</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Désignation</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Masse (g)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Module de finesse</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Tamis</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in granulometries %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ g.date_essai|date:"d/m/Y" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ g.reference|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ g.get_materiau_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ g.matiere_premiere.nom|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ g.designation|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ g.masse_echantillon_g|floatformat:2 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;"><strong>{{ g.module_finesse|floatformat:3|default:"—" }}</strong></td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ g.lignes.count }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="color: #666;">Aucune analyse granulométrique sur la période.</p>
+  {% endif %}
+
+  {# ---------- 4. Équivalent de sable ---------- #}
+  <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #f59e0b;">
+    4. Équivalent de sable (ES) <small style="font-weight: normal; color: #666;">({{ nb_es }})</small>
+  </h2>
+  {% if es_essais %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Date</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Référence</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matériau</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matière première</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Type</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Fournisseur</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">h1 (mm)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">h2 (mm)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">ES (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in es_essais %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ s.date_essai|date:"d/m/Y" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ s.reference|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ s.get_materiau_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ s.matiere_premiere.nom|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ s.get_type_matiere_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ s.fournisseur.nom|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ s.hauteur_sable_mm|floatformat:1 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ s.hauteur_floculat_mm|floatformat:1 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;"><strong>{{ s.valeur_es|floatformat:2|default:"—" }}</strong></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="color: #666;">Aucun essai d'équivalent de sable sur la période.</p>
+  {% endif %}
+
+  {# ---------- 5. Bleu de méthylène ---------- #}
+  <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #0284c7;">
+    5. Bleu de méthylène (valeur de bleu VB) <small style="font-weight: normal; color: #666;">({{ nb_bleu }})</small>
+  </h2>
+  {% if bleu_essais %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Date</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Référence</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matériau</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matière première</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Type</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Fournisseur</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Masse (g)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Volume (ml)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">VB (g/kg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bleu_essais %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ b.date_essai|date:"d/m/Y" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ b.reference|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ b.get_materiau_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ b.matiere_premiere.nom|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ b.get_type_matiere_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ b.fournisseur.nom|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ b.masse_echantillon_g|floatformat:2 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ b.volume_solution_ml|floatformat:2 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;"><strong>{{ b.valeur_bleu|floatformat:2|default:"—" }}</strong></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="color: #666;">Aucun essai au bleu de méthylène sur la période.</p>
+  {% endif %}
+
+  {# ---------- 6. Teneur en eau ---------- #}
+  <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #0d9488;">
+    6. Teneur en eau des granulats <small style="font-weight: normal; color: #666;">({{ nb_eau }})</small>
+  </h2>
+  {% if eau_essais %}
+    <table class="listing" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Date</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Référence</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matériau</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Matière première</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Masse humide (g)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Masse sèche (g)</th>
+          <th style="text-align:right; padding:8px; border-bottom:1px solid #ddd;">Teneur en eau (%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in eau_essais %}
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ t.date_essai|date:"d/m/Y" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ t.reference|default:"—" }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ t.get_materiau_display }}</td>
+            <td style="padding:8px; border-bottom:1px solid #f0f0f0;">{{ t.matiere_premiere.nom|default:"—" }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ t.masse_humide_g|floatformat:2 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;">{{ t.masse_seche_g|floatformat:2 }}</td>
+            <td style="padding:8px; text-align:right; border-bottom:1px solid #f0f0f0;"><strong>{{ t.teneur_eau_pourcent|floatformat:2|default:"—" }}</strong></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="color: #666;">Aucun essai de teneur en eau sur la période.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

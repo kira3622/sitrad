@@ -49,6 +49,7 @@ class RapportAdmin(admin.ModelAdmin):
             'cout_formule': reverse('reports:cout_formule'),
             'rapport_camion': reverse('reports:rapport_camion'),
             'rapport_client': reverse('reports:rapport_client'),
+            'laboratoire': reverse('reports:laboratoire'),
         }
         return super().changelist_view(request, extra_context=extra_context)
 

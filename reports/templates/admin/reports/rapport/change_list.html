@@ -219,6 +219,16 @@
             </a>
         </div>
         {% endif %}
+
+        {% if 'laboratoire' in codes_rapports %}
+        <div class="report-card" style="background: rgba(168, 85, 247, 0.25);">
+            <a href="{{ reports_links.laboratoire }}">
+                <span class="report-icon">🧪</span>
+                <div><strong>Rapport de Laboratoire</strong></div>
+                <small>Prélèvements, écrasements, granulométrie, ES, bleu, eau</small>
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
 
