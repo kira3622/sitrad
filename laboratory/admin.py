@@ -228,8 +228,8 @@ class EssaiEquivalentSableAdmin(admin.ModelAdmin):
 
 @admin.register(EssaiBleuMethylene)
 class EssaiBleuMethyleneAdmin(admin.ModelAdmin):
-    list_display = ('reference', 'date_essai', 'materiau', 'masse_echantillon_g', 'volume_solution_ml', 'valeur_bleu')
-    list_filter = ('materiau', 'date_essai')
+    list_display = ('reference', 'date_essai', 'materiau', 'type_matiere', 'masse_echantillon_g', 'volume_solution_ml', 'valeur_bleu')
+    list_filter = ('materiau', 'type_matiere', 'date_essai')
     search_fields = ('reference',)
     date_hierarchy = 'date_essai'
     readonly_fields = ('valeur_bleu',)

@@ -92,6 +92,11 @@ MATERIAU_CHOICES = [
     ('autre', 'Autre'),
 ]
 
+TYPE_MATIERE_CHOICES = [
+    ('normal', 'Normal'),
+    ('special', 'Spécial'),
+]
+
 # Ouverture des tamis normalisés (mm), du plus grand au plus petit
 TAMIS_STANDARD = [
     Decimal('31.5'), Decimal('25'), Decimal('20'), Decimal('16'), Decimal('12.5'),
@@ -455,6 +460,7 @@ class EssaiBleuMethylene(models.Model):
     materiau = models.CharField(max_length=20, choices=MATERIAU_CHOICES, default='sable')
     matiere_premiere = models.ForeignKey('inventory.MatierePremiere', on_delete=models.SET_NULL, null=True, blank=True,
                                          related_name='essais_bleu_methylene')
+    type_matiere = models.CharField(max_length=20, choices=TYPE_MATIERE_CHOICES, default='normal', verbose_name="Type")
     masse_echantillon_g = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Masse échantillon (g)")
     volume_solution_ml = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Volume solution de bleu (ml)")
     valeur_bleu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Valeur de bleu VB (ml/kg)")
