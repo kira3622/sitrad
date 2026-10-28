@@ -2484,6 +2484,44 @@ def rapport_laboratoire(request):
         else:
             zone['moyenne'] = zone['minimum'] = zone['maximum'] = None
 
+    # ---- Séries des courbes d'évolution ----
+    def _serie_chrono(essais, champ):
+        """Série chronologique {labels, valeurs} d'un champ d'essai."""
+        tries = sorted(
+            (o for o in essais if getattr(o, champ) is not None),
+            key=lambda o: o.date_essai,
+        )
+        return {
+            'labels': [o.date_essai.strftime('%d/%m/%Y') for o in tries],
+            'valeurs': [float(getattr(o, champ)) for o in tries],
+        }
+
+    ecrasements_tries = sorted(
+        (e for e in ecrasements if e.resistance_mpa is not None),
+        key=lambda e: e.date_essai,
+    )
+    ecrasements_par_age = sorted(
+        (e for e in ecrasements if e.resistance_mpa is not None),
+        key=lambda e: (e.eprouvette.age_jours, e.date_essai),
+    )
+
+    courbes = {
+        # Évolution de la résistance à l'écrasement dans le temps
+        'resistance': {
+            'labels': [e.date_essai.strftime('%d/%m/%Y') for e in ecrasements_tries],
+            'valeurs': [float(e.resistance_mpa) for e in ecrasements_tries],
+        },
+        # Montée en résistance selon l'âge de l'éprouvette (3j, 7j, 14j, 28j, 60j)
+        'resistance_age': {
+            'labels': [e.eprouvette.age_jours for e in ecrasements_par_age],
+            'valeurs': [float(e.resistance_mpa) for e in ecrasements_par_age],
+        },
+        'granulometrie': _serie_chrono(granulometries, 'module_finesse'),
+        'es': _serie_chrono(es_essais, 'valeur_es'),
+        'bleu': _serie_chrono(bleu_essais, 'valeur_bleu'),
+        'eau': _serie_chrono(eau_essais, 'teneur_eau_pourcent'),
+    }
+
     context = {
         'title': 'Rapport de Laboratoire',
         'date_debut': date_debut,
@@ -2495,6 +2533,7 @@ def rapport_laboratoire(request):
         'bleu_essais': bleu_essais,
         'eau_essais': eau_essais,
         'zones': sorted(zones.values(), key=lambda z: z['classe']),
+        'courbes': courbes,
         'nb_prelevements': prelevements.count(),
         'nb_eprouvettes': Eprouvette.objects.filter(prelevement__in=prelevements).count(),
         'nb_ecrasements': ecrasements.count(),

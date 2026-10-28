@@ -2,6 +2,36 @@
 
 {% block title %}Rapport de Laboratoire{% endblock %}
 
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+  .courbes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 16px;
+  }
+  .courbe-carte {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .courbe-carte h3 {
+    margin: 0 0 8px 0;
+    font-size: 0.95em;
+    color: #374151;
+  }
+  .courbe-canvas {
+    height: 300px;
+  }
+  @media print {
+    .courbes-grid { grid-template-columns: 1fr 1fr; }
+    .courbe-canvas { height: 240px; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content" style="margin: 20px;">
 
@@ -51,6 +81,99 @@
       </div>
     </div>
   </div>
+
+  {# ---------- Courbes d'évolution ---------- #}
+  <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #7c3aed;">
+    📈 Courbes d'évolution
+  </h2>
+
+  {% if courbes.resistance.labels or courbes.resistance_age.labels or courbes.granulometrie.labels or courbes.es.labels or courbes.bleu.labels or courbes.eau.labels %}
+    <div class="courbes-grid">
+      {% if courbes.resistance.labels %}
+        <div class="courbe-carte">
+          <h3>Résistance à l'écrasement (MPa) — évolution dans le temps</h3>
+          <div id="chartResistance" class="courbe-canvas"></div>
+        </div>
+      {% endif %}
+      {% if courbes.resistance_age.labels %}
+        <div class="courbe-carte">
+          <h3>Montée en résistance selon l'âge de l'éprouvette</h3>
+          <div id="chartResistanceAge" class="courbe-canvas"></div>
+        </div>
+      {% endif %}
+      {% if courbes.granulometrie.labels %}
+        <div class="courbe-carte">
+          <h3>Module de finesse — évolution dans le temps</h3>
+          <div id="chartGranulo" class="courbe-canvas"></div>
+        </div>
+      {% endif %}
+      {% if courbes.es.labels %}
+        <div class="courbe-carte">
+          <h3>Équivalent de sable ES (%) — évolution dans le temps</h3>
+          <div id="chartES" class="courbe-canvas"></div>
+        </div>
+      {% endif %}
+      {% if courbes.bleu.labels %}
+        <div class="courbe-carte">
+          <h3>Valeur de bleu VB (g/kg) — évolution dans le temps</h3>
+          <div id="chartBleu" class="courbe-canvas"></div>
+        </div>
+      {% endif %}
+      {% if courbes.eau.labels %}
+        <div class="courbe-carte">
+          <h3>Teneur en eau (%) — évolution dans le temps</h3>
+          <div id="chartEau" class="courbe-canvas"></div>
+        </div>
+      {% endif %}
+    </div>
+    {{ courbes|json_script:"courbes-laboratoire" }}
+    <script>
+      (function () {
+        var racine = document.getElementById('courbes-laboratoire');
+        if (!racine || typeof echarts === 'undefined') { return; }
+        var donnees = JSON.parse(racine.textContent);
+
+        function tracer(id, serie, unite, couleur, axeX) {
+          var el = document.getElementById(id);
+          if (!el || !serie || !serie.labels || !serie.labels.length) { return; }
+
+          var estAge = (axeX === 'valeur');
+          var points = estAge
+            ? serie.labels.map(function (x, i) { return [x, serie.valeurs[i]]; })
+            : serie.valeurs;
+
+          var graphique = echarts.init(el);
+          graphique.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: 55, right: 20, top: 25, bottom: estAge ? 40 : 60 },
+            xAxis: estAge
+              ? { type: 'value', name: 'Âge (jours)', scale: true, minInterval: 1 }
+              : { type: 'category', data: serie.labels, axisLabel: { rotate: 45, fontSize: 10 } },
+            yAxis: { type: 'value', name: unite, scale: true },
+            series: [{
+              type: 'line',
+              smooth: true,
+              symbolSize: 7,
+              data: points,
+              itemStyle: { color: couleur },
+              lineStyle: { color: couleur, width: 2 },
+              areaStyle: { color: couleur, opacity: 0.12 }
+            }]
+          });
+          window.addEventListener('resize', function () { graphique.resize(); });
+        }
+
+        tracer('chartResistance', donnees.resistance, 'MPa', '#16a34a', 'categorie');
+        tracer('chartResistanceAge', donnees.resistance_age, 'MPa', '#0ea5e9', 'valeur');
+        tracer('chartGranulo', donnees.granulometrie, 'Module de finesse', '#a855f7', 'categorie');
+        tracer('chartES', donnees.es, 'ES (%)', '#f59e0b', 'categorie');
+        tracer('chartBleu', donnees.bleu, 'VB (g/kg)', '#0284c7', 'categorie');
+        tracer('chartEau', donnees.eau, 'Teneur en eau (%)', '#0d9488', 'categorie');
+      })();
+    </script>
+  {% else %}
+    <p style="color: #666;">Aucune donnée sur la période : les courbes d'évolution apparaîtront dès le premier essai enregistré.</p>
+  {% endif %}
 
   {# ---------- 1. Prélèvements ---------- #}
   <h2 style="margin-top: 28px; padding-bottom: 6px; border-bottom: 2px solid #3b82f6;">
