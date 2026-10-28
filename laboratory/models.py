@@ -95,6 +95,10 @@ MATERIAU_CHOICES = [
 TYPE_MATIERE_CHOICES = [
     ('normal', 'Normal'),
     ('special', 'Spécial'),
+    ('0_4_normal', '0/4 Normal'),
+    ('0_4_special', '0/4 Spécial'),
+    ('0_2_normal', '0/2 Normal'),
+    ('0_2_special', '0/2 Spécial'),
 ]
 
 # Ouverture des tamis normalisés (mm), du plus grand au plus petit
