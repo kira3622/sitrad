@@ -2496,6 +2496,32 @@ def rapport_laboratoire(request):
             'valeurs': [float(getattr(o, champ)) for o in tries],
         }
 
+    def _series_par_fournisseur(essais, champ):
+        """Courbes d'évolution éclatées par fournisseur : une série par fournisseur."""
+        points = sorted(
+            (
+                (o.date_essai, float(getattr(o, champ)), o.fournisseur.nom if o.fournisseur else 'Sans fournisseur')
+                for o in essais
+                if getattr(o, champ) is not None
+            ),
+            key=lambda p: p[0],
+        )
+
+        dates = sorted({p[0] for p in points})
+        positions = {date: i for i, date in enumerate(dates)}
+
+        par_fournisseur = {}
+        for date, valeur, nom in points:
+            par_fournisseur.setdefault(nom, [None] * len(dates))[positions[date]] = valeur
+
+        return {
+            'labels': [d.strftime('%d/%m/%Y') for d in dates],
+            'series': [
+                {'nom': nom, 'valeurs': valeurs}
+                for nom, valeurs in sorted(par_fournisseur.items())
+            ],
+        }
+
     ecrasements_tries = sorted(
         (e for e in ecrasements if e.resistance_mpa is not None),
         key=lambda e: e.date_essai,
@@ -2517,8 +2543,8 @@ def rapport_laboratoire(request):
             'valeurs': [float(e.resistance_mpa) for e in ecrasements_par_age],
         },
         'granulometrie': _serie_chrono(granulometries, 'module_finesse'),
-        'es': _serie_chrono(es_essais, 'valeur_es'),
-        'bleu': _serie_chrono(bleu_essais, 'valeur_bleu'),
+        'es': _series_par_fournisseur(es_essais, 'valeur_es'),
+        'bleu': _series_par_fournisseur(bleu_essais, 'valeur_bleu'),
         'eau': _serie_chrono(eau_essais, 'teneur_eau_pourcent'),
     }
 

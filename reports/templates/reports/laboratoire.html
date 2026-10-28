@@ -109,13 +109,13 @@
       {% endif %}
       {% if courbes.es.labels %}
         <div class="courbe-carte">
-          <h3>Équivalent de sable ES (%) — évolution dans le temps</h3>
+          <h3>Équivalent de sable ES (%) — évolution par fournisseur</h3>
           <div id="chartES" class="courbe-canvas"></div>
         </div>
       {% endif %}
       {% if courbes.bleu.labels %}
         <div class="courbe-carte">
-          <h3>Valeur de bleu VB (g/kg) — évolution dans le temps</h3>
+          <h3>Valeur de bleu VB (g/kg) — évolution par fournisseur</h3>
           <div id="chartBleu" class="courbe-canvas"></div>
         </div>
       {% endif %}
@@ -163,11 +163,45 @@
           window.addEventListener('resize', function () { graphique.resize(); });
         }
 
+        var PALETTE = ['#0284c7', '#f59e0b', '#16a34a', '#dc2626', '#7c3aed', '#0d9488',
+                       '#db2777', '#65a30d', '#ea580c', '#4f46e5'];
+
+        // Une courbe par fournisseur
+        function tracerParFournisseur(id, serie, unite) {
+          var el = document.getElementById(id);
+          if (!el || !serie || !serie.labels || !serie.labels.length) { return; }
+
+          var series = (serie.series || []).map(function (s, i) {
+            var couleur = PALETTE[i % PALETTE.length];
+            return {
+              name: s.nom,
+              type: 'line',
+              smooth: true,
+              connectNulls: true,
+              symbolSize: 7,
+              data: s.valeurs,
+              itemStyle: { color: couleur },
+              lineStyle: { color: couleur, width: 2 }
+            };
+          });
+
+          var graphique = echarts.init(el);
+          graphique.setOption({
+            tooltip: { trigger: 'axis' },
+            legend: { top: 0, type: 'scroll', textStyle: { fontSize: 10 } },
+            grid: { left: 55, right: 20, top: 45, bottom: 60 },
+            xAxis: { type: 'category', data: serie.labels, axisLabel: { rotate: 45, fontSize: 10 } },
+            yAxis: { type: 'value', name: unite, scale: true },
+            series: series
+          });
+          window.addEventListener('resize', function () { graphique.resize(); });
+        }
+
         tracer('chartResistance', donnees.resistance, 'MPa', '#16a34a', 'categorie');
         tracer('chartResistanceAge', donnees.resistance_age, 'MPa', '#0ea5e9', 'valeur');
         tracer('chartGranulo', donnees.granulometrie, 'Module de finesse', '#a855f7', 'categorie');
-        tracer('chartES', donnees.es, 'ES (%)', '#f59e0b', 'categorie');
-        tracer('chartBleu', donnees.bleu, 'VB (g/kg)', '#0284c7', 'categorie');
+        tracerParFournisseur('chartES', donnees.es, 'ES (%)');
+        tracerParFournisseur('chartBleu', donnees.bleu, 'VB (g/kg)');
         tracer('chartEau', donnees.eau, 'Teneur en eau (%)', '#0d9488', 'categorie');
       })();
     </script>
