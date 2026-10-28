@@ -469,7 +469,7 @@ class EssaiBleuMethylene(models.Model):
                                     related_name='essais_bleu_methylene', verbose_name="Fournisseur")
     masse_echantillon_g = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Masse échantillon (g)")
     volume_solution_ml = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Volume solution de bleu (ml)")
-    valeur_bleu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Valeur de bleu VB (ml/kg)")
+    valeur_bleu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Valeur de bleu VB (g/kg)")
     observations = models.TextField(blank=True)
 
     class Meta:
@@ -481,9 +481,10 @@ class EssaiBleuMethylene(models.Model):
         return f"VB {self.valeur_bleu or '?'} - {self.date_essai:%d/%m/%Y}"
 
     def save(self, *args, **kwargs):
-        # VB = volume de solution (ml) / masse sèche (kg)
+        # VB (g/kg) = 10 x volume de solution (ml) / masse sèche (g)
+        # (solution de bleu de méthylène à 10 g/l, NF EN 933-9)
         if self.masse_echantillon_g:
-            self.valeur_bleu = _q(Decimal(self.volume_solution_ml or 0) / (Decimal(self.masse_echantillon_g) / Decimal('1000')))
+            self.valeur_bleu = _q(Decimal('10') * Decimal(self.volume_solution_ml or 0) / Decimal(self.masse_echantillon_g))
         super().save(*args, **kwargs)
 
 
