@@ -461,6 +461,8 @@ class EssaiBleuMethylene(models.Model):
     matiere_premiere = models.ForeignKey('inventory.MatierePremiere', on_delete=models.SET_NULL, null=True, blank=True,
                                          related_name='essais_bleu_methylene')
     type_matiere = models.CharField(max_length=20, choices=TYPE_MATIERE_CHOICES, default='normal', verbose_name="Type")
+    fournisseur = models.ForeignKey('stock.Fournisseur', on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name='essais_bleu_methylene', verbose_name="Fournisseur")
     masse_echantillon_g = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Masse échantillon (g)")
     volume_solution_ml = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Volume solution de bleu (ml)")
     valeur_bleu = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Valeur de bleu VB (ml/kg)")
