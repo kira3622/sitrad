@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from .models import (
     Prelevement, Eprouvette, EssaiEcrasement,
@@ -75,7 +75,7 @@ class PrelevementAdmin(admin.ModelAdmin):
     search_fields = ('numero_bl', 'element_coule_detail', 'observations',
                      'ordre_production__numero_bon', 'ordre_production__commande__client__nom')
     date_hierarchy = 'date_prelevement'
-    readonly_fields = ('date_creation', 'lien_pv', 'liens_suivi')
+    readonly_fields = ('date_creation', 'lien_pv', 'liens_suivi', 'formule_composition')
     autocomplete_fields = ('ordre_production',)
     inlines = [EprouvetteInline]
     actions = ['action_generer_7_28', 'action_generer_7_28_60']
@@ -83,6 +83,9 @@ class PrelevementAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Rattachement", {
             'fields': ('ordre_production', 'numero_bl', 'centrale', 'date_prelevement')
+        }),
+        ("Formule du béton", {
+            'fields': ('formule_composition',)
         }),
         ("Élément coulé", {
             'fields': ('element_coule', 'element_coule_detail')
@@ -120,6 +123,57 @@ class PrelevementAdmin(admin.ModelAdmin):
         detail = reverse('laboratory:prelevement_detail', args=[obj.pk])
         return format_html('<a href="{}" target="_blank">🔬 Voir la fiche de suivi laboratoire</a>', detail)
     liens_suivi.short_description = "Suivi"
+
+    def formule_composition(self, obj):
+        """Formule utilisée sur le bon de production et sa composition (dosages)."""
+        ordre = getattr(obj, 'ordre_production', None)
+        formule = getattr(ordre, 'formule', None) if ordre is not None else None
+        if formule is None:
+            return format_html(
+                '<p style="margin:0; color:#6b7280;">'
+                "Aucune formule rattachée : sélectionnez d'abord un ordre de production.</p>"
+            )
+
+        entete = format_html(
+            '<p style="margin:0 0 6px 0;"><strong>Formule : {}</strong>'
+            ' &nbsp;|&nbsp; Résistance requise : <strong>{}</strong>'
+            ' &nbsp;|&nbsp; Quantité de référence : {} m³'
+            ' &nbsp;|&nbsp; Prix de vente : {} MAD/m³</p>',
+            formule.nom, formule.resistance_requise,
+            formule.quantite_produite_reference, formule.prix_vente_unitaire,
+        )
+
+        lignes = list(
+            formule.composition.select_related('matiere_premiere')
+            .order_by('matiere_premiere__nom')
+        )
+        if not lignes:
+            return format_html(
+                '{}<p style="margin:0; color:#6b7280;">'
+                "Cette formule n'a pas de composition définie.</p>",
+                entete,
+            )
+
+        corps = format_html_join(
+            '',
+            '<tr>'
+            '<td style="padding:4px 12px; border-bottom:1px solid #e5e7eb;">{}</td>'
+            '<td style="padding:4px 12px; border-bottom:1px solid #e5e7eb; text-align:right;">{}</td>'
+            '<td style="padding:4px 12px; border-bottom:1px solid #e5e7eb;">{}</td>'
+            '</tr>',
+            ((l.matiere_premiere.nom, l.quantite, l.matiere_premiere.unite_mesure) for l in lignes),
+        )
+        tableau = format_html(
+            '<table style="border-collapse:collapse; background:#fff;">'
+            '<thead><tr style="background:#f3f4f6;">'
+            '<th style="padding:4px 12px; text-align:left;">Matière première</th>'
+            '<th style="padding:4px 12px; text-align:right;">Quantité</th>'
+            '<th style="padding:4px 12px; text-align:left;">Unité</th>'
+            '</tr></thead><tbody>{}</tbody></table>',
+            corps,
+        )
+        return format_html('{}{}', entete, tableau)
+    formule_composition.short_description = "Liste des formules (composition)"
 
     @admin.action(description="Générer les éprouvettes (7j et 28j)")
     def action_generer_7_28(self, request, queryset):
