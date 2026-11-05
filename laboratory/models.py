@@ -83,6 +83,11 @@ FCK_MAP = {
     'C50/60': 50,
 }
 
+# Seuil de conformité spécifique aux éprouvettes écrasées à 7 jours (MPa).
+# À 7 jours le béton n'a pas encore atteint sa résistance caractéristique :
+# le critère de contrôle précoce appliqué est une résistance ≥ 18 MPa.
+SEUIL_CONFORMITE_7J_MPA = Decimal('18')
+
 MATERIAU_CHOICES = [
     ('sable', 'Sable'),
     ('gravier_3_8', 'Gravier 3/8'),
@@ -348,12 +353,19 @@ class EssaiEcrasement(models.Model):
         if self.poids_kg and volume:
             self.masse_volumique_kg_m3 = _q(Decimal(self.poids_kg) / Decimal(volume) * Decimal('1000000'))
 
-        # Conformité vis-à-vis de la résistance contractuelle
-        fck = self.eprouvette.prelevement.fck_mpa
-        if fck is not None and self.resistance_mpa is not None:
-            self.conforme = self.resistance_mpa >= fck
+        # Conformité vis-à-vis du seuil applicable (18 MPa à 7 jours, sinon fck)
+        seuil = self.seuil_conformite_mpa
+        if seuil is not None and self.resistance_mpa is not None:
+            self.conforme = self.resistance_mpa >= seuil
 
         super().save(*args, **kwargs)
+
+    @property
+    def seuil_conformite_mpa(self):
+        """Seuil de conformité applicable : 18 MPa à 7 jours, sinon le fck contractuel."""
+        if self.eprouvette.age_jours == 7:
+            return SEUIL_CONFORMITE_7J_MPA
+        return self.eprouvette.prelevement.fck_mpa
 
     @property
     def ecart_fck(self):

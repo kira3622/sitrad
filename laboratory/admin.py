@@ -40,12 +40,29 @@ class StatutEprouvetteFilter(admin.SimpleListFilter):
         return queryset
 
 
-class EssaiEcrasementInline(admin.StackedInline):
+class SeuilConformiteMixin:
+    """Colonne affichant le seuil de conformité appliqué à l'essai."""
+
+    def seuil_conformite(self, obj):
+        if not obj.pk:
+            return '—'
+        seuil = obj.seuil_conformite_mpa
+        if seuil is None:
+            return '— (classe de résistance non renseignée)'
+        if obj.eprouvette.age_jours == 7:
+            return format_html('{} MPa <em>(7 jours)</em>', seuil)
+        return format_html('{} MPa <em>(fck {})</em>', seuil, obj.eprouvette.prelevement.classe_resistance)
+    seuil_conformite.short_description = "Seuil applicable"
+
+
+class EssaiEcrasementInline(SeuilConformiteMixin, admin.StackedInline):
     model = EssaiEcrasement
     extra = 0
     fields = ('date_essai', 'poids_kg', 'force_rupture_kn', 'type_rupture',
-              'surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3', 'conforme', 'observation')
-    readonly_fields = ('surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3', 'conforme')
+              'surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3', 'seuil_conformite',
+              'conforme', 'observation')
+    readonly_fields = ('surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3',
+                       'seuil_conformite', 'conforme')
 
 
 class EprouvetteInline(admin.TabularInline):
@@ -218,14 +235,16 @@ class EprouvetteAdmin(admin.ModelAdmin):
 
 
 @admin.register(EssaiEcrasement)
-class EssaiEcrasementAdmin(admin.ModelAdmin):
+class EssaiEcrasementAdmin(SeuilConformiteMixin, admin.ModelAdmin):
     list_display = ('eprouvette', 'date_essai', 'poids_kg', 'force_rupture_kn',
-                    'surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3', 'type_rupture', 'conforme')
+                    'surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3', 'type_rupture',
+                    'seuil_conformite', 'conforme')
     list_filter = ('type_rupture', 'conforme', 'date_essai')
     search_fields = ('eprouvette__code', 'eprouvette__prelevement__numero_bl')
     date_hierarchy = 'date_essai'
     autocomplete_fields = ('eprouvette',)
-    readonly_fields = ('surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3', 'conforme')
+    readonly_fields = ('surface_mm2', 'resistance_mpa', 'masse_volumique_kg_m3',
+                       'seuil_conformite', 'conforme')
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
