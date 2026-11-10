@@ -203,6 +203,7 @@ class AccesRapport(models.Model):
             ("voir_rapport_clients_journalier", "Peut voir le rapport Journalier Clients"),
             ("voir_rapport_vehicules_journalier", "Peut voir le rapport Journalier Véhicules"),
             ("voir_rapport_laboratoire", "Peut voir le rapport de Laboratoire"),
+            ("voir_rapport_prix_vente_unitaire", "Peut voir le rapport Prix de Vente Unitaire"),
         ]
 
     def __str__(self):

@@ -1,14 +1,60 @@
+from datetime import timedelta
+
 from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
+from django.utils import timezone
 from django.utils.html import format_html
 from .models import OrdreProduction, LotProduction
 from orders.models import Commande
+from reports.acces import peut_voir_prix_vente
+
+
+class PlageDatesFilter(admin.SimpleListFilter):
+    """Filtre de période de production : l'utilisateur choisit la durée à consulter."""
+    title = "Période de production"
+    parameter_name = 'plage'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('aujourdhui', "Aujourd'hui"),
+            ('7j', "7 derniers jours"),
+            ('30j', "30 derniers jours"),
+            ('mois', "Ce mois"),
+            ('mois_precedent', "Mois précédent"),
+            ('annee', "Cette année"),
+        )
+
+    def queryset(self, request, queryset):
+        valeur = self.value()
+        if not valeur:
+            return queryset
+        aujourdhui = timezone.localdate()
+        if valeur == 'aujourdhui':
+            return queryset.filter(date_production=aujourdhui)
+        if valeur == '7j':
+            return queryset.filter(date_production__gte=aujourdhui - timedelta(days=7))
+        if valeur == '30j':
+            return queryset.filter(date_production__gte=aujourdhui - timedelta(days=30))
+        if valeur == 'mois':
+            return queryset.filter(date_production__year=aujourdhui.year,
+                                   date_production__month=aujourdhui.month)
+        if valeur == 'mois_precedent':
+            premier_du_mois = aujourdhui.replace(day=1)
+            fin = premier_du_mois - timedelta(days=1)
+            debut = fin.replace(day=1)
+            return queryset.filter(date_production__range=[debut, fin])
+        if valeur == 'annee':
+            return queryset.filter(date_production__year=aujourdhui.year)
+        return queryset
+
 
 class LotProductionInline(admin.TabularInline):
     model = LotProduction
     extra = 0
 
 class OrdreProductionAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/production/ordreproduction/change_list.html'
+
     list_display = (
         'numero_bon', 'id', 'commande', 'formule', 'quantite_produire', 'prix_vente_unitaire', 'prix_deplacement_pompe', 'prix_deplacement_camion', 'date_production', 'heure_production',
         'chauffeur', 'vehicule', 'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
@@ -16,7 +62,7 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         'masse_volumique', 'transporteur', 'pompe_display', 'statut', 'matieres_sorties_calculees', 'actions_sorties'
     )
     list_filter = (
-        'statut', 'date_production', 'matieres_sorties_calculees', 'chauffeur', 'vehicule',
+        'statut', PlageDatesFilter, 'date_production', 'matieres_sorties_calculees', 'chauffeur', 'vehicule',
         'classe_exposition', 'classe_consistance', 'classe_teneur_chlorure', 'd_max',
         'ciment_type_classe', 'adjuvant_type', 'transporteur', 'pompe__statut', 'pompe__marque'
     )
@@ -40,7 +86,26 @@ class OrdreProductionAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related(
             'commande', 'formule', 'chauffeur', 'vehicule', 'pompe', 'pompe__operateur'
         )
-    
+
+    def get_list_display(self, request):
+        """Masquer la colonne « Prix de vente unitaire » aux utilisateurs non autorisés."""
+        colonnes = list(super().get_list_display(request))
+        if not peut_voir_prix_vente(request.user):
+            colonnes = [colonne for colonne in colonnes if colonne != 'prix_vente_unitaire']
+        return colonnes
+
+    def get_fields(self, request, obj=None):
+        """Masquer le champ « Prix de vente unitaire » du formulaire aux non autorisés."""
+        champs = list(super().get_fields(request, obj))
+        if not peut_voir_prix_vente(request.user):
+            champs = [champ for champ in champs if champ != 'prix_vente_unitaire']
+        return champs
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['peut_voir_prix'] = peut_voir_prix_vente(request.user)
+        return super().changelist_view(request, extra_context=extra_context)
+
     def pompe_display(self, obj):
         """Affiche les informations de la pompe de manière formatée"""
         if obj.pompe:

@@ -1,0 +1,176 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .report-container { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .report-header {
+    background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+    color: #fff; padding: 25px; border-radius: 10px; margin-bottom: 24px; text-align: center;
+  }
+  .report-header h1 { margin: 0; font-size: 2em; font-weight: 300; }
+  .filters-section {
+    background: #fff; padding: 20px; border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.08); margin-bottom: 24px;
+  }
+  .filters-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; align-items: end;
+  }
+  .filter-group { display: flex; flex-direction: column; }
+  .filter-group label { font-weight: 600; margin-bottom: 6px; color: #333; }
+  .filter-group input, .filter-group select {
+    padding: 9px; border: 2px solid #e9ecef; border-radius: 5px; font-size: 14px;
+  }
+  .btn-filter {
+    padding: 10px 20px; background: #0ea5e9; color: #fff; border: none;
+    border-radius: 5px; cursor: pointer; font-weight: 600;
+  }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #fff; padding: 20px; border-radius: 10px; text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,.08); border-left: 5px solid #0ea5e9;
+  }
+  .stat-value { font-size: 1.9em; font-weight: bold; color: #0369a1; }
+  .stat-label { color: #666; margin-top: 6px; }
+  .data-section { background: #fff; border-radius: 10px; overflow: auto; box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th { background: #0ea5e9; color: #fff; padding: 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+  .data-table tr:hover { background: #f8fafc; }
+  .num { text-align: right; }
+  .pu { font-weight: bold; color: #0369a1; }
+  .pu-absent { color: #b45309; font-style: italic; }
+  .totaux-row td { font-weight: bold; background: #f1f5f9; border-top: 2px solid #0ea5e9; }
+  .btn-back {
+    display: inline-block; margin-bottom: 16px; padding: 9px 16px; background: #6c757d;
+    color: #fff; text-decoration: none; border-radius: 5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+  <a href="{% url 'reports:dashboard' %}" class="btn-back">⬅️ Retour au tableau de bord</a>
+
+  <div class="report-header">
+    <h1>🏷️ {{ title }}</h1>
+    <p>Du {{ date_debut|date:"d/m/Y" }} au {{ date_fin|date:"d/m/Y" }}</p>
+  </div>
+
+  <div class="filters-section">
+    <h3 style="margin-top:0; color:#333;">🔍 Choix de la période</h3>
+    <form method="get" class="filters-grid">
+      <div class="filter-group">
+        <label for="date_debut">Du :</label>
+        <input type="date" id="date_debut" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}">
+      </div>
+      <div class="filter-group">
+        <label for="date_fin">Au :</label>
+        <input type="date" id="date_fin" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}">
+      </div>
+      <div class="filter-group">
+        <label for="client">Client :</label>
+        <select id="client" name="client">
+          <option value="">Tous les clients</option>
+          {% for c in clients_choices %}
+            <option value="{{ c.id }}" {% if c.id|stringformat:"s" == client_id|stringformat:"s" %}selected{% endif %}>{{ c.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="formule">Formule :</label>
+        <select id="formule" name="formule">
+          <option value="">Toutes les formules</option>
+          {% for f in formules_choices %}
+            <option value="{{ f.id }}" {% if f.id|stringformat:"s" == formule_id|stringformat:"s" %}selected{% endif %}>{{ f.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <button type="submit" class="btn-filter">Afficher les prix</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ nb_ordres }}</div>
+      <div class="stat-label">Ordres de production</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_volume|floatformat:2 }} m³</div>
+      <div class="stat-label">Volume total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ pu_moyen|floatformat:2 }} MAD</div>
+      <div class="stat-label">Prix de vente unitaire moyen (/m³)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_montant|floatformat:2 }} MAD</div>
+      <div class="stat-label">Montant total</div>
+    </div>
+  </div>
+
+  <div class="data-section">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>N° Bon</th>
+          <th>Client</th>
+          <th>Formule</th>
+          <th class="num">Volume (m³)</th>
+          <th class="num">Prix vente unitaire (MAD/m³)</th>
+          <th class="num">Dépl. pompe</th>
+          <th class="num">Dépl. camion</th>
+          <th class="num">Montant (MAD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in lignes %}
+          <tr>
+            <td>{{ l.date_production|date:"d/m/Y" }}</td>
+            <td>{{ l.numero_bon }}</td>
+            <td>{{ l.client_nom }}</td>
+            <td>{{ l.formule_nom }}</td>
+            <td class="num">{{ l.quantite_produire|floatformat:2 }}</td>
+            <td class="num">
+              {% if l.prix_vente_unitaire is not None %}
+                <span class="pu">{{ l.prix_vente_unitaire|floatformat:2 }}</span>
+              {% else %}
+                <span class="pu-absent">Non renseigné</span>
+              {% endif %}
+            </td>
+            <td class="num">{{ l.prix_deplacement_pompe|floatformat:2 }}</td>
+            <td class="num">{{ l.prix_deplacement_camion|floatformat:2 }}</td>
+            <td class="num">{{ l.montant|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" style="text-align:center; padding:30px; color:#666; font-style:italic;">
+              Aucun ordre de production sur la période sélectionnée.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if lignes %}
+      <tfoot>
+        <tr class="totaux-row">
+          <td colspan="4">TOTAUX</td>
+          <td class="num">{{ total_volume|floatformat:2 }}</td>
+          <td class="num">{{ pu_moyen|floatformat:2 }} (moy.)</td>
+          <td colspan="2"></td>
+          <td class="num">{{ total_montant|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -69,3 +69,45 @@ def rapport_requis(code):
             return vue(request, *args, **kwargs)
         return enveloppe
     return decorateur
+
+
+# ---------------------------------------------------------------------------
+# Consultation des prix de vente unitaires (accès strict, sans droit par défaut)
+# ---------------------------------------------------------------------------
+
+CODE_PRIX_VENTE = 'prix_vente_unitaire'
+PERMISSION_PRIX_VENTE = PREFIXE_PERMISSION + CODE_PRIX_VENTE
+
+
+def peut_voir_prix_vente(user):
+    """Autorisation stricte (opt-in) pour consulter les prix de vente unitaires.
+
+    Contrairement aux autres rapports, aucun accès n'est accordé par défaut :
+    il faut être superutilisateur, détenir la permission native
+    ``reports.voir_rapport_prix_vente_unitaire``, ou avoir le rapport
+    « prix_vente_unitaire » coché dans son profil d'accès aux rapports.
+    """
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    if user.is_superuser:
+        return True
+    if PERMISSION_PRIX_VENTE in user.get_all_permissions():
+        return True
+    profil = getattr(user, 'profil_rapports', None)
+    if profil is None:
+        return False
+    if profil.acces_total:
+        return True
+    return profil.rapports.filter(code=CODE_PRIX_VENTE).exists()
+
+
+def prix_vente_requis(vue):
+    """Décorateur de vue : réserve l'accès aux prix de vente unitaires."""
+    @wraps(vue)
+    def enveloppe(request, *args, **kwargs):
+        if not peut_voir_prix_vente(request.user):
+            raise PermissionDenied(
+                "Vous n'êtes pas autorisé à consulter les prix de vente unitaires."
+            )
+        return vue(request, *args, **kwargs)
+    return enveloppe

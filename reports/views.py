@@ -11,7 +11,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 # Import des modèles
 from .models import Rapport
-from .acces import codes_rapports_autorises, rapport_requis, a_acces_rapport
+from .acces import (
+    codes_rapports_autorises, rapport_requis, a_acces_rapport,
+    peut_voir_prix_vente, prix_vente_requis,
+)
 from production.models import OrdreProduction, LotProduction
 from orders.models import Commande, LigneCommande
 from customers.models import Client, Chantier
@@ -1560,6 +1563,95 @@ def rapport_client(request):
     return render(request, 'reports/rapport_client.html', context)
 
 
+@staff_member_required
+@prix_vente_requis
+def rapport_prix_vente_unitaire(request):
+    """Prix de vente unitaire des ordres de production, sur la période choisie (du ... au ...).
+
+    Accès strictement réservé aux utilisateurs autorisés (superutilisateur,
+    permission native « Peut voir le rapport Prix de Vente Unitaire » ou
+    rapport coché dans le profil d'accès aux rapports).
+    """
+    date_debut_str = request.GET.get('date_debut')
+    date_fin_str = request.GET.get('date_fin')
+    client_id = request.GET.get('client')
+    formule_id = request.GET.get('formule')
+
+    if date_debut_str:
+        try:
+            date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_debut = (timezone.now() - timedelta(days=30)).date()
+    else:
+        date_debut = (timezone.now() - timedelta(days=30)).date()
+
+    if date_fin_str:
+        try:
+            date_fin = datetime.strptime(date_fin_str, '%Y-%m-%d').date()
+        except ValueError:
+            date_fin = timezone.now().date()
+    else:
+        date_fin = timezone.now().date()
+
+    ordres_qs = OrdreProduction.objects.filter(
+        date_production__range=[date_debut, date_fin]
+    ).select_related('commande', 'commande__client', 'formule').order_by('date_production', 'id')
+
+    if client_id:
+        ordres_qs = ordres_qs.filter(commande__client_id=client_id)
+    if formule_id:
+        ordres_qs = ordres_qs.filter(formule_id=formule_id)
+
+    lignes = []
+    total_volume = Decimal('0.00')
+    total_montant = Decimal('0.00')
+    somme_pu = Decimal('0.00')
+    nb_pu = 0
+
+    for ordre in ordres_qs:
+        quantite = ordre.quantite_produire or Decimal('0.00')
+        pu = ordre.prix_vente_unitaire
+        dep_pompe = ordre.prix_deplacement_pompe or Decimal('0.00')
+        dep_camion = ordre.prix_deplacement_camion or Decimal('0.00')
+        montant = (quantite * pu if pu is not None else Decimal('0.00')) + dep_pompe + dep_camion
+
+        lignes.append({
+            'date_production': ordre.date_production,
+            'numero_bon': ordre.numero_bon or f'#{ordre.id}',
+            'client_nom': ordre.commande.client.nom if ordre.commande and ordre.commande.client else '—',
+            'formule_nom': ordre.formule.nom if ordre.formule else '—',
+            'quantite_produire': quantite,
+            'prix_vente_unitaire': pu,
+            'prix_deplacement_pompe': dep_pompe,
+            'prix_deplacement_camion': dep_camion,
+            'montant': montant,
+        })
+        total_volume += quantite
+        total_montant += montant
+        if pu is not None:
+            somme_pu += pu
+            nb_pu += 1
+
+    pu_moyen = (somme_pu / nb_pu) if nb_pu else Decimal('0.00')
+
+    context = {
+        'title': 'Prix de Vente Unitaire (Ordres de Production)',
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'client_id': client_id,
+        'formule_id': formule_id,
+        'clients_choices': Client.objects.all().order_by('nom'),
+        'formules_choices': FormuleBeton.objects.all().order_by('nom'),
+        'lignes': lignes,
+        'total_volume': total_volume,
+        'total_montant': total_montant,
+        'pu_moyen': pu_moyen,
+        'nb_ordres': len(lignes),
+        'nb_pu_renseignes': nb_pu,
+    }
+    return render(request, 'reports/prix_vente_unitaire.html', context)
+
+
 def _get_commandes_data(request):
     # Logique similaire à rapport_commandes mais simplifiée pour PDF
     pass
@@ -2363,7 +2455,15 @@ def acces_rapide_reports(request):
             'url': 'reports:laboratoire',
             'couleur': '#A855F7',
             'categorie': 'Laboratoire'
-        }
+        },
+        {
+            'titre': 'Prix de Vente Unitaire (Ordres de Production)',
+            'description': 'Prix de vente unitaire par bon de production, sur la période choisie (du ... au ...)',
+            'icone': 'fas fa-tag',
+            'url': 'reports:prix_vente_unitaire',
+            'couleur': '#0EA5E9',
+            'categorie': 'Commercial'
+        },
     ]
     
     # Ne conserver que les rapports autorisés pour l'utilisateur
@@ -2373,6 +2473,13 @@ def acces_rapide_reports(request):
         rapport for rapport in rapports_disponibles
         if rapport['url'].split(':')[-1] in codes_autorises
     ]
+
+    # Les prix de vente unitaires relèvent d'un accès strict (aucun droit par défaut)
+    if not peut_voir_prix_vente(request.user):
+        rapports_disponibles = [
+            rapport for rapport in rapports_disponibles
+            if rapport['url'] != 'reports:prix_vente_unitaire'
+        ]
 
     # Grouper par catégorie
     rapports_par_categorie = {}

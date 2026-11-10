@@ -343,6 +343,17 @@
         </div>
         {% endif %}
 
+        {% if peut_voir_prix %}
+        <div class="report-card commercial">
+            <div class="icon">🏷️</div>
+            <h3>Prix de Vente Unitaire</h3>
+            <p>Consultez le prix de vente unitaire des ordres de production sur la période de votre choix (du ... au ...).</p>
+            <div class="report-actions">
+                <a href="{% url 'reports:prix_vente_unitaire' %}" class="btn btn-primary">Voir le rapport</a>
+            </div>
+        </div>
+        {% endif %}
+
         {% if 'laboratoire' in codes_rapports %}
         <div class="report-card laboratoire">
             <div class="icon">🧪</div>

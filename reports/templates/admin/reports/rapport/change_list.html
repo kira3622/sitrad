@@ -220,6 +220,16 @@
         </div>
         {% endif %}
 
+        {% if peut_voir_prix %}
+        <div class="report-card" style="background: rgba(14, 165, 233, 0.25);">
+            <a href="{{ reports_links.prix_vente_unitaire }}">
+                <span class="report-icon">🏷️</span>
+                <div><strong>Prix de Vente Unitaire</strong></div>
+                <small>PU des ordres de production, du ... au ...</small>
+            </a>
+        </div>
+        {% endif %}
+
         {% if 'laboratoire' in codes_rapports %}
         <div class="report-card" style="background: rgba(168, 85, 247, 0.25);">
             <a href="{{ reports_links.laboratoire }}">

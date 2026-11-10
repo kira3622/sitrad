@@ -50,6 +50,7 @@ class RapportAdmin(admin.ModelAdmin):
             'rapport_camion': reverse('reports:rapport_camion'),
             'rapport_client': reverse('reports:rapport_client'),
             'laboratoire': reverse('reports:laboratoire'),
+            'prix_vente_unitaire': reverse('reports:prix_vente_unitaire'),
         }
         return super().changelist_view(request, extra_context=extra_context)
 

@@ -1,6 +1,6 @@
 # Widget d'accès rapide aux rapports (context processor)
 
-from .acces import codes_rapports_autorises
+from .acces import codes_rapports_autorises, peut_voir_prix_vente
 
 
 def quick_reports_widget(request):
@@ -74,4 +74,5 @@ def quick_reports_widget(request):
         'quick_reports': quick_reports,
         'has_quick_reports': bool(quick_reports),
         'codes_rapports': codes_autorises,
+        'peut_voir_prix': peut_voir_prix_vente(getattr(request, 'user', None)),
     }

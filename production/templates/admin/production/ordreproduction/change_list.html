@@ -1,0 +1,17 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{# Lien vers le rapport des prix de vente unitaires (uniquement pour les utilisateurs autorisés). #}
+{% block object-tools %}
+{{ block.super }}
+{% if peut_voir_prix %}
+<ul class="object-tools">
+    <li>
+        <a href="{% url 'reports:prix_vente_unitaire' %}" target="_blank"
+           style="background:#0ea5e9; padding-top:3px;">
+            🏷️ Prix de vente unitaire (par période)
+        </a>
+    </li>
+</ul>
+{% endif %}
+{% endblock %}
