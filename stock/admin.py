@@ -67,7 +67,6 @@ class MouvementStockAdmin(admin.ModelAdmin):
         'lien_ordre_production',
         'stock_apres_mouvement',
         'description',
-        'date_mouvement',
     )
 
     fieldsets = (
