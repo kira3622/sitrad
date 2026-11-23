@@ -60,6 +60,14 @@
         font-size: 14px;
     }
     
+    .filter-group select {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        background: white;
+    }
+    
     .btn-filter {
         padding: 8px 20px;
         background-color: #FF9800;
@@ -250,12 +258,22 @@
                 <label for="date_fin">Date de fin :</label>
                 <input type="date" id="date_fin" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}">
             </div>
+            <div class="filter-group">
+                <label for="commercial">Commercial :</label>
+                <select id="commercial" name="commercial">
+                    <option value="">Tous les commerciaux</option>
+                    {% for commercial in commerciaux_choices %}
+                        <option value="{{ commercial.id }}" {% if commercial.id|stringformat:"s" == commercial_id %}selected{% endif %}>{{ commercial.nom }}</option>
+                    {% endfor %}
+                    <option value="aucun" {% if commercial_id == 'aucun' %}selected{% endif %}>Non renseigné</option>
+                </select>
+            </div>
             <button type="submit" class="btn-filter">Filtrer</button>
         </form>
     </div>
     
     <div class="section">
-        <h3>🧱 Béton vendu (ordres de production)</h3>
+        <h3>🧱 Béton vendu (ordres de production){% if commercial_nom %} — Commercial : {{ commercial_nom }}{% endif %}</h3>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
             <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 8px;">
                 <div style="font-size: 1.5em; font-weight: bold; color: #1976d2;">{{ beton_stats.quantite_totale|floatformat:2 }} m³</div>
@@ -277,6 +295,8 @@
         <p style="color: #666;">
             Quantité moyenne par ordre : {{ beton_stats.quantite_moyenne|floatformat:2 }} m³ —
             les ordres annulés ne sont pas comptés. Montant = quantité × PU + déplacements pompe/camion.
+            {% if commercial_nom %}Filtre par commercial appliqué aux ordres de production
+            (les sections de facturation ci-dessous ne dépendent pas de l'agent commercial).{% endif %}
         </p>
 
         <h4 style="margin-top: 25px;">Par client</h4>

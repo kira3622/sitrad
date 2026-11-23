@@ -17,7 +17,7 @@ from .acces import (
 )
 from production.models import OrdreProduction, LotProduction
 from orders.models import Commande, LigneCommande
-from customers.models import Client, Chantier
+from customers.models import Client, Chantier, AgentCommercial
 from stock.models import MouvementStock, SaisieEntreeLie
 from inventory.models import MatierePremiere
 from billing.models import Facture, LigneFacture
@@ -201,6 +201,7 @@ def rapport_commercial(request):
     # Filtres
     date_debut = request.GET.get('date_debut')
     date_fin = request.GET.get('date_fin')
+    commercial_id = request.GET.get('commercial')
     
     if not date_debut:
         date_debut = (timezone.now() - timedelta(days=30)).date()
@@ -261,6 +262,16 @@ def rapport_commercial(request):
     ordres = OrdreProduction.objects.filter(
         date_production__range=[date_debut, date_fin]
     ).exclude(statut='annule').select_related('commande__client', 'formule')
+
+    # Filtre par agent commercial (le CA facturé ci-dessus n'en dépend pas)
+    commercial_nom = ''
+    if commercial_id == 'aucun':
+        ordres = ordres.filter(agent_commercial__isnull=True)
+        commercial_nom = 'Non renseigné'
+    elif commercial_id:
+        ordres = ordres.filter(agent_commercial_id=commercial_id)
+        agent = AgentCommercial.objects.filter(pk=commercial_id).first()
+        commercial_nom = agent.nom if agent else ''
 
     def _cumuler(cible, libelle, quantite, montant):
         ligne = cible.setdefault(libelle, {
@@ -323,6 +334,9 @@ def rapport_commercial(request):
         'title': 'Rapport Commercial',
         'date_debut': date_debut,
         'date_fin': date_fin,
+        'commercial_id': commercial_id,
+        'commercial_nom': commercial_nom,
+        'commerciaux_choices': AgentCommercial.objects.filter(actif=True).order_by('nom'),
         'ca_stats': ca_stats,
         'ca_par_client': ca_par_client,
         'clients_fidelite': clients_fidelite,
