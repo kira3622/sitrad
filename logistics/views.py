@@ -19,7 +19,7 @@ from django.utils import timezone
 
 from customers.models import Client
 from orders.models import Commande
-from .models import Livraison
+from .models import Livraison, SaisiePlanning
 
 # Statuts de commande considérés comme « à livrer »
 STATUTS_A_LIVRER = ('en_attente', 'validee', 'en_production')
@@ -284,3 +284,76 @@ def planifier_livraison(request, commande_id):
         'retour': retour,
     }
     return render(request, 'planning/planifier.html', context)
+
+
+class SaisiePlanningForm(forms.ModelForm):
+    """Saisie libre d'une livraison planifiée (sans commande)."""
+
+    class Meta:
+        model = SaisiePlanning
+        fields = ('date_livraison', 'heure_livraison', 'client', 'chantier', 'formule',
+                  'quantite', 'vehicule', 'adresse', 'statut', 'observation')
+        widgets = {
+            'date_livraison': forms.DateInput(attrs={'type': 'date'}),
+            'heure_livraison': forms.TimeInput(attrs={'type': 'time'}),
+            'adresse': forms.Textarea(attrs={'rows': 2, 'cols': 60}),
+            'observation': forms.Textarea(attrs={'rows': 2, 'cols': 60}),
+        }
+
+
+def _url_saisie(filtres):
+    """URL de la page de saisie en conservant la période affichée."""
+    return (
+        f"{reverse('planning:saisie')}"
+        f"?date_debut={filtres['date_debut']}&date_fin={filtres['date_fin']}"
+    )
+
+
+@staff_member_required
+def saisie_plannings(request):
+    """Page dédiée : saisie libre des livraisons planifiées (hors commande)."""
+    filtres = _filtres(request)
+
+    instance = None
+    identifiant = request.POST.get('id') or request.GET.get('edit')
+    if identifiant and str(identifiant).isdigit():
+        instance = get_object_or_404(SaisiePlanning, pk=identifiant)
+
+    if request.method == 'POST':
+        if request.POST.get('action') == 'supprimer' and instance is not None:
+            instance.delete()
+            messages.success(request, "Livraison planifiée supprimée.")
+            return redirect(_url_saisie(filtres))
+        form = SaisiePlanningForm(request.POST, instance=instance)
+        if form.is_valid():
+            enregistree = form.save()
+            messages.success(
+                request,
+                f"Livraison planifiée du {enregistree.date_livraison.strftime('%d/%m/%Y')} "
+                f"pour {enregistree.client} enregistrée.",
+            )
+            return redirect(_url_saisie(filtres))
+    else:
+        initial = {}
+        if instance is None:
+            initial = {'date_livraison': timezone.localdate(), 'statut': 'planifiee'}
+        form = SaisiePlanningForm(instance=instance, initial=initial)
+
+    entrees = list(
+        SaisiePlanning.objects.filter(
+            date_livraison__range=[filtres['date_debut'], filtres['date_fin']]
+        ).select_related('vehicule').order_by('date_livraison', 'heure_livraison', 'id')
+    )
+    total_quantite = sum((entree.quantite for entree in entrees), Decimal('0.00'))
+
+    context = {
+        'title': "Saisie des plannings",
+        **filtres,
+        'form': form,
+        'instance': instance,
+        'entrees': entrees,
+        'total_entrees': len(entrees),
+        'total_quantite': total_quantite,
+        'retour_filtres': request.GET.urlencode(),
+    }
+    return render(request, 'planning/saisie.html', context)

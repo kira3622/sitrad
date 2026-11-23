@@ -6,5 +6,6 @@ app_name = 'planning'
 
 urlpatterns = [
     path('', views.planning_livraisons, name='livraisons'),
+    path('saisie/', views.saisie_plannings, name='saisie'),
     path('planifier/<int:commande_id>/', views.planifier_livraison, name='planifier'),
 ]

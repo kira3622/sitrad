@@ -1,0 +1,242 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .saisie-container { padding: 20px; max-width: 1300px; margin: 0 auto; }
+    .saisie-header {
+        background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+        color: #fff; padding: 22px; border-radius: 10px; margin-bottom: 20px; text-align: center;
+    }
+    .saisie-header h1 { margin: 0; font-size: 1.8em; font-weight: 300; }
+    .saisie-header p { margin: 8px 0 0 0; opacity: .9; }
+    .bloc {
+        background: #fff; padding: 18px; border-radius: 10px; margin-bottom: 18px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    }
+    .bloc h2 {
+        margin: 0 0 14px 0; font-size: 1.1em; color: #0f766e;
+        border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .grille-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .champ { display: flex; flex-direction: column; }
+    .champ.large { grid-column: 1 / -1; }
+    .champ label { font-weight: 600; margin-bottom: 5px; color: #333; font-size: .9em; }
+    .champ input, .champ select, .champ textarea {
+        padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; font-family: inherit;
+    }
+    .erreurs { color: #991b1b; background: #fee2e2; padding: 10px 12px; border-radius: 6px;
+        margin-bottom: 14px; font-size: .9em; }
+    .actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+    .bouton {
+        padding: 9px 16px; border: none; border-radius: 5px; cursor: pointer;
+        font-weight: 600; color: #fff; background: #0f766e; text-decoration: none; display: inline-block;
+    }
+    .bouton.secondaire { background: #6b7280; }
+    .bouton.danger { background: #dc2626; }
+    .bouton.petit { padding: 5px 10px; font-size: .82em; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .stat-card {
+        background: #fff; padding: 16px; border-radius: 10px; text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08); border-left: 5px solid #14b8a6;
+    }
+    .stat-value { font-size: 1.7em; font-weight: bold; color: #0f766e; }
+    .stat-label { color: #666; margin-top: 4px; font-size: .9em; }
+    table.tableau { width: 100%; border-collapse: collapse; }
+    table.tableau th {
+        background: #f1f5f9; padding: 9px; text-align: left; font-size: .85em;
+        color: #334155; border-bottom: 1px solid #e2e8f0; white-space: nowrap;
+    }
+    table.tableau td { padding: 8px 9px; border-bottom: 1px solid #eef2f6; font-size: .92em; }
+    table.tableau tr:hover td { background: #f8fafc; }
+    .num { text-align: right; }
+    .badge {
+        display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78em;
+        font-weight: 600; white-space: nowrap;
+    }
+    .badge.planifiee { background: #e0f2fe; color: #075985; }
+    .badge.en_cours { background: #fef3c7; color: #92400e; }
+    .badge.livree { background: #dcfce7; color: #166534; }
+    .badge.annulee { background: #fee2e2; color: #991b1b; }
+    .vide { color: #666; font-style: italic; }
+    .filtres form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+    .filtres .champ { min-width: 170px; }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'planning:livraisons' %}">Planning des livraisons prévues</a>
+    &rsaquo; Saisie des plannings
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="saisie-container">
+    <div class="saisie-header">
+        <h1>📝 Saisie des plannings</h1>
+        <p>Saisie libre des livraisons planifiées (hors commande)</p>
+    </div>
+
+    <div class="bloc filtres">
+        <form method="get">
+            <div class="champ">
+                <label for="date_debut">Du :</label>
+                <input type="date" id="date_debut" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}">
+            </div>
+            <div class="champ">
+                <label for="date_fin">Au :</label>
+                <input type="date" id="date_fin" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}">
+            </div>
+            <div class="champ">
+                <button type="submit" class="bouton">Afficher</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_entrees }}</div>
+            <div class="stat-label">Livraisons planifiées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_quantite|floatformat:2 }} m³</div>
+            <div class="stat-label">Quantité totale</div>
+        </div>
+    </div>
+
+    <div class="bloc">
+        <h2>{% if instance %}✏️ Modifier la livraison planifiée{% else %}➕ Nouvelle livraison planifiée{% endif %}</h2>
+
+        {% if form.non_field_errors %}
+            <div class="erreurs">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {% if instance %}<input type="hidden" name="id" value="{{ instance.id }}">{% endif %}
+            <div class="grille-form">
+                <div class="champ">
+                    <label for="{{ form.date_livraison.id_for_label }}">Date de livraison</label>
+                    {{ form.date_livraison }}
+                    {% if form.date_livraison.errors %}<div class="erreurs">{{ form.date_livraison.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.heure_livraison.id_for_label }}">Heure</label>
+                    {{ form.heure_livraison }}
+                    {% if form.heure_livraison.errors %}<div class="erreurs">{{ form.heure_livraison.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.client.id_for_label }}">Client</label>
+                    {{ form.client }}
+                    {% if form.client.errors %}<div class="erreurs">{{ form.client.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.chantier.id_for_label }}">Chantier / lieu</label>
+                    {{ form.chantier }}
+                    {% if form.chantier.errors %}<div class="erreurs">{{ form.chantier.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.formule.id_for_label }}">Formule</label>
+                    {{ form.formule }}
+                    {% if form.formule.errors %}<div class="erreurs">{{ form.formule.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.quantite.id_for_label }}">Quantité (m³)</label>
+                    {{ form.quantite }}
+                    {% if form.quantite.errors %}<div class="erreurs">{{ form.quantite.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.vehicule.id_for_label }}">Véhicule</label>
+                    {{ form.vehicule }}
+                    {% if form.vehicule.errors %}<div class="erreurs">{{ form.vehicule.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.statut.id_for_label }}">Statut</label>
+                    {{ form.statut }}
+                    {% if form.statut.errors %}<div class="erreurs">{{ form.statut.errors }}</div>{% endif %}
+                </div>
+                <div class="champ large">
+                    <label for="{{ form.adresse.id_for_label }}">Adresse de livraison</label>
+                    {{ form.adresse }}
+                    {% if form.adresse.errors %}<div class="erreurs">{{ form.adresse.errors }}</div>{% endif %}
+                </div>
+                <div class="champ large">
+                    <label for="{{ form.observation.id_for_label }}">Observation</label>
+                    {{ form.observation }}
+                    {% if form.observation.errors %}<div class="erreurs">{{ form.observation.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="bouton">💾 Enregistrer</button>
+                {% if instance %}
+                    <a href="{% url 'planning:saisie' %}?date_debut={{ date_debut|date:'Y-m-d' }}&date_fin={{ date_fin|date:'Y-m-d' }}" class="bouton secondaire">Annuler</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="bloc">
+        <h2>📋 Livraisons planifiées saisies</h2>
+        <form method="post" id="form-suppression">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="supprimer">
+            <input type="hidden" name="id" id="suppression-id">
+        </form>
+        <table class="tableau">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Heure</th>
+                    <th>Client</th>
+                    <th>Chantier / lieu</th>
+                    <th>Formule</th>
+                    <th class="num">Quantité (m³)</th>
+                    <th>Véhicule</th>
+                    <th>Statut</th>
+                    <th>Observation</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entree in entrees %}
+                <tr>
+                    <td>{{ entree.date_livraison|date:"d/m/Y" }}</td>
+                    <td>{% if entree.heure_livraison %}{{ entree.heure_livraison|time:"H:i" }}{% else %}—{% endif %}</td>
+                    <td>{{ entree.client }}</td>
+                    <td>{% if entree.chantier %}{{ entree.chantier }}{% else %}—{% endif %}</td>
+                    <td>{% if entree.formule %}{{ entree.formule }}{% else %}—{% endif %}</td>
+                    <td class="num">{{ entree.quantite|floatformat:2 }}</td>
+                    <td>{% if entree.vehicule %}{{ entree.vehicule.immatriculation }}{% else %}—{% endif %}</td>
+                    <td><span class="badge {{ entree.statut }}">{{ entree.get_statut_display }}</span></td>
+                    <td>{% if entree.observation %}{{ entree.observation }}{% else %}—{% endif %}</td>
+                    <td style="white-space:nowrap;">
+                        <a href="{% url 'planning:saisie' %}?edit={{ entree.id }}&date_debut={{ date_debut|date:'Y-m-d' }}&date_fin={{ date_fin|date:'Y-m-d' }}"
+                           class="bouton petit secondaire">Modifier</a>
+                        <button type="button" class="bouton petit danger"
+                                onclick="supprimer({{ entree.id }});">Supprimer</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10" class="vide">Aucune livraison planifiée saisie sur la période.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function supprimer(id) {
+        if (confirm('Supprimer cette livraison planifiée ?')) {
+            document.getElementById('suppression-id').value = id;
+            document.getElementById('form-suppression').submit();
+        }
+    }
+</script>
+{% endblock %}

@@ -87,3 +87,43 @@ class PlanningLivraisons(Livraison):
         proxy = True
         verbose_name = "Planning des livraisons prévues"
         verbose_name_plural = "Planning des livraisons prévues"
+
+
+class SaisiePlanning(models.Model):
+    """Livraison planifiée saisie librement, sans être rattachée à une commande."""
+    STATUT_CHOICES = [
+        ('planifiee', 'Planifiée'),
+        ('en_cours', 'En cours'),
+        ('livree', 'Livrée'),
+        ('annulee', 'Annulée'),
+    ]
+    date_livraison = models.DateField(verbose_name="Date de livraison")
+    heure_livraison = models.TimeField(null=True, blank=True, verbose_name="Heure de livraison")
+    client = models.CharField(max_length=200, verbose_name="Client")
+    chantier = models.CharField(max_length=200, blank=True, verbose_name="Chantier / lieu")
+    formule = models.CharField(max_length=200, blank=True, verbose_name="Formule")
+    quantite = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                   verbose_name="Quantité (m³)")
+    vehicule = models.ForeignKey(Vehicule, on_delete=models.SET_NULL, null=True, blank=True,
+                                 verbose_name="Véhicule")
+    adresse = models.TextField(blank=True, verbose_name="Adresse de livraison")
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='planifiee',
+                              verbose_name="Statut")
+    observation = models.TextField(blank=True, verbose_name="Observation")
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Livraison planifiée (saisie)"
+        verbose_name_plural = "Livraisons planifiées (saisie)"
+        ordering = ['date_livraison', 'heure_livraison', 'id']
+
+    def __str__(self):
+        return f"{self.client} - {self.date_livraison}"
+
+
+class SaisiePlanningModule(SaisiePlanning):
+    """Proxy pour exposer l'entrée de menu « Saisie des plannings » dans l'admin."""
+    class Meta:
+        proxy = True
+        verbose_name = "Saisie des plannings"
+        verbose_name_plural = "Saisie des plannings"

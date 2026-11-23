@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import reverse
-from .models import Vehicule, Livraison, Chauffeur, Pompe, PlanningLivraisons
+from .models import (
+    Vehicule, Livraison, Chauffeur, Pompe, PlanningLivraisons, SaisiePlanningModule,
+)
 
 @admin.register(Vehicule)
 class VehiculeAdmin(admin.ModelAdmin):
@@ -43,6 +45,31 @@ class PlanningLivraisonsAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         return redirect(reverse('planning:livraisons'))
+
+
+@admin.register(SaisiePlanningModule)
+class SaisiePlanningModuleAdmin(admin.ModelAdmin):
+    """Entrée de menu « Saisie des plannings ».
+    Redirige vers la page dédiée de saisie libre des livraisons planifiées.
+    """
+    list_display = ()
+    actions = None
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        # Aucun enregistrement à afficher : simple point d'entrée.
+        return SaisiePlanningModule.objects.none()
+
+    def changelist_view(self, request, extra_context=None):
+        return redirect(reverse('planning:saisie'))
 
 @admin.register(Pompe)
 class PompeAdmin(admin.ModelAdmin):
