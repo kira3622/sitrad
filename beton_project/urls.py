@@ -22,6 +22,8 @@ from .views import service_worker, push_test_page
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/admin/', permanent=True)),
+    # Module « Planning des livraisons prévues » (placé avant l'admin : /admin/planning/)
+    path('admin/planning/', include('logistics.urls_planning')),
     path('admin/', admin.site.urls),
     # Route explicite pour le PDF Bon de Livraison (assure la disponibilité en production)
     path('production/orders/<int:pk>/delivery-note.pdf', delivery_note_pdf, name='delivery_note_pdf'),

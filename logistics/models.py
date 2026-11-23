@@ -71,8 +71,19 @@ class Livraison(models.Model):
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE)
     vehicule = models.ForeignKey(Vehicule, on_delete=models.SET_NULL, null=True, blank=True)
     date_livraison = models.DateField()
+    heure_livraison = models.TimeField(null=True, blank=True, verbose_name="Heure de livraison")
     adresse_livraison = models.TextField()
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='planifiee')
 
     def __str__(self):
         return f"Livraison pour {self.commande.client} le {self.date_livraison}"
+
+
+class PlanningLivraisons(Livraison):
+    """Proxy pour exposer le module « Planning des livraisons prévues » dans l'admin.
+    Aucun enregistrement n'est affiché : sert uniquement de point d'entrée vers le planning.
+    """
+    class Meta:
+        proxy = True
+        verbose_name = "Planning des livraisons prévues"
+        verbose_name_plural = "Planning des livraisons prévues"

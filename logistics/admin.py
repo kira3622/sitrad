@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Vehicule, Livraison, Chauffeur, Pompe
+from django.shortcuts import redirect
+from django.urls import reverse
+from .models import Vehicule, Livraison, Chauffeur, Pompe, PlanningLivraisons
 
 @admin.register(Vehicule)
 class VehiculeAdmin(admin.ModelAdmin):
@@ -13,9 +15,34 @@ class ChauffeurAdmin(admin.ModelAdmin):
 
 @admin.register(Livraison)
 class LivraisonAdmin(admin.ModelAdmin):
-    list_display = ('commande', 'vehicule', 'date_livraison', 'statut')
+    list_display = ('commande', 'vehicule', 'date_livraison', 'heure_livraison', 'statut')
     list_filter = ('date_livraison', 'statut', 'vehicule')
     search_fields = ('commande__client__nom', 'commande__id')
+
+
+@admin.register(PlanningLivraisons)
+class PlanningLivraisonsAdmin(admin.ModelAdmin):
+    """Entrée de menu « Planning des livraisons prévues ».
+    Redirige vers la vue de planning (consultation + planification).
+    """
+    list_display = ()
+    actions = None
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        # Aucun enregistrement à afficher : simple point d'entrée.
+        return Livraison.objects.none()
+
+    def changelist_view(self, request, extra_context=None):
+        return redirect(reverse('planning:livraisons'))
 
 @admin.register(Pompe)
 class PompeAdmin(admin.ModelAdmin):

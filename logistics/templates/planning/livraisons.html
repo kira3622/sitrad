@@ -1,0 +1,304 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .planning-container { padding: 20px; max-width: 1500px; margin: 0 auto; }
+    .planning-header {
+        background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+        color: #fff; padding: 22px; border-radius: 10px; margin-bottom: 20px; text-align: center;
+    }
+    .planning-header h1 { margin: 0; font-size: 1.9em; font-weight: 300; }
+    .planning-header p { margin: 8px 0 0 0; opacity: .9; }
+    .filtres {
+        background: #fff; padding: 18px; border-radius: 10px; margin-bottom: 18px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    }
+    .filtres form {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 14px; align-items: end;
+    }
+    .champ { display: flex; flex-direction: column; }
+    .champ label { font-weight: 600; margin-bottom: 5px; color: #333; font-size: .9em; }
+    .champ input, .champ select {
+        padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;
+    }
+    .bouton {
+        padding: 9px 16px; border: none; border-radius: 5px; cursor: pointer;
+        font-weight: 600; color: #fff; background: #0f766e;
+    }
+    .bouton.secondaire { background: #6b7280; }
+    .onglets { display: flex; gap: 8px; margin-bottom: 14px; }
+    .onglet {
+        padding: 9px 18px; border-radius: 6px 6px 0 0; background: #e5e7eb; cursor: pointer;
+        border: none; font-weight: 600; color: #374151;
+    }
+    .onglet.actif { background: #0f766e; color: #fff; }
+    .stats-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px; margin-bottom: 18px;
+    }
+    .stat-card {
+        background: #fff; padding: 16px; border-radius: 10px; text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08); border-left: 5px solid #14b8a6;
+    }
+    .stat-value { font-size: 1.7em; font-weight: bold; color: #0f766e; }
+    .stat-label { color: #666; margin-top: 4px; font-size: .9em; }
+    .jour { margin-bottom: 20px; }
+    .jour-titre {
+        background: #0f766e; color: #fff; padding: 9px 14px; border-radius: 6px 6px 0 0;
+        font-weight: 600; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    }
+    table.tableau { width: 100%; border-collapse: collapse; background: #fff; }
+    table.tableau th {
+        background: #f1f5f9; padding: 9px; text-align: left; font-size: .85em;
+        color: #334155; white-space: nowrap; border-bottom: 1px solid #e2e8f0;
+    }
+    table.tableau td { padding: 8px 9px; border-bottom: 1px solid #eef2f6; font-size: .92em; }
+    table.tableau tr:hover td { background: #f8fafc; }
+    .num { text-align: right; }
+    .badge {
+        display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78em;
+        font-weight: 600; white-space: nowrap;
+    }
+    .badge.planifiee, .badge.en_attente, .badge.validee { background: #e0f2fe; color: #075985; }
+    .badge.en_cours, .badge.en_production { background: #fef3c7; color: #92400e; }
+    .badge.livree { background: #dcfce7; color: #166534; }
+    .badge.annulee { background: #fee2e2; color: #991b1b; }
+    .vide {
+        background: #fff; padding: 26px; text-align: center; color: #666;
+        font-style: italic; border-radius: 8px;
+    }
+    .calendrier-nav {
+        display: flex; justify-content: space-between; align-items: center;
+        background: #fff; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    }
+    .calendrier-nav .titre { font-size: 1.2em; font-weight: 600; color: #0f766e; }
+    .calendrier { width: 100%; border-collapse: collapse; background: #fff; }
+    .calendrier th {
+        background: #0f766e; color: #fff; padding: 8px; font-size: .85em; border: 1px solid #e2e8f0;
+    }
+    .calendrier td {
+        vertical-align: top; border: 1px solid #e2e8f0; height: 100px; width: 14.28%;
+        padding: 6px; font-size: .82em;
+    }
+    .calendrier td.hors-mois { background: #f8fafc; color: #94a3b8; }
+    .calendrier td.aujourdhui { background: #ecfdf5; border: 2px solid #14b8a6; }
+    .calendrier .numero-jour { font-weight: 700; color: #0f172a; }
+    .calendrier .total-jour { margin-top: 4px; font-weight: 600; color: #0f766e; }
+    .calendrier .livraison-jour {
+        display: block; margin-top: 3px; padding: 2px 4px; border-radius: 4px;
+        background: #e0f2fe; color: #075985; text-decoration: none; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+    }
+    .calendrier .livraison-jour:hover { background: #bae6fd; }
+    @media print {
+        .filtres, .onglets, .action-col, .btn-imprimer { display: none !important; }
+        .planning-container { padding: 0; max-width: none; }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; Planning des livraisons prévues
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="planning-container">
+    <div class="planning-header">
+        <h1>📅 {{ title }}</h1>
+        <p>Du {{ date_debut|date:"d/m/Y" }} au {{ date_fin|date:"d/m/Y" }}</p>
+    </div>
+
+    <div class="filtres">
+        <form method="get">
+            <div class="champ">
+                <label for="date_debut">Du :</label>
+                <input type="date" id="date_debut" name="date_debut" value="{{ date_debut|date:'Y-m-d' }}">
+            </div>
+            <div class="champ">
+                <label for="date_fin">Au :</label>
+                <input type="date" id="date_fin" name="date_fin" value="{{ date_fin|date:'Y-m-d' }}">
+            </div>
+            <div class="champ">
+                <label for="client">Client :</label>
+                <select id="client" name="client">
+                    <option value="">Tous les clients</option>
+                    {% for c in clients %}
+                        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == client %}selected{% endif %}>{{ c.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="champ">
+                <label for="statut">Statut :</label>
+                <select id="statut" name="statut">
+                    {% for code, libelle in statuts %}
+                        <option value="{{ code }}" {% if code == statut %}selected{% endif %}>{{ libelle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="champ">
+                <button type="submit" class="bouton">Afficher</button>
+            </div>
+            <div class="champ btn-imprimer">
+                <button type="button" class="bouton secondaire" onclick="window.print();">🖨️ Imprimer</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_livraisons }}</div>
+            <div class="stat-label">Livraisons prévues</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_quantite|floatformat:2 }} m³</div>
+            <div class="stat-label">Quantité totale à livrer</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ jours|length }}</div>
+            <div class="stat-label">Jours avec livraison</div>
+        </div>
+    </div>
+
+    <div class="onglets">
+        <button type="button" class="onglet {% if onglet != 'calendrier' %}actif{% endif %}" onclick="afficherOnglet('liste');">
+            📋 Liste par jour
+        </button>
+        <button type="button" class="onglet {% if onglet == 'calendrier' %}actif{% endif %}" onclick="afficherOnglet('calendrier');">
+            🗓️ Calendrier
+        </button>
+    </div>
+
+    <div id="panneau-liste" style="{% if onglet == 'calendrier' %}display:none;{% endif %}">
+        {% for jour in jours %}
+            <div class="jour">
+                <div class="jour-titre">
+                    <span>{{ jour.libelle }}</span>
+                    <span>{{ jour.nb }} livraison(s) — {{ jour.quantite|floatformat:2 }} m³</span>
+                </div>
+                <table class="tableau">
+                    <thead>
+                        <tr>
+                            <th>Heure</th>
+                            <th>N° commande</th>
+                            <th>Client</th>
+                            <th>Chantier</th>
+                            <th>Formule(s)</th>
+                            <th class="num">Quantité (m³)</th>
+                            <th>Ordres de production</th>
+                            <th>Véhicule</th>
+                            <th>Statut</th>
+                            <th class="action-col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in jour.lignes %}
+                        <tr>
+                            <td>{% if ligne.heure %}{{ ligne.heure|time:"H:i" }}{% else %}—{% endif %}</td>
+                            <td>
+                                <a href="{% url 'admin:orders_commande_change' ligne.commande.id %}">N° {{ ligne.commande.id }}</a>
+                            </td>
+                            <td>{{ ligne.commande.client.nom }}</td>
+                            <td>{% if ligne.commande.chantier %}{{ ligne.commande.chantier.nom }}{% else %}—{% endif %}</td>
+                            <td>
+                                {% for formule in ligne.formules %}{{ formule }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                            </td>
+                            <td class="num">{{ ligne.quantite|floatformat:2 }}</td>
+                            <td>
+                                {% for ordre in ligne.ordres %}
+                                    <a href="{% url 'admin:production_ordreproduction_change' ordre.id %}">{{ ordre.numero_bon|default:ordre.id }}</a>
+                                    <span class="badge {{ ordre.statut }}">{{ ordre.get_statut_display }}</span>{% if not forloop.last %}<br>{% endif %}
+                                {% empty %}
+                                    —
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% if ligne.vehicule %}
+                                    {{ ligne.vehicule.immatriculation }}
+                                    {% if ligne.vehicule.chauffeur %}<br><small>{{ ligne.vehicule.chauffeur.nom }}</small>{% endif %}
+                                {% else %}—{% endif %}
+                            </td>
+                            <td><span class="badge {{ ligne.statut_code }}">{{ ligne.statut_label }}</span></td>
+                            <td class="action-col">
+                                <a href="{% url 'planning:planifier' ligne.commande.id %}?retour={{ retour_filtres|urlencode }}"
+                                   class="bouton" style="padding:5px 10px; font-size:.85em; text-decoration:none;">
+                                    {% if ligne.planifiee %}Modifier{% else %}Planifier{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" style="text-align:right; font-weight:600;">Total du jour</td>
+                            <td class="num" style="font-weight:600;">{{ jour.quantite|floatformat:2 }}</td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        {% empty %}
+            <div class="vide">Aucune livraison prévue sur la période et les filtres sélectionnés.</div>
+        {% endfor %}
+    </div>
+
+    <div id="panneau-calendrier" style="{% if onglet != 'calendrier' %}display:none;{% endif %}">
+        <div class="calendrier-nav">
+            <a class="bouton secondaire" style="text-decoration:none;"
+               href="?{% if retour_filtres %}{{ retour_filtres }}&{% endif %}onglet=calendrier&mois={{ mois_precedent }}">‹ Mois précédent</a>
+            <span class="titre">{{ mois_label }}</span>
+            <a class="bouton secondaire" style="text-decoration:none;"
+               href="?{% if retour_filtres %}{{ retour_filtres }}&{% endif %}onglet=calendrier&mois={{ mois_suivant }}">Mois suivant ›</a>
+        </div>
+        <table class="calendrier">
+            <thead>
+                <tr>
+                    <th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th>
+                    <th>Vendredi</th><th>Samedi</th><th>Dimanche</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for semaine in semaines %}
+                <tr>
+                    {% for jour in semaine %}
+                        <td class="{% if not jour.dans_le_mois %}hors-mois{% endif %} {% if jour.aujourdhui %}aujourdhui{% endif %}">
+                            <div class="numero-jour">{{ jour.date|date:"d/m" }}</div>
+                            {% for ligne in jour.lignes %}
+                                <a class="livraison-jour"
+                                   href="{% url 'planning:planifier' ligne.commande.id %}?retour={{ retour_filtres|urlencode }}"
+                                   title="{{ ligne.commande.client.nom }} — {{ ligne.quantite|floatformat:2 }} m³">
+                                    {% if ligne.heure %}{{ ligne.heure|time:"H:i" }} · {% endif %}{{ ligne.commande.client.nom }}
+                                </a>
+                            {% endfor %}
+                            {% if jour.lignes %}
+                                <div class="total-jour">{{ jour.quantite|floatformat:2 }} m³</div>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function afficherOnglet(nom) {
+        var onglets = {'liste': 'panneau-liste', 'calendrier': 'panneau-calendrier'};
+        Object.keys(onglets).forEach(function (cle) {
+            document.getElementById(onglets[cle]).style.display = (cle === nom) ? '' : 'none';
+        });
+        document.querySelectorAll('.onglet').forEach(function (bouton) {
+            bouton.classList.toggle('actif', bouton.textContent.indexOf(nom === 'liste' ? 'Liste' : 'Calendrier') !== -1);
+        });
+    }
+</script>
+{% endblock %}

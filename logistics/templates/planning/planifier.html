@@ -1,0 +1,202 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .planifier-container { padding: 20px; max-width: 1100px; margin: 0 auto; }
+    .planifier-header {
+        background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+        color: #fff; padding: 22px; border-radius: 10px; margin-bottom: 20px; text-align: center;
+    }
+    .planifier-header h1 { margin: 0; font-size: 1.8em; font-weight: 300; }
+    .planifier-header p { margin: 8px 0 0 0; opacity: .9; }
+    .bloc {
+        background: #fff; padding: 18px; border-radius: 10px; margin-bottom: 18px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.08);
+    }
+    .bloc h2 {
+        margin: 0 0 14px 0; font-size: 1.1em; color: #0f766e;
+        border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;
+    }
+    .infos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .info { display: flex; flex-direction: column; }
+    .info .label { font-size: .82em; color: #64748b; text-transform: uppercase; letter-spacing: .03em; }
+    .info .valeur { font-weight: 600; color: #0f172a; margin-top: 2px; }
+    .champ { display: flex; flex-direction: column; margin-bottom: 14px; }
+    .champ label { font-weight: 600; margin-bottom: 5px; color: #333; font-size: .9em; }
+    .champ input, .champ select, .champ textarea {
+        padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;
+        font-family: inherit;
+    }
+    .champ .help { font-size: .8em; color: #64748b; margin-top: 4px; }
+    .erreurs { color: #991b1b; background: #fee2e2; padding: 10px 12px; border-radius: 6px;
+        margin-bottom: 14px; font-size: .9em; }
+    .grille-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    table.tableau { width: 100%; border-collapse: collapse; }
+    table.tableau th {
+        background: #f1f5f9; padding: 9px; text-align: left; font-size: .85em;
+        color: #334155; border-bottom: 1px solid #e2e8f0;
+    }
+    table.tableau td { padding: 8px 9px; border-bottom: 1px solid #eef2f6; font-size: .92em; }
+    .num { text-align: right; }
+    .badge {
+        display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78em;
+        font-weight: 600; white-space: nowrap;
+    }
+    .badge.planifiee, .badge.en_attente, .badge.validee { background: #e0f2fe; color: #075985; }
+    .badge.en_cours, .badge.en_production { background: #fef3c7; color: #92400e; }
+    .badge.livree { background: #dcfce7; color: #166534; }
+    .badge.annulee { background: #fee2e2; color: #991b1b; }
+    .vide { color: #666; font-style: italic; }
+    .actions { display: flex; gap: 10px; align-items: center; }
+    .bouton {
+        padding: 9px 16px; border: none; border-radius: 5px; cursor: pointer;
+        font-weight: 600; color: #fff; background: #0f766e; text-decoration: none;
+        display: inline-block;
+    }
+    .bouton.secondaire { background: #6b7280; }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'planning:livraisons' %}">Planning des livraisons prévues</a>
+    &rsaquo; {% if livraison %}Modifier{% else %}Planifier{% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="planifier-container">
+    <div class="planifier-header">
+        <h1>{% if livraison %}✏️ Modifier la livraison prévue{% else %}📅 Planifier une livraison prévue{% endif %}</h1>
+        <p>Commande N° {{ commande.id }} — {{ commande.client.nom }}</p>
+    </div>
+
+    <div class="bloc">
+        <h2>Commande à livrer</h2>
+        <div class="infos">
+            <div class="info">
+                <span class="label">Client</span>
+                <span class="valeur">{{ commande.client.nom }}</span>
+            </div>
+            <div class="info">
+                <span class="label">Chantier</span>
+                <span class="valeur">{% if commande.chantier %}{{ commande.chantier.nom }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="info">
+                <span class="label">Date souhaitée</span>
+                <span class="valeur">{{ commande.date_livraison_souhaitee|date:"d/m/Y" }}</span>
+            </div>
+            <div class="info">
+                <span class="label">Heure souhaitée</span>
+                <span class="valeur">{% if commande.heure_livraison_souhaitee %}{{ commande.heure_livraison_souhaitee|time:"H:i" }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="info">
+                <span class="label">Statut commande</span>
+                <span class="valeur"><span class="badge {{ commande.statut }}">{{ commande.get_statut_display }}</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bloc">
+        <h2>Formules / quantités</h2>
+        <table class="tableau">
+            <thead>
+                <tr>
+                    <th>Formule</th>
+                    <th class="num">Quantité (m³)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in lignes %}
+                <tr>
+                    <td>{{ ligne.formule.nom }}</td>
+                    <td class="num">{{ ligne.quantite|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="2" class="vide">Aucune ligne de commande.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bloc">
+        <h2>Ordres de production liés</h2>
+        <table class="tableau">
+            <thead>
+                <tr>
+                    <th>N° bon</th>
+                    <th>Quantité à produire (m³)</th>
+                    <th>Véhicule</th>
+                    <th>Chauffeur</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ordre in ordres %}
+                <tr>
+                    <td><a href="{% url 'admin:production_ordreproduction_change' ordre.id %}">{{ ordre.numero_bon|default:ordre.id }}</a></td>
+                    <td class="num">{{ ordre.quantite_produire|floatformat:2 }}</td>
+                    <td>{% if ordre.vehicule %}{{ ordre.vehicule.immatriculation }}{% else %}—{% endif %}</td>
+                    <td>{% if ordre.chauffeur %}{{ ordre.chauffeur.nom }}{% else %}—{% endif %}</td>
+                    <td><span class="badge {{ ordre.statut }}">{{ ordre.get_statut_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="vide">Aucun ordre de production lié à cette commande.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bloc">
+        <h2>{% if livraison %}Livraison prévue{% else %}Nouvelle livraison prévue{% endif %}</h2>
+
+        {% if form.non_field_errors %}
+            <div class="erreurs">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="retour" value="{{ retour }}">
+
+            <div class="grille-form">
+                <div class="champ">
+                    <label for="{{ form.date_livraison.id_for_label }}">Date de livraison</label>
+                    {{ form.date_livraison }}
+                    {% if form.date_livraison.errors %}<div class="erreurs">{{ form.date_livraison.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.heure_livraison.id_for_label }}">Heure de livraison</label>
+                    {{ form.heure_livraison }}
+                    {% if form.heure_livraison.errors %}<div class="erreurs">{{ form.heure_livraison.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.vehicule.id_for_label }}">Véhicule</label>
+                    {{ form.vehicule }}
+                    {% if form.vehicule.errors %}<div class="erreurs">{{ form.vehicule.errors }}</div>{% endif %}
+                </div>
+                <div class="champ">
+                    <label for="{{ form.statut.id_for_label }}">Statut</label>
+                    {{ form.statut }}
+                    {% if form.statut.errors %}<div class="erreurs">{{ form.statut.errors }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="champ">
+                <label for="{{ form.adresse_livraison.id_for_label }}">Adresse de livraison</label>
+                {{ form.adresse_livraison }}
+                {% if form.adresse_livraison.errors %}<div class="erreurs">{{ form.adresse_livraison.errors }}</div>{% endif %}
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="bouton">💾 Enregistrer</button>
+                <a href="{% url 'planning:livraisons' %}{% if retour %}?{{ retour }}{% endif %}" class="bouton secondaire">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
