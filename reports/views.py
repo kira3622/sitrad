@@ -256,7 +256,69 @@ def rapport_commercial(request):
         ca=Sum('montant_total'),
         nombre_commandes=Count('id')
     ).order_by('-ca')
-    
+
+    # --- Béton vendu (source : ordres de production) -------------------------
+    ordres = OrdreProduction.objects.filter(
+        date_production__range=[date_debut, date_fin]
+    ).exclude(statut='annule').select_related('commande__client', 'formule')
+
+    def _cumuler(cible, libelle, quantite, montant):
+        ligne = cible.setdefault(libelle, {
+            'libelle': libelle,
+            'nb_ordres': 0,
+            'quantite': Decimal('0.00'),
+            'montant': Decimal('0.00'),
+        })
+        ligne['nb_ordres'] += 1
+        ligne['quantite'] += quantite
+        ligne['montant'] += montant
+
+    quantite_totale = Decimal('0.00')
+    montant_beton = Decimal('0.00')
+    somme_pu = Decimal('0.00')
+    nb_ordres = 0
+    nb_pu = 0
+    beton_par_client = {}
+    beton_par_formule = {}
+    beton_par_mois = {}
+
+    for ordre in ordres.order_by('date_production', 'id'):
+        quantite = ordre.quantite_produire or Decimal('0.00')
+        prix_unitaire = ordre.prix_vente_unitaire
+        montant = (
+            (quantite * prix_unitaire if prix_unitaire is not None else Decimal('0.00'))
+            + (ordre.prix_deplacement_pompe or Decimal('0.00'))
+            + (ordre.prix_deplacement_camion or Decimal('0.00'))
+        )
+
+        nom_client = ordre.commande.client.nom if ordre.commande and ordre.commande.client else 'Non renseigné'
+        nom_formule = ordre.formule.nom if ordre.formule else 'Non renseignée'
+        mois = ordre.date_production.strftime('%m/%Y')
+
+        _cumuler(beton_par_client, nom_client, quantite, montant)
+        _cumuler(beton_par_formule, nom_formule, quantite, montant)
+        _cumuler(beton_par_mois, mois, quantite, montant)
+
+        quantite_totale += quantite
+        montant_beton += montant
+        nb_ordres += 1
+        if prix_unitaire is not None:
+            somme_pu += prix_unitaire
+            nb_pu += 1
+
+    beton_stats = {
+        'quantite_totale': quantite_totale,
+        'montant_total': montant_beton,
+        'nb_ordres': nb_ordres,
+        'pu_moyen': (somme_pu / nb_pu) if nb_pu else Decimal('0.00'),
+        'quantite_moyenne': (quantite_totale / nb_ordres) if nb_ordres else Decimal('0.00'),
+    }
+
+    # Tri des mois au format MM/AAAA -> chronologique
+    beton_par_mois = [
+        ligne for _, ligne in sorted(beton_par_mois.items(), key=lambda item: (item[0][3:], item[0][:2]))
+    ]
+
     context = {
         'title': 'Rapport Commercial',
         'date_debut': date_debut,
@@ -266,8 +328,12 @@ def rapport_commercial(request):
         'clients_fidelite': clients_fidelite,
         'ca_mensuel': ca_mensuel,
         'repartition_geo': repartition_geo,
+        'beton_stats': beton_stats,
+        'beton_par_client': sorted(beton_par_client.values(), key=lambda ligne: ligne['montant'], reverse=True),
+        'beton_par_formule': sorted(beton_par_formule.values(), key=lambda ligne: ligne['montant'], reverse=True),
+        'beton_par_mois': beton_par_mois,
     }
-    
+
     return render(request, 'reports/commercial.html', context)
 
 # ==================== RAPPORTS DE STOCK ====================

@@ -254,6 +254,131 @@
         </form>
     </div>
     
+    <div class="section">
+        <h3>🧱 Béton vendu (ordres de production)</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+            <div style="text-align: center; padding: 15px; background: #e3f2fd; border-radius: 8px;">
+                <div style="font-size: 1.5em; font-weight: bold; color: #1976d2;">{{ beton_stats.quantite_totale|floatformat:2 }} m³</div>
+                <div style="color: #666;">Quantité totale de béton</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #fff3e0; border-radius: 8px;">
+                <div style="font-size: 1.5em; font-weight: bold; color: #FF9800;">{{ beton_stats.montant_total|floatformat:2 }} DH</div>
+                <div style="color: #666;">Montant total</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #f3e5f5; border-radius: 8px;">
+                <div style="font-size: 1.5em; font-weight: bold; color: #7b1fa2;">{{ beton_stats.nb_ordres }}</div>
+                <div style="color: #666;">Ordres de production</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                <div style="font-size: 1.5em; font-weight: bold; color: #4CAF50;">{{ beton_stats.pu_moyen|floatformat:2 }} DH</div>
+                <div style="color: #666;">Prix de vente unitaire moyen (/m³)</div>
+            </div>
+        </div>
+        <p style="color: #666;">
+            Quantité moyenne par ordre : {{ beton_stats.quantite_moyenne|floatformat:2 }} m³ —
+            les ordres annulés ne sont pas comptés. Montant = quantité × PU + déplacements pompe/camion.
+        </p>
+
+        <h4 style="margin-top: 25px;">Par client</h4>
+        {% if beton_par_client %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Nombre d'ordres</th>
+                        <th>Quantité (m³)</th>
+                        <th>Montant</th>
+                        <th>Part du montant total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ligne in beton_par_client %}
+                    <tr>
+                        <td>{{ ligne.libelle }}</td>
+                        <td>{{ ligne.nb_ordres }}</td>
+                        <td>{{ ligne.quantite|floatformat:2 }}</td>
+                        <td class="currency">{{ ligne.montant|floatformat:2 }} DH</td>
+                        <td>{% if beton_stats.montant_total > 0 %}{% widthratio ligne.montant beton_stats.montant_total 100 %}%{% else %}0%{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight: bold; background-color: #f8f9fa;">
+                        <td>TOTAL</td>
+                        <td>{{ beton_stats.nb_ordres }}</td>
+                        <td>{{ beton_stats.quantite_totale|floatformat:2 }}</td>
+                        <td class="currency">{{ beton_stats.montant_total|floatformat:2 }} DH</td>
+                        <td>100%</td>
+                    </tr>
+                </tfoot>
+            </table>
+        {% else %}
+            <div class="no-data">Aucun ordre de production sur la période.</div>
+        {% endif %}
+
+        <h4 style="margin-top: 25px;">Par formule</h4>
+        {% if beton_par_formule %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Formule</th>
+                        <th>Nombre d'ordres</th>
+                        <th>Quantité (m³)</th>
+                        <th>Montant</th>
+                        <th>Part du montant total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ligne in beton_par_formule %}
+                    <tr>
+                        <td>{{ ligne.libelle }}</td>
+                        <td>{{ ligne.nb_ordres }}</td>
+                        <td>{{ ligne.quantite|floatformat:2 }}</td>
+                        <td class="currency">{{ ligne.montant|floatformat:2 }} DH</td>
+                        <td>{% if beton_stats.montant_total > 0 %}{% widthratio ligne.montant beton_stats.montant_total 100 %}%{% else %}0%{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">Aucune formule sur la période.</div>
+        {% endif %}
+
+        <h4 style="margin-top: 25px;">Par mois</h4>
+        {% if beton_par_mois %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Mois</th>
+                        <th>Nombre d'ordres</th>
+                        <th>Quantité (m³)</th>
+                        <th>Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ligne in beton_par_mois %}
+                    <tr>
+                        <td>{{ ligne.libelle }}</td>
+                        <td>{{ ligne.nb_ordres }}</td>
+                        <td>{{ ligne.quantite|floatformat:2 }}</td>
+                        <td class="currency">{{ ligne.montant|floatformat:2 }} DH</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight: bold; background-color: #f8f9fa;">
+                        <td>TOTAL</td>
+                        <td>{{ beton_stats.nb_ordres }}</td>
+                        <td>{{ beton_stats.quantite_totale|floatformat:2 }}</td>
+                        <td class="currency">{{ beton_stats.montant_total|floatformat:2 }} DH</td>
+                    </tr>
+                </tfoot>
+            </table>
+        {% else %}
+            <div class="no-data">Aucune donnée mensuelle disponible.</div>
+        {% endif %}
+    </div>
+
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-value">{{ ca_stats.ca_total|floatformat:0 }} DH</div>
