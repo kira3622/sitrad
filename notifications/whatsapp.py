@@ -19,6 +19,20 @@ logger = logging.getLogger(__name__)
 TIMEOUT = 15
 
 
+def _format_date(valeur):
+    """Formate une date (objet ``date``/``datetime`` ou chaîne « AAAA-MM-JJ ») en jj/mm/aaaa."""
+    if hasattr(valeur, 'strftime'):
+        return valeur.strftime('%d/%m/%Y')
+    return str(valeur)
+
+
+def _format_heure(valeur):
+    """Formate une heure (objet ``time``) en hh:mm."""
+    if hasattr(valeur, 'strftime'):
+        return valeur.strftime('%H:%M')
+    return str(valeur)
+
+
 def est_configure():
     """Indique si les identifiants UltraMsg et le groupe sont renseignés."""
     return bool(
@@ -72,9 +86,9 @@ def message_nouvelle_saisie(saisie):
     """Construit le texte du message pour une nouvelle livraison planifiée."""
     lignes = ["📅 Nouvelle livraison planifiée"]
     if saisie.heure_livraison:
-        lignes.append(f"🗓️ {saisie.date_livraison.strftime('%d/%m/%Y')} à {saisie.heure_livraison.strftime('%H:%M')}")
+        lignes.append(f"🗓️ {_format_date(saisie.date_livraison)} à {_format_heure(saisie.heure_livraison)}")
     else:
-        lignes.append(f"🗓️ {saisie.date_livraison.strftime('%d/%m/%Y')}")
+        lignes.append(f"🗓️ {_format_date(saisie.date_livraison)}")
     lignes.append(f"👤 Client : {saisie.client}")
     if saisie.chantier:
         lignes.append(f"🏗️ Chantier : {saisie.chantier}")
@@ -88,4 +102,33 @@ def message_nouvelle_saisie(saisie):
         lignes.append(f"📍 Adresse : {saisie.adresse}")
     if saisie.observation:
         lignes.append(f"📝 Observation : {saisie.observation}")
+    return "\n".join(lignes)
+
+
+def message_nouvel_ordre(ordre):
+    """Construit le texte du message pour un nouvel ordre de production."""
+    lignes = ["🏭 Nouvel ordre de production"]
+    if ordre.numero_bon:
+        lignes.append(f"🔖 Bon N° : {ordre.numero_bon}")
+    commande = ordre.commande
+    if commande is not None:
+        lignes.append(f"👤 Client : {commande.client}")
+        if commande.chantier:
+            lignes.append(f"🏗️ Chantier : {commande.chantier}")
+    if ordre.formule:
+        lignes.append(f"🧱 Formule : {ordre.formule}")
+    lignes.append(f"📦 Quantité : {ordre.quantite_produire} m³")
+    if ordre.heure_production:
+        lignes.append(
+            f"🗓️ {_format_date(ordre.date_production)} à {_format_heure(ordre.heure_production)}"
+        )
+    else:
+        lignes.append(f"🗓️ {_format_date(ordre.date_production)}")
+    if ordre.vehicule:
+        lignes.append(f"🚚 Véhicule : {ordre.vehicule.immatriculation}")
+    if ordre.chauffeur:
+        lignes.append(f"👷 Chauffeur : {ordre.chauffeur.nom}")
+    if ordre.pompe:
+        lignes.append(f"🚛 Pompe : {ordre.pompe}")
+    lignes.append(f"📌 Statut : {ordre.get_statut_display()}")
     return "\n".join(lignes)
