@@ -20,6 +20,7 @@ from django.utils import timezone
 from customers.models import Client
 from orders.models import Commande
 from .models import Livraison, SaisiePlanning
+from .whatsapp import envoyer_message_groupe, message_nouvelle_saisie
 
 # Statuts de commande considérés comme « à livrer »
 STATUTS_A_LIVRER = ('en_attente', 'validee', 'en_production')
@@ -332,6 +333,12 @@ def saisie_plannings(request):
                 f"Livraison planifiée du {enregistree.date_livraison.strftime('%d/%m/%Y')} "
                 f"pour {enregistree.client} enregistrée.",
             )
+            if instance is None:
+                ok, detail = envoyer_message_groupe(message_nouvelle_saisie(enregistree))
+                if ok:
+                    messages.info(request, "Message envoyé au groupe WhatsApp.")
+                else:
+                    messages.warning(request, f"Envoi WhatsApp non effectué : {detail}")
             return redirect(_url_saisie(filtres))
     else:
         initial = {}

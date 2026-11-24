@@ -315,3 +315,11 @@ except ImportError:
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY')
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY')
 VAPID_SUBJECT = os.environ.get('VAPID_SUBJECT', 'mailto:admin@example.com')
+
+
+# ======== WhatsApp (UltraMsg) — envoi vers un groupe ========
+# Renseigner ces variables d'environnement (Render) pour activer l'envoi.
+ULTRAMSG_BASE_URL = os.environ.get('ULTRAMSG_BASE_URL', 'https://api.ultramsg.com')
+ULTRAMSG_INSTANCE_ID = os.environ.get('ULTRAMSG_INSTANCE_ID', '')
+ULTRAMSG_TOKEN = os.environ.get('ULTRAMSG_TOKEN', '')
+WHATSAPP_GROUP_ID = os.environ.get('WHATSAPP_GROUP_ID', '')
